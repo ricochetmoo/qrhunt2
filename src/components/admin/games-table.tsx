@@ -23,6 +23,7 @@ export function GamesTable({ games }: { games: Game[] }) {
         <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
           <tr>
             <th className="px-4 py-3 font-medium">Name</th>
+            <th className="px-4 py-3 font-medium">Code</th>
             <th className="px-4 py-3 font-medium">Status</th>
             <th className="px-4 py-3 font-medium">Updated</th>
             <th className="px-4 py-3" />
@@ -35,6 +36,11 @@ export function GamesTable({ games }: { games: Game[] }) {
                 <Link href={`/admin/games/${game.id}`} className="hover:underline">
                   {game.name}
                 </Link>
+              </td>
+              <td className="px-4 py-3">
+                <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs tracking-wider text-slate-700">
+                  {game.gameCode}
+                </code>
               </td>
               <td className="px-4 py-3">
                 <StatusBadge status={game.status} />

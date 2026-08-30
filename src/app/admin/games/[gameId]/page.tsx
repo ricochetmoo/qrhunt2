@@ -20,22 +20,14 @@ export default async function GamePage({ params }: PageProps<"/admin/games/[game
     <div className="space-y-6">
       <PageHeader
         title={game.name}
-        description={`${qrCodes.length} ${qrCodes.length === 1 ? "code" : "codes"} on the route`}
+        description={`Game code ${game.gameCode} · ${qrCodes.length} ${qrCodes.length === 1 ? "code" : "codes"} on the route`}
         actions={<StatusBadge status={game.status} />}
       />
 
       <Card>
         <CardHeader title="Game settings" />
         <CardBody>
-          <GameForm
-            mode="edit"
-            game={{
-              id: game.id,
-              name: game.name,
-              status: game.status,
-              pauseReason: game.pauseReason,
-            }}
-          />
+          <GameForm mode="edit" game={game} />
         </CardBody>
       </Card>
 

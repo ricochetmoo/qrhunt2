@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent, type ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
 import { ErrorMessage, Field } from "@/components/ui/field";
@@ -11,9 +11,104 @@ import { apiClient } from "@/lib/api-client";
 import { readError } from "@/lib/api-errors";
 import { GAME_STATUSES, GAME_STATUS_LABELS, isGameStatus, type GameStatus } from "@/lib/game-status";
 
-type GameFormProps =
-  | { mode: "create" }
-  | { mode: "edit"; game: Pick<Game, "id" | "name" | "status" | "pauseReason"> };
+export type EditableGame = Pick<
+  Game,
+  | "id"
+  | "name"
+  | "status"
+  | "pauseReason"
+  | "gameCode"
+  | "allowSelfSignup"
+  | "allowTeamCreation"
+  | "allowTeamNames"
+  | "allowTeamPhotos"
+  | "routeSignupEnabled"
+  | "wildcardEnabled"
+  | "wildcardName"
+  | "staggeredStart"
+  | "qrRemoveBy"
+  | "issueContactPhone"
+>;
+
+type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
+
+type ConfigState = {
+  allowSelfSignup: boolean;
+  allowTeamCreation: boolean;
+  allowTeamNames: boolean;
+  allowTeamPhotos: boolean;
+  routeSignupEnabled: boolean;
+  wildcardEnabled: boolean;
+  wildcardName: string;
+  staggeredStart: boolean;
+  qrRemoveBy: string; // value of a datetime-local input, in the admin's local time
+  issueContactPhone: string;
+};
+
+/** datetime-local wants `YYYY-MM-DDTHH:mm` in local time. */
+function toLocalInputValue(date: Date | null): string {
+  if (!date) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function initialConfig(game: EditableGame | null): ConfigState {
+  return {
+    allowSelfSignup: game?.allowSelfSignup ?? true,
+    allowTeamCreation: game?.allowTeamCreation ?? true,
+    allowTeamNames: game?.allowTeamNames ?? true,
+    allowTeamPhotos: game?.allowTeamPhotos ?? false,
+    routeSignupEnabled: game?.routeSignupEnabled ?? false,
+    wildcardEnabled: game?.wildcardEnabled ?? false,
+    wildcardName: game?.wildcardName ?? "",
+    staggeredStart: game?.staggeredStart ?? false,
+    qrRemoveBy: toLocalInputValue(game?.qrRemoveBy ?? null),
+    issueContactPhone: game?.issueContactPhone ?? "",
+  };
+}
+
+function Toggle({
+  id,
+  label,
+  hint,
+  checked,
+  onChange,
+  disabled,
+}: {
+  id: string;
+  label: string;
+  hint?: string;
+  checked: boolean;
+  onChange: (value: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <label htmlFor={id} className="flex cursor-pointer items-start gap-3">
+      <input
+        id={id}
+        type="checkbox"
+        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+        disabled={disabled}
+      />
+      <span>
+        <span className="block text-sm font-medium text-slate-700">{label}</span>
+        {hint ? <span className="block text-xs text-slate-500">{hint}</span> : null}
+      </span>
+    </label>
+  );
+}
+
+function Section({ title, children }: { title: string; children: ReactNode }) {
+  return (
+    <fieldset className="space-y-3 border-t border-slate-200 pt-4">
+      <legend className="pr-3 text-sm font-semibold text-slate-900">{title}</legend>
+      {children}
+    </fieldset>
+  );
+}
 
 export function GameForm(props: GameFormProps) {
   const router = useRouter();
@@ -24,9 +119,14 @@ export function GameForm(props: GameFormProps) {
     game && isGameStatus(game.status) ? game.status : "draft",
   );
   const [pauseReason, setPauseReason] = useState(game?.pauseReason ?? "");
+  const [config, setConfig] = useState<ConfigState>(() => initialConfig(game));
+  const [gameCode, setGameCode] = useState(game?.gameCode ?? "");
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  const set = <K extends keyof ConfigState>(key: K) => (value: ConfigState[K]) =>
+    setConfig((current) => ({ ...current, [key]: value }));
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -53,6 +153,16 @@ export function GameForm(props: GameFormProps) {
           name,
           status,
           pauseReason: status === "paused" ? pauseReason : null,
+          allowSelfSignup: config.allowSelfSignup,
+          allowTeamCreation: config.allowTeamCreation,
+          allowTeamNames: config.allowTeamNames,
+          allowTeamPhotos: config.allowTeamPhotos,
+          routeSignupEnabled: config.routeSignupEnabled,
+          wildcardEnabled: config.wildcardEnabled,
+          wildcardName: config.wildcardName.trim() || null,
+          staggeredStart: config.staggeredStart,
+          qrRemoveBy: config.qrRemoveBy ? new Date(config.qrRemoveBy).toISOString() : null,
+          issueContactPhone: config.issueContactPhone.trim() || null,
         },
       });
 
@@ -62,6 +172,27 @@ export function GameForm(props: GameFormProps) {
       }
 
       setSaved(true);
+      router.refresh();
+    });
+  }
+
+  function handleRegenerateCode() {
+    if (props.mode !== "edit") return;
+    if (!window.confirm("Issue a new game code? The current code will stop working immediately.")) return;
+
+    setError(null);
+    startTransition(async () => {
+      const response = await apiClient.api.admin.games[":gameId"]["game-code"].$post({
+        param: { gameId: props.game.id },
+      });
+
+      if (!response.ok) {
+        setError(await readError(response));
+        return;
+      }
+
+      const { game: updated } = await response.json();
+      setGameCode(updated.gameCode);
       router.refresh();
     });
   }
@@ -104,6 +235,24 @@ export function GameForm(props: GameFormProps) {
       {props.mode === "edit" ? (
         <>
           <Field
+            label="Game code"
+            htmlFor="game-code"
+            hint="Players enter this code to join. Share it at the start; regenerate it if it leaks."
+          >
+            <div className="flex items-center gap-2">
+              <code
+                id="game-code"
+                className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-lg tracking-widest text-slate-900"
+              >
+                {gameCode}
+              </code>
+              <Button variant="secondary" size="sm" onClick={handleRegenerateCode} disabled={pending}>
+                Regenerate
+              </Button>
+            </div>
+          </Field>
+
+          <Field
             label="Status"
             htmlFor="game-status"
             hint="Lifecycle transition rules are not enforced yet; any status can be chosen."
@@ -135,10 +284,105 @@ export function GameForm(props: GameFormProps) {
               />
             </Field>
           ) : null}
+
+          <Section title="Players and teams">
+            <Toggle
+              id="cfg-self-signup"
+              label="Players can sign up themselves"
+              hint="When off, only administrators can add players to teams."
+              checked={config.allowSelfSignup}
+              onChange={set("allowSelfSignup")}
+            />
+            <Toggle
+              id="cfg-team-creation"
+              label="Players can create teams"
+              hint="When off, players can only join teams that already exist."
+              checked={config.allowTeamCreation}
+              onChange={set("allowTeamCreation")}
+              disabled={!config.allowSelfSignup}
+            />
+            <Toggle
+              id="cfg-team-names"
+              label="Players can choose a team name"
+              checked={config.allowTeamNames}
+              onChange={set("allowTeamNames")}
+            />
+            <Toggle
+              id="cfg-team-photos"
+              label="Players can upload a team photo"
+              checked={config.allowTeamPhotos}
+              onChange={set("allowTeamPhotos")}
+            />
+            <Toggle
+              id="cfg-route-signup"
+              label="Join by scanning a route QR code"
+              hint="Lets players join the game directly from any poster instead of entering the game code."
+              checked={config.routeSignupEnabled}
+              onChange={set("routeSignupEnabled")}
+            />
+          </Section>
+
+          <Section title="Wildcard">
+            <Toggle
+              id="cfg-wildcard"
+              label="Wildcard is active"
+              hint="An extra object players can scan at any point, outside the route order."
+              checked={config.wildcardEnabled}
+              onChange={set("wildcardEnabled")}
+            />
+            {config.wildcardEnabled ? (
+              <Field label="Wildcard name" htmlFor="cfg-wildcard-name" hint="How it appears to players.">
+                <Input
+                  id="cfg-wildcard-name"
+                  value={config.wildcardName}
+                  onChange={(event) => set("wildcardName")(event.target.value)}
+                  maxLength={60}
+                  required
+                />
+              </Field>
+            ) : null}
+          </Section>
+
+          <Section title="Start and posters">
+            <Toggle
+              id="cfg-staggered"
+              label="Staggered start"
+              hint="Teams set off at intervals rather than all at once."
+              checked={config.staggeredStart}
+              onChange={set("staggeredStart")}
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field
+                label="Remove QR codes by"
+                htmlFor="cfg-remove-by"
+                hint="Printed on posters so the public knows when they will be taken down."
+              >
+                <Input
+                  id="cfg-remove-by"
+                  type="datetime-local"
+                  value={config.qrRemoveBy}
+                  onChange={(event) => set("qrRemoveBy")(event.target.value)}
+                />
+              </Field>
+              <Field
+                label="Issue contact phone"
+                htmlFor="cfg-phone"
+                hint="Public number printed on posters for reporting problems."
+              >
+                <Input
+                  id="cfg-phone"
+                  type="tel"
+                  value={config.issueContactPhone}
+                  onChange={(event) => set("issueContactPhone")(event.target.value)}
+                  maxLength={30}
+                />
+              </Field>
+            </div>
+          </Section>
         </>
       ) : null}
 
-      <div className="flex items-center gap-3 pt-2">
+      <div className="flex items-center gap-3 border-t border-slate-200 pt-4">
         <Button type="submit" disabled={pending}>
           {pending ? "Saving…" : props.mode === "create" ? "Create game" : "Save changes"}
         </Button>

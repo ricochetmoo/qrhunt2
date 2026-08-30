@@ -13,11 +13,41 @@ export const createGameSchema = z.object({
   name: gameName,
 });
 
-export const updateGameSchema = z.object({
-  name: gameName.optional(),
-  status: gameStatusSchema.optional(),
-  pauseReason: z.string().trim().max(500).nullable().optional(),
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((value) => (value === "" ? null : value));
+
+/** Per-game configuration (see AGENTS.md "Admin configuration frontend"). */
+export const gameConfigSchema = z.object({
+  allowSelfSignup: z.boolean(),
+  allowTeamCreation: z.boolean(),
+  allowTeamNames: z.boolean(),
+  allowTeamPhotos: z.boolean(),
+  routeSignupEnabled: z.boolean(),
+  wildcardEnabled: z.boolean(),
+  wildcardName: optionalText(60),
+  staggeredStart: z.boolean(),
+  // ISO-8601 datetime string or null; the API stores a timestamp.
+  qrRemoveBy: z.iso.datetime({ offset: true }).nullable().optional(),
+  issueContactPhone: optionalText(30),
 });
+
+export const updateGameSchema = z
+  .object({
+    name: gameName.optional(),
+    status: gameStatusSchema.optional(),
+    pauseReason: z.string().trim().max(500).nullable().optional(),
+  })
+  .extend(gameConfigSchema.partial().shape)
+  .refine((value) => !(value.wildcardEnabled && value.wildcardName === null), {
+    message: "Give the wildcard a name when it is enabled.",
+    path: ["wildcardName"],
+  });
 
 const decimalString = z.string().trim().regex(/^-?\d+(\.\d+)?$/, "Must be a decimal number.");
 
@@ -55,5 +85,6 @@ export const qrCodeParamSchema = gameIdParamSchema.extend({
 
 export type CreateGameInput = z.infer<typeof createGameSchema>;
 export type UpdateGameInput = z.infer<typeof updateGameSchema>;
+export type GameConfigInput = z.infer<typeof gameConfigSchema>;
 export type QrCodeInput = z.infer<typeof qrCodeInputSchema>;
 export type UpdateQrCodeInput = z.infer<typeof updateQrCodeSchema>;

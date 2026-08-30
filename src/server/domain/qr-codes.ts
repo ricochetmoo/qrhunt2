@@ -8,10 +8,9 @@ import type { QrCode } from "@/db/types";
 import type { QrCodeInput, UpdateQrCodeInput } from "@/lib/admin-schemas";
 
 import { generateId, generateRouteCode } from "./codes";
-import { DomainError } from "./errors";
+import { DomainError, isUniqueViolation } from "./errors";
 import { getGame } from "./games";
 
-const UNIQUE_VIOLATION = "23505";
 const CODE_INSERT_ATTEMPTS = 3;
 
 export async function listQrCodes(gameId: string): Promise<QrCode[]> {
@@ -30,15 +29,6 @@ async function requireGame(gameId: string) {
   }
 
   return game;
-}
-
-function isUniqueViolation(error: unknown) {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as { code?: unknown }).code === UNIQUE_VIOLATION
-  );
 }
 
 export async function createQrCode(gameId: string, input: QrCodeInput): Promise<QrCode> {

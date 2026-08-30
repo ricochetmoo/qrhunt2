@@ -16,6 +16,7 @@ import {
   deleteGame,
   getGameWithRoute,
   listGames,
+  regenerateGameCode,
   updateGame,
 } from "@/server/domain/games";
 import {
@@ -62,6 +63,15 @@ export const adminGamesRoute = new Hono()
       }
     },
   )
+  .post("/:gameId/game-code", zValidator("param", gameIdParamSchema), async (c) => {
+    try {
+      const game = await regenerateGameCode(c.req.valid("param").gameId);
+
+      return c.json({ game });
+    } catch (error) {
+      return domainErrorToResponse(c, error);
+    }
+  })
   .delete("/:gameId", zValidator("param", gameIdParamSchema), async (c) => {
     const deleted = await deleteGame(c.req.valid("param").gameId);
 
