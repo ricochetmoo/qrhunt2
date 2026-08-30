@@ -11,6 +11,9 @@ export function AdminNav() {
           <Link href="/admin/games" className="hover:text-slate-900">
             Games
           </Link>
+          <Link href="/admin/users" className="hover:text-slate-900">
+            Users
+          </Link>
         </nav>
         <Link href="/" className="ml-auto text-xs text-slate-500 hover:text-slate-900">
           Back to site
