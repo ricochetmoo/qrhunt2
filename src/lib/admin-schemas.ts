@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { gameModeSchema } from "./game-mode";
 import { gameStatusSchema } from "./game-status";
 import { latitude, longitude, optionalText } from "./zod-helpers";
 
@@ -16,6 +17,7 @@ export const createGameSchema = z.object({
 
 /** Per-game configuration (see AGENTS.md "Admin configuration frontend"). */
 export const gameConfigSchema = z.object({
+  gameMode: gameModeSchema,
   allowSelfSignup: z.boolean(),
   allowTeamCreation: z.boolean(),
   allowTeamNames: z.boolean(),

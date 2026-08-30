@@ -87,6 +87,9 @@ export const games = pgTable(
     name: text("name").notNull(),
     status: text("status").notNull().default("draft"),
     pauseReason: text("pause_reason"),
+    // How the game is won: "speed" (fastest to finish) or "completeness"
+    // (find everything, no time pressure). See src/lib/game-mode.ts.
+    gameMode: text("game_mode").notNull().default("speed"),
     // Code players type (or embed in a QR) to join the game.
     gameCode: text("game_code").notNull().unique(),
     // Player sign-up rules.

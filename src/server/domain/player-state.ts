@@ -20,6 +20,8 @@ export type PlayerState = {
     id: string;
     name: string;
     status: string;
+    /** "speed" or "completeness" — how the leaderboard ranks (src/lib/game-mode.ts). */
+    mode: string;
     pauseReason: string | null;
     startedAt: Date | null;
     finishedAt: Date | null;
@@ -100,7 +102,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       hintsReleased,
     }),
     team ? listTeamMembers(team.id) : Promise.resolve([]),
-    getLeaderboard(game.id, route.length, team?.id ?? null),
+    getLeaderboard(game.id, route.length, team?.id ?? null, game.gameMode),
   ]);
 
   return {
@@ -109,6 +111,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       id: game.id,
       name: game.name,
       status: game.status,
+      mode: game.gameMode,
       pauseReason: game.status === "paused" ? game.pauseReason : null,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,

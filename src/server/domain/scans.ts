@@ -99,6 +99,8 @@ export type LeaderboardEntry = {
   found: number;
   total: number;
   wildcardFound: boolean;
+  /** Mode-aware score: found stops, plus the wildcard in completeness mode. */
+  score: number;
   lastScanAt: Date | null;
   finishedAt: Date | null;
   isYou: boolean;
@@ -108,6 +110,7 @@ export async function getLeaderboard(
   gameId: string,
   totalCodes: number,
   youTeamId: string | null,
+  mode: string = "speed",
 ): Promise<LeaderboardEntry[]> {
   const rows = await db
     .select({
@@ -123,18 +126,31 @@ export async function getLeaderboard(
     .where(eq(teams.gameId, gameId))
     .groupBy(teams.id);
 
+  const completeness = mode === "completeness";
   const entries = rows.map((row) => ({
     ...row,
     lastScanAt: row.lastScanAt ? new Date(row.lastScanAt) : null,
+    // In completeness mode the wildcard counts as a stop; scoring details
+    // remain provisional (AGENTS.md open decision), the mode split is settled.
+    score: row.found + (completeness && row.wildcardFound ? 1 : 0),
   }));
 
-  entries.sort(
-    (a, b) =>
-      b.found - a.found ||
-      Number(b.wildcardFound) - Number(a.wildcardFound) ||
-      (a.lastScanAt?.getTime() ?? Infinity) - (b.lastScanAt?.getTime() ?? Infinity) ||
-      a.name.localeCompare(b.name),
-  );
+  entries.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+
+    if (!completeness) {
+      // Speed: wildcard as tie-break, then the earlier finisher of the score.
+      const wildcard = Number(b.wildcardFound) - Number(a.wildcardFound);
+      if (wildcard !== 0) return wildcard;
+
+      const byTime =
+        (a.lastScanAt?.getTime() ?? Infinity) - (b.lastScanAt?.getTime() ?? Infinity);
+      if (byTime !== 0) return byTime;
+    }
+
+    // Completeness deliberately ignores time so there is no incentive to dash.
+    return a.name.localeCompare(b.name);
+  });
 
   return entries.map((entry, index) => ({
     rank: index + 1,
@@ -143,6 +159,7 @@ export async function getLeaderboard(
     found: entry.found,
     total: totalCodes,
     wildcardFound: entry.wildcardFound,
+    score: entry.score,
     lastScanAt: entry.lastScanAt,
     finishedAt: entry.finishedAt,
     isYou: entry.teamId === youTeamId,

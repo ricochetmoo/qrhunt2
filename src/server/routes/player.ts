@@ -72,6 +72,7 @@ export const playerRoute = new Hono<PlayerEnv>()
         id: game.id,
         name: game.name,
         status: game.status,
+        mode: game.gameMode,
         joinable: isJoinable(game.status),
         routeSignupEnabled: game.routeSignupEnabled,
         allowSelfSignup: game.allowSelfSignup,

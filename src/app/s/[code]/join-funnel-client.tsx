@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/card";
 import { ErrorMessage, Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signIn } from "@/lib/auth-client";
+import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { detectScanContext, type ScanContext } from "@/lib/scan-context";
 
 const ONBOARDED_KEY = "qr-hunt:onboarded";
@@ -19,6 +20,7 @@ type Resolved = {
     id: string;
     name: string;
     status: string;
+    mode: string;
     joinable: boolean;
     routeSignupEnabled: boolean;
     allowSelfSignup: boolean;
@@ -291,6 +293,11 @@ export function JoinFunnel({ code }: { code: string }) {
                   <>Your game code worked. Let&apos;s get you into the game.</>
                 )}
               </p>
+              {isGameMode(game.mode) ? (
+                <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                  {GAME_MODE_PLAYER_BLURBS[game.mode]}
+                </p>
+              ) : null}
             </div>
             <form onSubmit={handleOnboard} className="space-y-3">
               <Field label="What's your first name?" htmlFor="player-name">
@@ -371,6 +378,9 @@ export function JoinFunnel({ code }: { code: string }) {
               {joined?.playerName ? `You're checked in, ${joined.playerName}! 🎉` : game.name}
             </h1>
             <p className="text-sm text-slate-700">{joined?.message}</p>
+            {isGameMode(game.mode) ? (
+              <p className="text-sm text-slate-600">{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
+            ) : null}
             {joined?.teamCode ? (
               <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
                 Your rejoin code:{" "}
