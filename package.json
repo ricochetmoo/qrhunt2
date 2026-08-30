@@ -21,6 +21,7 @@
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.5",
     "next": "16.3.3",
+    "quagga": "^0.12.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
