@@ -33,7 +33,7 @@ export function GamesTable({ games }: { games: Game[] }) {
           {games.map((game) => (
             <tr key={game.id} className="hover:bg-slate-50">
               <td className="px-4 py-3 font-medium text-slate-900">
-                <Link href={`/admin/games/${game.id}`} className="hover:underline">
+                <Link href={`/admin/games/${game.id}/dashboard`} className="hover:underline">
                   {game.name}
                 </Link>
               </td>
@@ -48,7 +48,7 @@ export function GamesTable({ games }: { games: Game[] }) {
               <td className="px-4 py-3 text-slate-500">{dateFormat.format(game.updatedAt)}</td>
               <td className="px-4 py-3 text-right">
                 <Link
-                  href={`/admin/games/${game.id}`}
+                  href={`/admin/games/${game.id}/edit`}
                   className="text-xs font-medium text-slate-700 hover:underline"
                 >
                   Manage
