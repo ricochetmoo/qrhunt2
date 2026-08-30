@@ -26,12 +26,17 @@ export function UsersTable({ users, emptyMessage }: { users: AdminUser[]; emptyM
             <th className="px-4 py-3 font-medium">Type</th>
             <th className="px-4 py-3 font-medium">Teams</th>
             <th className="px-4 py-3 font-medium">Signed up</th>
+            <th className="px-4 py-3" />
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
           {users.map((u) => (
             <tr key={u.id} className="hover:bg-slate-50">
-              <td className="px-4 py-3 font-medium text-slate-900">{u.name || "—"}</td>
+              <td className="px-4 py-3 font-medium text-slate-900">
+                <Link href={`/admin/users/${u.id}`} className="hover:underline">
+                  {u.name || "—"}
+                </Link>
+              </td>
               <td className="px-4 py-3 text-slate-600">
                 <span className="font-mono text-xs">{u.email}</span>
               </td>
@@ -67,6 +72,14 @@ export function UsersTable({ users, emptyMessage }: { users: AdminUser[]; emptyM
               </td>
               <td className="whitespace-nowrap px-4 py-3 text-slate-500">
                 {dateFormat.format(u.createdAt)}
+              </td>
+              <td className="px-4 py-3 text-right">
+                <Link
+                  href={`/admin/users/${u.id}`}
+                  className="text-xs font-medium text-slate-700 hover:underline"
+                >
+                  View
+                </Link>
               </td>
             </tr>
           ))}
