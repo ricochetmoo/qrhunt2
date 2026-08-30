@@ -9,7 +9,10 @@ import { authSchema, gameSchema } from "./schema";
 function createDatabase() {
   const sql = neon(getDatabaseUrl());
 
-  return drizzle({ client: sql, schema: { ...authSchema, ...gameSchema } });
+  return drizzle({
+    client: sql,
+    schema: { ...authSchema, ...gameSchema },
+  });
 }
 
 type Database = ReturnType<typeof createDatabase>;

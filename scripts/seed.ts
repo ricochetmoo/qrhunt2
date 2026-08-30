@@ -29,12 +29,11 @@ function routeCode(): string {
   return out;
 }
 
-// Same confusable-free alphabet the app uses for game/team join codes.
-const JOIN_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-function joinCode(): string {
+const GAME_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function gameCode(): string {
   let out = "";
   for (let i = 0; i < 6; i += 1) {
-    out += JOIN_ALPHABET[Math.floor(Math.random() * JOIN_ALPHABET.length)];
+    out += GAME_CODE_ALPHABET[Math.floor(Math.random() * GAME_CODE_ALPHABET.length)];
   }
   return out;
 }
@@ -80,8 +79,7 @@ async function seed() {
     id: gameId,
     name: `${SEED_GAME_PREFIX} Autumn Trail`,
     status: "started",
-    gameCode: joinCode(),
-    startedAt: minutes(0),
+    gameCode: gameCode(),
   });
 
   await db.insert(schema.game_admins).values({

@@ -10,6 +10,7 @@ import {
   updateGameSchema,
   updateQrCodeSchema,
 } from "@/lib/admin-schemas";
+import { gameDashboard } from "@/server/api/gameDashboard";
 import { domainErrorToResponse } from "@/server/domain/errors";
 import {
   createGame,
@@ -49,6 +50,7 @@ export const adminGamesRoute = new Hono()
 
     return c.json(result);
   })
+  .get("/:gameId/dashboard", zValidator("param", gameIdParamSchema), gameDashboard)
   .patch(
     "/:gameId",
     zValidator("param", gameIdParamSchema),

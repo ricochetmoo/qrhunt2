@@ -60,7 +60,7 @@ export function UsersTable({ users, emptyMessage }: { users: AdminUser[]; emptyM
                       <li key={team.teamId}>
                         {team.teamName}{" "}
                         <Link
-                          href={`/admin/games/${team.gameId}`}
+                          href={`/admin/games/${team.gameId}/dashboard`}
                           className="text-xs text-slate-500 hover:underline"
                         >
                           ({team.gameName})

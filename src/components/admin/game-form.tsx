@@ -143,7 +143,7 @@ export function GameForm(props: GameFormProps) {
         }
 
         const { game: created } = await response.json();
-        router.push(`/admin/games/${created.id}`);
+        router.push(`/admin/games/${created.id}/edit`);
         return;
       }
 
