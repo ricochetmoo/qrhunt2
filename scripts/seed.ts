@@ -123,12 +123,6 @@ async function seed() {
         email: `${team.name.toLowerCase()}-${player.toLowerCase()}${SEED_EMAIL_DOMAIN}`,
         isAnonymous: true,
       });
-      await db.insert(schema.game_players).values({
-        id: randomUUID(),
-        gameId,
-        userId: id,
-        joinedVia: "game_code",
-      });
       await db.insert(schema.team_memberships).values({ id: randomUUID(), teamId, userId: id });
     }
 

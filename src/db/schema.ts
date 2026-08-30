@@ -111,31 +111,6 @@ export const games = pgTable(
   (table) => [index("games_name_idx").on(table.name)],
 );
 
-/**
- * A player who has joined a game (by game code, route QR, or team code).
- * Separate from team membership: a player joins the game first, then creates
- * or joins a team within it.
- */
-export const game_players = pgTable(
-  "game_players",
-  {
-    id: text("id").primaryKey(),
-    gameId: text("game_id")
-      .notNull()
-      .references(() => games.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id, { onDelete: "cascade" }),
-    joinedVia: text("joined_via").notNull(), // game_code | route_qr | team_code
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("game_players_game_id_user_id_idx").on(table.gameId, table.userId),
-    index("game_players_user_id_idx").on(table.userId),
-  ],
-);
-
 export const game_admins = pgTable(
   "game_admins",
   {
@@ -259,7 +234,6 @@ export const qr_code_scans = pgTable(
 export const gameSchema = {
   games,
   game_admins,
-  game_players,
   teams,
   team_memberships,
   qr_codes,
@@ -278,8 +252,6 @@ export type Game = typeof games.$inferSelect;
 export type NewGame = typeof games.$inferInsert;
 export type GameAdmin = typeof game_admins.$inferSelect;
 export type NewGameAdmin = typeof game_admins.$inferInsert;
-export type GamePlayer = typeof game_players.$inferSelect;
-export type NewGamePlayer = typeof game_players.$inferInsert;
 export type Team = typeof teams.$inferSelect;
 export type NewTeam = typeof teams.$inferInsert;
 export type TeamMembership = typeof team_memberships.$inferSelect;

@@ -3,7 +3,8 @@ import "server-only";
 import type { Game, Team } from "@/db/types";
 import { canScan, hasStarted } from "@/lib/game-status";
 
-import { requireGamePlayer } from "./players";
+import { DomainError } from "./errors";
+import { requireVisibleGame } from "./players";
 import { listQrCodes } from "./qr-codes";
 import { buildRouteBundle, splitRoute, type RouteBundle } from "./route-bundle";
 import { computeProgress, getLeaderboard, listCreditedScans, type LeaderboardEntry } from "./scans";
@@ -60,28 +61,46 @@ export type PlayerState = {
   leaderboard: LeaderboardEntry[];
 };
 
-function hintsReleasedFor(game: Game, team: Team | null): boolean {
+function hintsReleasedFor(game: Game, team: Team): boolean {
   if (!hasStarted(game.status)) return false;
-  if (game.staggeredStart) return team?.startedAt != null;
+  if (game.staggeredStart) return team.startedAt != null;
   return true;
 }
 
-export async function getPlayerState(gameId: string, userId: string): Promise<PlayerState> {
-  const { game } = await requireGamePlayer(gameId, userId);
-  const [team, codes] = await Promise.all([getTeamForUser(gameId, userId), listQrCodes(gameId)]);
+/**
+ * The game plus proof the user belongs to one of its teams — the only
+ * persistent game membership. Everything after enrolment is gated on this.
+ */
+export async function requireTeamMember(
+  gameId: string,
+  userId: string,
+): Promise<{ game: Game; team: Team }> {
+  const game = await requireVisibleGame(gameId);
+  const team = await getTeamForUser(gameId, userId);
+
+  if (!team) {
+    throw new DomainError("NOT_IN_TEAM", "Join a team in this game first.");
+  }
+
+  return { game, team };
+}
+
+async function buildState(game: Game, team: Team | null, userId: string): Promise<PlayerState> {
+  const codes = await listQrCodes(game.id);
   const { route, wildcard } = splitRoute(codes);
 
-  const hintsReleased = hintsReleasedFor(game, team ?? null);
+  // Pre-team previews reveal nothing: the bundle stays fully locked.
+  const hintsReleased = team ? hintsReleasedFor(game, team) : false;
   const progress = team ? computeProgress(route, await listCreditedScans(team.id)) : null;
 
   const [bundle, members, leaderboard] = await Promise.all([
     buildRouteBundle(game, route, wildcard, {
       foundIds: progress?.foundIds ?? new Set<string>(),
-      targetIndex: progress?.targetIndex ?? (hintsReleased ? 0 : null),
+      targetIndex: hintsReleased ? (progress?.targetIndex ?? null) : null,
       hintsReleased,
     }),
     team ? listTeamMembers(team.id) : Promise.resolve([]),
-    getLeaderboard(gameId, route.length, team?.id ?? null),
+    getLeaderboard(game.id, route.length, team?.id ?? null),
   ]);
 
   return {
@@ -131,4 +150,20 @@ export async function getPlayerState(gameId: string, userId: string): Promise<Pl
       : null,
     leaderboard,
   };
+}
+
+/** Full state for an enrolled player (team membership required). */
+export async function getPlayerState(gameId: string, userId: string): Promise<PlayerState> {
+  const { game, team } = await requireTeamMember(gameId, userId);
+
+  return buildState(game, team, userId);
+}
+
+/**
+ * One-shot state returned by `POST /join` before the player has a team: same
+ * shape, but `team`/`progress` are null and the route bundle is fully locked.
+ * There is no other pre-team read access.
+ */
+export async function getGamePreview(game: Game, userId: string): Promise<PlayerState> {
+  return buildState(game, null, userId);
 }

@@ -1,25 +1,27 @@
 import "server-only";
 
 import type { Game, QrCode } from "@/db/types";
-import { encryptHint, hashRouteCode, type EncryptedHint } from "@/lib/hint-crypto";
+import { encryptHintPayload, hashRouteCode, type EncryptedHint } from "@/lib/hint-crypto";
 
 /**
- * The offline route bundle handed to players. Never contains a code: each
- * entry carries a code hash (to classify scans offline) and either a plaintext
- * hint (already unlocked) or one encrypted with the previous code on the
- * route. See `src/lib/hint-crypto.ts` for the rationale.
+ * The offline route bundle handed to players. Never contains a code, and a
+ * stop's secrets (hint AND map location) appear in plaintext only once that
+ * stop is unlocked — otherwise they travel inside `lockedPayload`, encrypted
+ * with the previous code on the route. See `src/lib/hint-crypto.ts`.
  */
 export type RouteBundleEntry = {
   id: string;
   position: number; // 0-based index on the ordered route
   name: string;
-  location: { latitude: string; longitude: string } | null;
   codeHash: string;
   found: boolean;
   /** Plaintext when unlocked (found, or the current target once the game has started). */
   hint: string | null;
-  /** Encrypted with the previous position's code; null for position 0 or when `hint` is set. */
-  lockedHint: EncryptedHint | null;
+  /** Revealed alongside `hint`; hidden while the stop is locked. */
+  location: { latitude: string; longitude: string } | null;
+  /** `{hint, location}` encrypted with the previous position's code (see HintPayload);
+   *  null for position 0 or when the plaintext fields are set. */
+  lockedPayload: EncryptedHint | null;
 };
 
 export type RouteBundle = {
@@ -66,20 +68,23 @@ export async function buildRouteBundle(
       const found = options.foundIds.has(code.id);
       const unlocked = options.hintsReleased && (found || index === options.targetIndex);
       const previous = index > 0 ? route[index - 1] : null;
+      const location =
+        code.latitude && code.longitude
+          ? { latitude: code.latitude, longitude: code.longitude }
+          : null;
 
       return {
         id: code.id,
         position: index,
         name: code.name,
-        location:
-          code.latitude && code.longitude
-            ? { latitude: code.latitude, longitude: code.longitude }
-            : null,
         codeHash: await hashRouteCode(game.id, code.code),
         found,
         hint: unlocked ? code.hint : null,
-        lockedHint:
-          !unlocked && previous ? await encryptHint(game.id, previous.code, code.hint) : null,
+        location: unlocked ? location : null,
+        lockedPayload:
+          !unlocked && previous
+            ? await encryptHintPayload(game.id, previous.code, { hint: code.hint, location })
+            : null,
       };
     }),
   );

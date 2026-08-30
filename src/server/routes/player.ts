@@ -10,18 +10,22 @@ import {
   updateTeamSchema,
 } from "@/lib/player-schemas";
 import { DomainError, domainErrorToResponse } from "@/server/domain/errors";
-import { getPlayerState } from "@/server/domain/player-state";
-import { joinGame, requireGamePlayer } from "@/server/domain/players";
+import { getGamePreview, getPlayerState, requireTeamMember } from "@/server/domain/player-state";
+import { assertJoinable, joinGame, requireVisibleGame } from "@/server/domain/players";
 import { listQrCodes } from "@/server/domain/qr-codes";
 import { splitRoute } from "@/server/domain/route-bundle";
 import { syncScans } from "@/server/domain/scans";
-import { createTeam, findTeamByCode, getTeamForUser, joinTeam, updateTeam } from "@/server/domain/teams";
+import { createTeam, findTeamByCode, joinTeam, updateTeam } from "@/server/domain/teams";
 import { requirePlayer, type PlayerEnv } from "@/server/middleware/require-player";
 
 /**
  * Player API (AGENTS.md "Minimal custom API contract"). Mounted at `/api/player`.
- * Every response that changes state also returns the full aggregate `state`
- * so the client needs no follow-up round-trip.
+ *
+ * Access model: team membership is the only persistent game membership.
+ * `POST /join` with a game/QR code returns a one-shot preview (nothing
+ * persisted, bundle fully locked); creating a team re-presents the game code;
+ * a team code enrols directly. Every other endpoint requires membership.
+ * Responses that change state also return the full aggregate `state`.
  */
 export const playerRoute = new Hono<PlayerEnv>()
   .use("*", requirePlayer)
@@ -29,8 +33,8 @@ export const playerRoute = new Hono<PlayerEnv>()
     const user = c.get("user");
 
     try {
-      const { gameId } = await joinGame(user.id, c.req.valid("json"));
-      const state = await getPlayerState(gameId, user.id);
+      const { game, team } = await joinGame(user.id, c.req.valid("json"));
+      const state = team ? await getPlayerState(game.id, user.id) : await getGamePreview(game, user.id);
 
       return c.json({ state });
     } catch (error) {
@@ -56,9 +60,14 @@ export const playerRoute = new Hono<PlayerEnv>()
       const input = c.req.valid("json");
 
       try {
-        const { game } = await requireGamePlayer(gameId, user.id);
+        const game = await requireVisibleGame(gameId);
 
         if (input.action === "create") {
+          if (game.gameCode !== input.gameCode) {
+            throw new DomainError("FORBIDDEN", "That game code does not match this game.");
+          }
+
+          assertJoinable(game);
           await createTeam(game, user.id, input.name);
         } else {
           const team = await findTeamByCode(input.teamCode);
@@ -105,13 +114,7 @@ export const playerRoute = new Hono<PlayerEnv>()
       const { scans } = c.req.valid("json");
 
       try {
-        const { game } = await requireGamePlayer(gameId, user.id);
-        const team = await getTeamForUser(gameId, user.id);
-
-        if (!team) {
-          throw new DomainError("NOT_IN_TEAM", "Create or join a team before scanning.");
-        }
-
+        const { game, team } = await requireTeamMember(gameId, user.id);
         const { route, wildcard } = splitRoute(await listQrCodes(gameId));
         const { outcomes } = await syncScans({ game, team, userId: user.id, route, wildcard, scans });
         const state = await getPlayerState(gameId, user.id);

@@ -32,7 +32,9 @@ export const joinGameSchema = z
 const teamName = z.string().trim().min(1, "Team name is required.").max(60);
 
 export const teamActionSchema = z.discriminatedUnion("action", [
-  z.object({ action: z.literal("create"), name: teamName.optional() }),
+  // Creating a team is what enrols a player, so it must re-present the game
+  // code as proof they were given it (there is no pre-team membership record).
+  z.object({ action: z.literal("create"), gameCode: joinCode, name: teamName.optional() }),
   z.object({ action: z.literal("join"), teamCode: joinCode }),
 ]);
 

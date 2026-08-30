@@ -1,19 +1,24 @@
 import "server-only";
 
-import { and, eq, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
-import { game_players, games, qr_codes } from "@/db/schema";
-import type { Game, GamePlayer, QrCode } from "@/db/types";
+import { games, qr_codes } from "@/db/schema";
+import type { Game, QrCode, Team } from "@/db/types";
 import { isJoinable, isPlayerVisible } from "@/lib/game-status";
 import { normalizeRouteCode } from "@/lib/hint-crypto";
 import type { JoinGameInput } from "@/lib/player-schemas";
 
-import { generateId } from "./codes";
-import { DomainError, isUniqueViolation } from "./errors";
+import { DomainError } from "./errors";
 import { findTeamByCode, joinTeam } from "./teams";
 
-export type JoinedVia = "game_code" | "route_qr" | "team_code";
+/**
+ * Game membership model: there is no player-game table. A player's persistent
+ * link to a game is their team membership (`team_memberships` → `teams`).
+ * Joining with a game/QR code is a stateless lookup that returns a one-shot
+ * preview; joining with a team code enrols via the team. Team creation proves
+ * capability by re-presenting the game code (see routes/player.ts).
+ */
 
 /**
  * QR payload format (decision): posters encode `${NEXT_PUBLIC_APP_URL}/s/<code>`.
@@ -69,45 +74,6 @@ export async function findGameByRouteCode(
   return row;
 }
 
-export async function getGamePlayer(gameId: string, userId: string): Promise<GamePlayer | undefined> {
-  const [player] = await db
-    .select()
-    .from(game_players)
-    .where(and(eq(game_players.gameId, gameId), eq(game_players.userId, userId)))
-    .limit(1);
-
-  return player;
-}
-
-/** Idempotently record that the user has joined the game. */
-export async function ensureGamePlayer(
-  gameId: string,
-  userId: string,
-  joinedVia: JoinedVia,
-): Promise<GamePlayer> {
-  const existing = await getGamePlayer(gameId, userId);
-
-  if (existing) {
-    return existing;
-  }
-
-  try {
-    const [created] = await db
-      .insert(game_players)
-      .values({ id: generateId(), gameId, userId, joinedVia })
-      .returning();
-
-    return created;
-  } catch (error) {
-    // Two devices joining at once: the row now exists.
-    if (isUniqueViolation(error)) {
-      return (await getGamePlayer(gameId, userId))!;
-    }
-
-    throw error;
-  }
-}
-
 /** The game, if players are allowed to see it at all. */
 export async function requireVisibleGame(gameId: string): Promise<Game> {
   const [game] = await db.select().from(games).where(eq(games.id, gameId)).limit(1);
@@ -119,22 +85,7 @@ export async function requireVisibleGame(gameId: string): Promise<Game> {
   return game;
 }
 
-/** The game plus proof that the user has joined it. */
-export async function requireGamePlayer(
-  gameId: string,
-  userId: string,
-): Promise<{ game: Game; player: GamePlayer }> {
-  const game = await requireVisibleGame(gameId);
-  const player = await getGamePlayer(gameId, userId);
-
-  if (!player) {
-    throw new DomainError("NOT_IN_GAME", "Join the game with its code first.");
-  }
-
-  return { game, player };
-}
-
-function assertJoinable(game: Game) {
+export function assertJoinable(game: Game) {
   if (!isJoinable(game.status)) {
     throw new DomainError(
       "GAME_NOT_JOINABLE",
@@ -152,12 +103,18 @@ function assertSelfSignup(game: Game) {
   }
 }
 
+export type JoinResult = { game: Game; team: Team | null };
+
 /**
- * Join a game by game code, route QR payload, or team code. Returns the game
- * id; callers fetch the aggregate player state afterwards. Re-joining a game
- * the user is already in is a no-op.
+ * Join by game code, route QR payload, or team code.
+ *
+ * - Game/QR codes are validated (lifecycle, self-sign-up, route-sign-up) and
+ *   return the game with no team; nothing is persisted. The client proceeds to
+ *   create or join a team, which is what enrols the player.
+ * - A team code is an invitation: it enrols the player into that team (and
+ *   therefore the game) immediately.
  */
-export async function joinGame(userId: string, input: JoinGameInput): Promise<{ gameId: string }> {
+export async function joinGame(userId: string, input: JoinGameInput): Promise<JoinResult> {
   if (input.teamCode) {
     const team = await findTeamByCode(input.teamCode);
 
@@ -166,20 +123,12 @@ export async function joinGame(userId: string, input: JoinGameInput): Promise<{ 
     }
 
     const game = await requireVisibleGame(team.gameId);
+    const joined = await joinTeam(game, team, userId);
 
-    if (!(await getGamePlayer(game.id, userId))) {
-      assertJoinable(game);
-      await ensureGamePlayer(game.id, userId, "team_code");
-    }
-
-    // A team code is an invitation, so self-sign-up rules do not apply.
-    await joinTeam(game, team, userId);
-
-    return { gameId: game.id };
+    return { game, team: joined };
   }
 
   let game: Game | undefined;
-  let via: JoinedVia;
 
   if (input.qrCode) {
     const match = await findGameByRouteCode(input.qrCode);
@@ -189,31 +138,23 @@ export async function joinGame(userId: string, input: JoinGameInput): Promise<{ 
     }
 
     game = match.game;
-    via = "route_qr";
+
+    if (isPlayerVisible(game.status) && !game.routeSignupEnabled) {
+      throw new DomainError(
+        "ROUTE_SIGNUP_DISABLED",
+        "You cannot join this game from a poster. Enter the game code instead.",
+      );
+    }
   } else {
     game = await findGameByCode(input.gameCode!);
-    via = "game_code";
   }
 
   if (!game || !isPlayerVisible(game.status)) {
     throw new DomainError("NOT_FOUND", "No game has that code.");
   }
 
-  if (await getGamePlayer(game.id, userId)) {
-    return { gameId: game.id };
-  }
-
   assertJoinable(game);
   assertSelfSignup(game);
 
-  if (via === "route_qr" && !game.routeSignupEnabled) {
-    throw new DomainError(
-      "ROUTE_SIGNUP_DISABLED",
-      "You cannot join this game from a poster. Enter the game code instead.",
-    );
-  }
-
-  await ensureGamePlayer(game.id, userId, via);
-
-  return { gameId: game.id };
+  return { game, team: null };
 }
