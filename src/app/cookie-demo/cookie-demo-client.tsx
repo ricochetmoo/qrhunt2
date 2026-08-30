@@ -17,6 +17,43 @@ type SessionInfo =
 
 type Marker = { id: string; firstSeen: string };
 
+type ProbeStep = "pass" | "fail" | "skipped";
+
+type ProbeResult = {
+  verdict: "keeps" | "throwaway";
+  cookieWrite: ProbeStep;
+  localStorageWrite: ProbeStep;
+  sessionRoundTrip: ProbeStep;
+  usedExistingSession: boolean;
+  detail: string;
+};
+
+/** Synchronous check: can this context write and read back a JS cookie at all? */
+function probeCookieWrite(): ProbeStep {
+  try {
+    const name = "qr-hunt-probe";
+    document.cookie = `${name}=1; path=/; max-age=60`;
+    const ok = document.cookie.includes(`${name}=1`);
+    document.cookie = `${name}=; path=/; max-age=0`;
+
+    return ok ? "pass" : "fail";
+  } catch {
+    return "fail";
+  }
+}
+
+function probeLocalStorageWrite(): ProbeStep {
+  try {
+    window.localStorage.setItem("qr-hunt-probe", "1");
+    const ok = window.localStorage.getItem("qr-hunt-probe") === "1";
+    window.localStorage.removeItem("qr-hunt-probe");
+
+    return ok ? "pass" : "fail";
+  } catch {
+    return "fail";
+  }
+}
+
 function shortId(value: string) {
   return value.length > 12 ? `${value.slice(0, 8)}…${value.slice(-4)}` : value;
 }
@@ -68,6 +105,7 @@ export function CookieDemo() {
   } | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [probe, setProbe] = useState<ProbeResult | "running" | null>(null);
   const [log, setLog] = useState<string[]>([]);
   const device = env?.device ?? null;
   const tab = env?.tab ?? null;
@@ -133,6 +171,71 @@ export function CookieDemo() {
     );
   }, [checkSession]);
 
+  /**
+   * The onboarding decision the real /s/[code] funnel will make: is it safe to
+   * enrol a player in this context, or is it a throwaway web view (e.g. the
+   * iOS Control Centre Code Scanner) that will forget them?
+   */
+  async function runProbe() {
+    setProbe("running");
+    setBusy(true);
+
+    try {
+      const cookieWrite = probeCookieWrite();
+      const localStorageWrite = probeLocalStorageWrite();
+      let sessionRoundTrip: ProbeStep = "skipped";
+      let usedExistingSession = false;
+      let detail = "";
+
+      // Prefer evidence from an existing session: if one echoes back, the
+      // HttpOnly cookie is being stored and sent.
+      const existing = await fetch("/api/me", { cache: "no-store" });
+
+      if (existing.ok) {
+        sessionRoundTrip = "pass";
+        usedExistingSession = true;
+      } else {
+        const minted = await signIn.anonymous();
+
+        if (minted.error) {
+          sessionRoundTrip = "fail";
+          detail = `Anonymous sign-in failed: ${minted.error.message ?? "unknown error"}.`;
+        } else {
+          const echo = await fetch("/api/me", { cache: "no-store" });
+          sessionRoundTrip = echo.ok ? "pass" : "fail";
+
+          if (!echo.ok) {
+            detail = "Sign-in succeeded but the session cookie did not come back on the next request.";
+          }
+        }
+
+        await checkSession();
+      }
+
+      const keeps = sessionRoundTrip === "pass" && cookieWrite === "pass";
+      setProbe({
+        verdict: keeps ? "keeps" : "throwaway",
+        cookieWrite,
+        localStorageWrite,
+        sessionRoundTrip,
+        usedExistingSession,
+        detail,
+      });
+      addLog(`Probe verdict: this context ${keeps ? "keeps you" : "is throwaway"}.`);
+    } catch (error) {
+      setProbe({
+        verdict: "throwaway",
+        cookieWrite: "fail",
+        localStorageWrite: "fail",
+        sessionRoundTrip: "fail",
+        usedExistingSession: false,
+        detail: error instanceof Error ? error.message : "Probe crashed.",
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function mintSession() {
     setBusy(true);
 
@@ -175,6 +278,54 @@ export function CookieDemo() {
         title="Cookie context demo"
         description="Open this page from different scan paths and compare the panels. Matching values mean the contexts share state; differing values mean the context is isolated."
       />
+
+      <Card>
+        <CardHeader
+          title="Persistence probe — should a player onboard here?"
+          description="The check the real /s/<code> join page will run. It writes a test cookie and proves the session cookie round-trips. Throwaway contexts (e.g. the iOS Control Centre Code Scanner) fail it."
+        />
+        <CardBody className="space-y-3">
+          {probe === null ? (
+            <p className="text-sm text-slate-500">Not run yet. The probe mints an anonymous identity if none exists.</p>
+          ) : probe === "running" ? (
+            <p className="text-sm text-slate-500">Probing…</p>
+          ) : (
+            <>
+              <p
+                className={`rounded-md border px-3 py-2 text-sm font-medium ${
+                  probe.verdict === "keeps"
+                    ? "border-green-200 bg-green-50 text-green-800"
+                    : "border-amber-200 bg-amber-50 text-amber-900"
+                }`}
+              >
+                {probe.verdict === "keeps"
+                  ? "✅ This context keeps you — safe to onboard players here."
+                  : "⚠️ This context looks throwaway — don't onboard here. The join page would show: “Open Safari and go to the game address printed on the poster.”"}
+              </p>
+              <dl>
+                <Row label="JS cookie write/read" value={probe.cookieWrite} mono={false} />
+                <Row label="localStorage write/read" value={probe.localStorageWrite} mono={false} />
+                <Row
+                  label="Session cookie round-trip"
+                  value={
+                    probe.sessionRoundTrip + (probe.usedExistingSession ? " (existing session)" : " (freshly minted)")
+                  }
+                  mono={false}
+                />
+                {probe.detail ? <Row label="Detail" value={probe.detail} mono={false} /> : null}
+              </dl>
+              <p className="text-xs text-slate-500">
+                A pass here can’t prove survival after this view closes: close this scanner, scan the
+                QR again, and compare the user ID in the panel below — a changed ID means the context
+                discarded the session on close.
+              </p>
+            </>
+          )}
+          <Button size="sm" onClick={runProbe} disabled={busy || probe === "running"}>
+            {probe && probe !== "running" ? "Run probe again" : "Run persistence probe"}
+          </Button>
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader
