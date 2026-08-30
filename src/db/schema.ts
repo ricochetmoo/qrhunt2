@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -152,13 +153,17 @@ export const qr_codes = pgTable(
     latitude: text("latitude"),
     longitude: text("longitude"),
     code: text("code").notNull().unique(),
+    sortOrder: integer("sort_order").notNull().default(0),
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (table) => [index("qr_codes_game_id_idx").on(table.gameId)],
+  (table) => [
+    index("qr_codes_game_id_idx").on(table.gameId),
+    index("qr_codes_game_id_sort_order_idx").on(table.gameId, table.sortOrder),
+  ],
 );
 
 export const qr_code_scans = pgTable(
