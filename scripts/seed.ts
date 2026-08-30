@@ -29,6 +29,15 @@ function routeCode(): string {
   return out;
 }
 
+const GAME_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function gameCode(): string {
+  let out = "";
+  for (let i = 0; i < 6; i += 1) {
+    out += GAME_CODE_ALPHABET[Math.floor(Math.random() * GAME_CODE_ALPHABET.length)];
+  }
+  return out;
+}
+
 const ROUTE: Array<{ name: string; hint: string; lat: string; lng: string }> = [
   { name: "The Old Oak", hint: "Start where the widest branches meet the path.", lat: "51.5072", lng: "-0.1276" },
   { name: "Bandstand", hint: "Music once played where the roof has eight sides.", lat: "51.5081", lng: "-0.1290" },
@@ -70,6 +79,7 @@ async function seed() {
     id: gameId,
     name: `${SEED_GAME_PREFIX} Autumn Trail`,
     status: "started",
+    gameCode: gameCode(),
   });
 
   await db.insert(schema.game_admins).values({
