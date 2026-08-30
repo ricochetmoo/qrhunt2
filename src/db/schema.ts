@@ -1,6 +1,7 @@
 import {
   boolean,
   index,
+  integer,
   pgTable,
   text,
   timestamp,
@@ -85,6 +86,21 @@ export const games = pgTable(
     name: text("name").notNull(),
     status: text("status").notNull().default("draft"),
     pauseReason: text("pause_reason"),
+    // Code players type (or embed in a QR) to join the game.
+    gameCode: text("game_code").notNull().unique(),
+    // Player sign-up rules.
+    allowSelfSignup: boolean("allow_self_signup").notNull().default(true),
+    allowTeamCreation: boolean("allow_team_creation").notNull().default(true),
+    allowTeamNames: boolean("allow_team_names").notNull().default(true),
+    allowTeamPhotos: boolean("allow_team_photos").notNull().default(false),
+    routeSignupEnabled: boolean("route_signup_enabled").notNull().default(false),
+    // Wildcard object that can be scanned outside the ordered route.
+    wildcardEnabled: boolean("wildcard_enabled").notNull().default(false),
+    wildcardName: text("wildcard_name"),
+    // Start behaviour and poster details.
+    staggeredStart: boolean("staggered_start").notNull().default(false),
+    qrRemoveBy: timestamp("qr_remove_by"),
+    issueContactPhone: text("issue_contact_phone"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -152,13 +168,17 @@ export const qr_codes = pgTable(
     latitude: text("latitude"),
     longitude: text("longitude"),
     code: text("code").notNull().unique(),
+    sortOrder: integer("sort_order").notNull().default(0),
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
-  (table) => [index("qr_codes_game_id_idx").on(table.gameId)],
+  (table) => [
+    index("qr_codes_game_id_idx").on(table.gameId),
+    index("qr_codes_game_id_sort_order_idx").on(table.gameId, table.sortOrder),
+  ],
 );
 
 export const qr_code_scans = pgTable(

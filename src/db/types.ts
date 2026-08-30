@@ -1,11 +1,23 @@
 // Type-only entrypoint for components and other browser-safe code.
 export type {
   Account,
+  Game,
+  GameAdmin,
   NewAccount,
+  NewGame,
+  NewGameAdmin,
+  NewQrCode,
+  NewQrCodeScan,
   NewSession,
+  NewTeam,
+  NewTeamMembership,
   NewUser,
   NewVerification,
+  QrCode,
+  QrCodeScan,
   Session,
+  Team,
+  TeamMembership,
   User,
   Verification,
 } from "./schema";

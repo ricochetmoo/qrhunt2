@@ -4,12 +4,15 @@ import { neon } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
 
 import { getDatabaseUrl } from "@/lib/env";
-import { authSchema } from "./schema";
+import { authSchema, gameSchema } from "./schema";
 
 function createDatabase() {
   const sql = neon(getDatabaseUrl());
 
-  return drizzle({ client: sql, schema: authSchema });
+  return drizzle({
+    client: sql,
+    schema: { ...authSchema, ...gameSchema },
+  });
 }
 
 type Database = ReturnType<typeof createDatabase>;
