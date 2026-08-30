@@ -6,15 +6,21 @@ export type Scanned = {
 } | {
     scanned: true,
     code: QrCode,
-    scan: QrCodeScan
+    scan: QrCodeScan,
+    userName: string | null,
 }
 
-export type Progress = Array<{
+export type TeamProgress = {
     team: Team,
-    scans: Array<Scanned>
-}>;
+    memberCount: number,
+    scans: Array<Scanned>,
+};
+
+export type Progress = Array<TeamProgress>;
 
 export type Dashboard = {
     game: Game,
+    route: Array<QrCode>,
+    serverTime: string,
     progress: Progress,
 }

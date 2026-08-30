@@ -1,7 +1,6 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
-import { gameDashboard } from "./api/gameDashboard";
 
 import { adminGamesRoute } from "./routes/admin-games";
 import { adminUsersRoute } from "./routes/admin-users";
@@ -36,7 +35,6 @@ export const api = new Hono()
     return c.json({ message });
   })
   .route("/admin/games", adminGamesRoute)
-  .route("/admin/users", adminUsersRoute)
-  .get("/admin/games/:gameId/dashboard", gameDashboard);
+  .route("/admin/users", adminUsersRoute);
 
 export type AppType = typeof api;

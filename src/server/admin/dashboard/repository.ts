@@ -1,9 +1,9 @@
 import "server-only";
 
-import { eq, inArray } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
-import { games, qr_codes, qr_code_scans, teams } from "@/db/schema";
+import { games, qr_codes, qr_code_scans, team_memberships, teams, user } from "@/db/schema";
 import { type DashboardRepository } from "./getForGame";
 
 export const drizzleDashboardRepository: DashboardRepository = {
@@ -14,7 +14,11 @@ export const drizzleDashboardRepository: DashboardRepository = {
     return db.query.teams.findMany({ where: eq(teams.gameId, gameId) });
   },
   getQrCodes(gameId) {
-    return db.query.qr_codes.findMany({ where: eq(qr_codes.gameId, gameId) });
+    return db
+      .select()
+      .from(qr_codes)
+      .where(eq(qr_codes.gameId, gameId))
+      .orderBy(asc(qr_codes.sortOrder), asc(qr_codes.createdAt));
   },
   getScans(gameId) {
     return db.query.qr_code_scans.findMany({
@@ -23,5 +27,17 @@ export const drizzleDashboardRepository: DashboardRepository = {
         db.select({ id: teams.id }).from(teams).where(eq(teams.gameId, gameId)),
       ),
     });
+  },
+  getMembers(gameId) {
+    return db
+      .select({
+        teamId: team_memberships.teamId,
+        userId: team_memberships.userId,
+        userName: user.name,
+      })
+      .from(team_memberships)
+      .innerJoin(teams, eq(teams.id, team_memberships.teamId))
+      .innerJoin(user, eq(user.id, team_memberships.userId))
+      .where(eq(teams.gameId, gameId));
   },
 };

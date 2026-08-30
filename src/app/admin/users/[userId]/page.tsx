@@ -87,7 +87,7 @@ export default async function UserPage({ params }: PageProps<"/admin/users/[user
             <ul className="space-y-1 text-sm">
               {adminOf.map((game) => (
                 <li key={game.id} className="flex items-center gap-2">
-                  <Link href={`/admin/games/${game.id}`} className="font-medium hover:underline">
+                  <Link href={`/admin/games/${game.id}/dashboard`} className="font-medium hover:underline">
                     {game.name}
                   </Link>
                   <StatusBadge status={game.status} />
@@ -113,7 +113,7 @@ export default async function UserPage({ params }: PageProps<"/admin/users/[user
               <CardBody key={e.team.id} className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
-                    href={`/admin/games/${e.game.id}`}
+                    href={`/admin/games/${e.game.id}/dashboard`}
                     className="text-base font-semibold text-slate-900 hover:underline"
                   >
                     {e.game.name}
