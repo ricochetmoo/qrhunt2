@@ -36,6 +36,13 @@
       "when": 1788108462005,
       "tag": "0004_game_config",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1788116960307,
+      "tag": "0005_player_play",
+      "breakpoints": true
     }
   ]
 }

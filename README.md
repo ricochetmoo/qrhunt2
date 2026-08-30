@@ -19,6 +19,12 @@ Then start the app:
 pnpm dev
 ```
 
+For the local seeded player screen, run `pnpm db:seed`, put its printed game
+code in `NEXT_PUBLIC_PLAYER_GAME_CODE`, keep `MOCK_PLAYER_EMAIL` set to a
+seeded player such as `foxes-dex@seed.local`, and restart `pnpm dev`. The mock
+identity bypass is development-only; production still requires a Better Auth
+session.
+
 The Hono API is mounted at `/api`, with a smoke-test endpoint at `/api/health` and a validated example endpoint at `/api/echo`. Better Auth is mounted at `/api/auth/*`.
 
 ## Project structure

@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import {
   boolean,
   index,
@@ -101,6 +102,9 @@ export const games = pgTable(
     staggeredStart: boolean("staggered_start").notNull().default(false),
     qrRemoveBy: timestamp("qr_remove_by"),
     issueContactPhone: text("issue_contact_phone"),
+    // Set the first time the game enters `started` / `finished`.
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -134,6 +138,13 @@ export const teams = pgTable(
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
+    // Code other devices enter to join this team.
+    teamCode: text("team_code").notNull().unique(),
+    // https URL or a small `data:image/...;base64,` payload.
+    photoUrl: text("photo_url"),
+    // Staggered start: when the team was released. Finished: route complete.
+    startedAt: timestamp("started_at"),
+    finishedAt: timestamp("finished_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -169,6 +180,8 @@ export const qr_codes = pgTable(
     longitude: text("longitude"),
     code: text("code").notNull().unique(),
     sortOrder: integer("sort_order").notNull().default(0),
+    // The optional wildcard object sits outside the ordered route.
+    isWildcard: boolean("is_wildcard").notNull().default(false),
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
@@ -194,6 +207,14 @@ export const qr_code_scans = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    // Authoritative outcome (see `src/lib/scan-results.ts`).
+    result: text("result").notNull().default("accepted"),
+    // Client-generated idempotency key for offline sync; unique per team.
+    clientScanId: text("client_scan_id"),
+    // When the device scanned it (untrusted); `createdAt` is server receipt.
+    clientScannedAt: timestamp("client_scanned_at"),
+    latitude: text("latitude"),
+    longitude: text("longitude"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -201,6 +222,12 @@ export const qr_code_scans = pgTable(
     index("qr_code_scans_qr_code_id_idx").on(table.qrCodeId),
     index("qr_code_scans_team_id_idx").on(table.teamId),
     index("qr_code_scans_user_id_idx").on(table.userId),
+    uniqueIndex("qr_code_scans_team_client_scan_idx").on(table.teamId, table.clientScanId),
+    // A team can be credited for each code at most once, even under
+    // concurrent syncs from several devices.
+    uniqueIndex("qr_code_scans_team_credit_once_idx")
+      .on(table.teamId, table.qrCodeId)
+      .where(sql`result in ('accepted', 'wildcard')`),
   ],
 );
 

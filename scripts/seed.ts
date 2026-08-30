@@ -38,6 +38,10 @@ function gameCode(): string {
   return out;
 }
 
+function teamCode(): string {
+  return gameCode();
+}
+
 const ROUTE: Array<{ name: string; hint: string; lat: string; lng: string }> = [
   { name: "The Old Oak", hint: "Start where the widest branches meet the path.", lat: "51.5072", lng: "-0.1276" },
   { name: "Bandstand", hint: "Music once played where the roof has eight sides.", lat: "51.5081", lng: "-0.1290" },
@@ -75,11 +79,12 @@ async function seed() {
   });
 
   const gameId = randomUUID();
+  const seededGameCode = gameCode();
   await db.insert(schema.games).values({
     id: gameId,
     name: `${SEED_GAME_PREFIX} Autumn Trail`,
     status: "started",
-    gameCode: gameCode(),
+    gameCode: seededGameCode,
   });
 
   await db.insert(schema.game_admins).values({
@@ -92,7 +97,6 @@ async function seed() {
   for (const [index, stop] of ROUTE.entries()) {
     const id = randomUUID();
     qrCodeIds.push(id);
-    // No explicit order column: route order is the createdAt order.
     const at = minutes(index);
     await db.insert(schema.qr_codes).values({
       id,
@@ -101,6 +105,7 @@ async function seed() {
       latitude: stop.lat,
       longitude: stop.lng,
       code: routeCode(),
+      sortOrder: index,
       gameId,
       createdAt: at,
       updatedAt: at,
@@ -109,7 +114,7 @@ async function seed() {
 
   for (const team of TEAMS) {
     const teamId = randomUUID();
-    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId });
+    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId, teamCode: teamCode() });
 
     const memberIds: string[] = [];
     for (const player of team.players) {
@@ -138,7 +143,7 @@ async function seed() {
   }
 
   console.log(
-    `Seeded game ${gameId}: ${ROUTE.length} stops, ${TEAMS.length} teams, ` +
+    `Seeded game ${gameId} (${seededGameCode}): ${ROUTE.length} stops, ${TEAMS.length} teams, ` +
       `${TEAMS.reduce((n, t) => n + t.players.length, 0)} players, ` +
       `${TEAMS.reduce((n, t) => n + t.progress, 0)} scans.`,
   );

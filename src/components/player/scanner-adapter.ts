@@ -28,7 +28,7 @@ export const SCANNER_COMPATIBILITY = {
   decoder: "QuaggaJS 0.12.1",
   qrPayloadSupported: false,
   note:
-    "QuaggaJS is a 1D barcode decoder. The adapter keeps QR payload handling isolated so a QR-capable decoder can replace it.",
+    "QuaggaJS is a 1D-only barcode decoder and does not decode the QR posters yet. The adapter keeps QR payload handling isolated so a QR-capable decoder can replace it.",
 } as const;
 
 function resolveQuagga(module: unknown): QuaggaApi {

@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { adminGamesRoute } from "./routes/admin-games";
 import { adminUsersRoute } from "./routes/admin-users";
+import { playerRoute } from "./routes/player";
 
 const echoSchema = z.object({
   message: z.string().trim().min(1).max(200),
@@ -35,6 +36,7 @@ export const api = new Hono()
     return c.json({ message });
   })
   .route("/admin/games", adminGamesRoute)
-  .route("/admin/users", adminUsersRoute);
+  .route("/admin/users", adminUsersRoute)
+  .route("/player", playerRoute);
 
 export type AppType = typeof api;
