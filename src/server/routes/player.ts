@@ -1,21 +1,31 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 
+import { z } from "zod";
+
+import { isJoinable, isPlayerVisible } from "@/lib/game-status";
 import {
   joinGameSchema,
   playerGameIdParamSchema,
   playerTeamIdParamSchema,
   syncScansSchema,
   teamActionSchema,
+  updatePlayerMeSchema,
   updateTeamSchema,
 } from "@/lib/player-schemas";
 import { DomainError, domainErrorToResponse } from "@/server/domain/errors";
 import { getGamePreview, getPlayerState, requireTeamMember } from "@/server/domain/player-state";
-import { assertJoinable, joinGame, requireVisibleGame } from "@/server/domain/players";
+import {
+  assertJoinable,
+  findGameByCode,
+  findGameByRouteCode,
+  joinGame,
+  requireVisibleGame,
+} from "@/server/domain/players";
 import { listQrCodes } from "@/server/domain/qr-codes";
 import { splitRoute } from "@/server/domain/route-bundle";
 import { syncScans } from "@/server/domain/scans";
-import { createTeam, findTeamByCode, joinTeam, updateTeam } from "@/server/domain/teams";
+import { createTeam, findTeamByCode, getTeamForUser, joinTeam, updateTeam } from "@/server/domain/teams";
 import { requirePlayer, type PlayerEnv } from "@/server/middleware/require-player";
 
 /**
@@ -27,8 +37,64 @@ import { requirePlayer, type PlayerEnv } from "@/server/middleware/require-playe
  * a team code enrols directly. Every other endpoint requires membership.
  * Responses that change state also return the full aggregate `state`.
  */
+/** Better Auth's anonymous plugin names fresh users "Anonymous". */
+const ANONYMOUS_DEFAULT_NAME = "Anonymous";
+
+const resolveParamSchema = z.object({ code: z.string().trim().min(1).max(2048) });
+
 export const playerRoute = new Hono<PlayerEnv>()
+  // Registered BEFORE requirePlayer on purpose: the /s/<code> funnel calls
+  // this on load, possibly with no session yet. Read-only; reveals only what
+  // the poster itself does (the game's name and join rules) plus the caller's
+  // own enrolment.
+  .get("/resolve/:code", zValidator("param", resolveParamSchema), async (c) => {
+    const payload = c.req.valid("param").code;
+
+    // A stop QR payload (8-char route code or poster URL) or, failing that,
+    // the 6-char game join code — so /s/<gameCode> links work too.
+    const match = await findGameByRouteCode(payload);
+    const game = match?.game ?? (await findGameByCode(payload.trim().toUpperCase()));
+    const kind = match ? ("stop" as const) : ("game" as const);
+
+    if (!game || !isPlayerVisible(game.status)) {
+      return c.json({ found: false as const });
+    }
+
+    const { auth } = await import("@/lib/auth");
+    const session = await auth.api.getSession({ headers: c.req.raw.headers });
+    const team = session ? await getTeamForUser(game.id, session.user.id) : undefined;
+    const name = session?.user.name?.trim() ?? "";
+
+    return c.json({
+      found: true as const,
+      kind,
+      game: {
+        id: game.id,
+        name: game.name,
+        status: game.status,
+        joinable: isJoinable(game.status),
+        routeSignupEnabled: game.routeSignupEnabled,
+        allowSelfSignup: game.allowSelfSignup,
+      },
+      stop: match ? { name: match.qrCode.name } : null,
+      viewer: {
+        signedIn: Boolean(session),
+        named: Boolean(name) && name !== ANONYMOUS_DEFAULT_NAME,
+        name: name || null,
+        enrolled: Boolean(team),
+        teamName: team?.name ?? null,
+      },
+    });
+  })
   .use("*", requirePlayer)
+  .patch("/me", zValidator("json", updatePlayerMeSchema), async (c) => {
+    const { name } = c.req.valid("json");
+    const { auth } = await import("@/lib/auth");
+
+    await auth.api.updateUser({ headers: c.req.raw.headers, body: { name } });
+
+    return c.json({ ok: true as const, name });
+  })
   .post("/join", zValidator("json", joinGameSchema), async (c) => {
     const user = c.get("user");
 
@@ -63,8 +129,14 @@ export const playerRoute = new Hono<PlayerEnv>()
         const game = await requireVisibleGame(gameId);
 
         if (input.action === "create") {
-          if (game.gameCode !== input.gameCode) {
-            throw new DomainError("FORBIDDEN", "That game code does not match this game.");
+          const viaGameCode = input.gameCode !== undefined && game.gameCode === input.gameCode;
+          const viaQr =
+            !viaGameCode &&
+            input.qrCode !== undefined &&
+            (await findGameByRouteCode(input.qrCode))?.game.id === game.id;
+
+          if (!viaGameCode && !viaQr) {
+            throw new DomainError("FORBIDDEN", "That code does not match this game.");
           }
 
           assertJoinable(game);

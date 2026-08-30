@@ -32,9 +32,20 @@ export const joinGameSchema = z
 const teamName = z.string().trim().min(1, "Team name is required.").max(60);
 
 export const teamActionSchema = z.discriminatedUnion("action", [
-  // Creating a team is what enrols a player, so it must re-present the game
-  // code as proof they were given it (there is no pre-team membership record).
-  z.object({ action: z.literal("create"), gameCode: joinCode, name: teamName.optional() }),
+  // Creating a team is what enrols a player, so it must re-present a code as
+  // proof of capability (there is no pre-team membership record): either the
+  // typed game code or a poster QR payload from this game — poster joiners
+  // never learn the game code.
+  z
+    .object({
+      action: z.literal("create"),
+      gameCode: joinCode.optional(),
+      qrCode: qrPayload.optional(),
+      name: teamName.optional(),
+    })
+    .refine((value) => [value.gameCode, value.qrCode].filter(Boolean).length === 1, {
+      message: "Provide the game code or a poster QR payload.",
+    }),
   z.object({ action: z.literal("join"), teamCode: joinCode }),
 ]);
 
@@ -76,6 +87,11 @@ export const syncScansSchema = z.object({
   /** The `route.version` the client holds; the server reapplies its own rules regardless. */
   routeVersion: z.string().max(64).optional(),
   scans: z.array(scanSubmissionSchema).min(1).max(100),
+});
+
+/** First name only — shown to teammates and admins; no surnames for child privacy. */
+export const updatePlayerMeSchema = z.object({
+  name: z.string().trim().min(1, "Tell us your name.").max(50),
 });
 
 export const playerGameIdParamSchema = z.object({ gameId: z.string().min(1) });

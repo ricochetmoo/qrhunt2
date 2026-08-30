@@ -109,7 +109,7 @@ async function seed() {
 
   for (const team of TEAMS) {
     const teamId = randomUUID();
-    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId, teamCode: joinCode() });
+    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId, teamCode: gameCode() });
 
     const memberIds: string[] = [];
     for (const player of team.players) {
