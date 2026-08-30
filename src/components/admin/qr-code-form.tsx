@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import type { QrCodeInput } from "@/lib/admin-schemas";
+import { useGeolocation } from "@/lib/use-geolocation";
 
 export type QrCodeFormValues = {
   name: string;
@@ -43,9 +44,24 @@ export function QrCodeForm({
   onCancel,
 }: QrCodeFormProps) {
   const [values, setValues] = useState<QrCodeFormValues>(initial);
+  const geo = useGeolocation();
+  const [accuracy, setAccuracy] = useState<number | null>(null);
 
   const update = (key: keyof QrCodeFormValues) => (value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
+
+  async function useCurrentLocation() {
+    const coords = await geo.request();
+
+    if (coords) {
+      setValues((current) => ({
+        ...current,
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+      }));
+      setAccuracy(coords.accuracy);
+    }
+  }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -94,6 +110,23 @@ export function QrCodeForm({
             onChange={(event) => update("longitude")(event.target.value)}
           />
         </Field>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={useCurrentLocation}
+            disabled={pending || geo.pending}
+          >
+            {geo.pending ? "Locating…" : "Use my current location"}
+          </Button>
+          {geo.error ? (
+            <span className="text-red-600">{geo.error}</span>
+          ) : accuracy !== null ? (
+            <span>Accurate to about {Math.round(accuracy)} m</span>
+          ) : (
+            <span>Stand at the QR code’s spot and tap to fill in the coordinates.</span>
+          )}
       </div>
       <div className="flex gap-2 pt-1">
         <Button type="submit" size="sm" disabled={pending}>
