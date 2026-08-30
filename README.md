@@ -40,4 +40,4 @@ pnpm db:migrate
 
 for the initial schema migration before starting the app.
 
-fucking deploy already
+fucking deploy already!!!!

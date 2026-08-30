@@ -47,6 +47,11 @@ export function generateGameCode(length = 6): string {
   return out;
 }
 
+/** Team join codes share the game-code alphabet; both are typed by players. */
+export function generateTeamCode(length = 6): string {
+  return generateGameCode(length);
+}
+
 /** Primary keys are `text` with no DB default, so generate them here. */
 export function generateId(): string {
   return crypto.randomUUID();

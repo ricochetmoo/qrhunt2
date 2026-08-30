@@ -31,8 +31,25 @@ async function requireGame(gameId: string) {
   return game;
 }
 
+/** The brief describes a single wildcard object per game. */
+async function assertNoOtherWildcard(gameId: string, exceptId?: string) {
+  const [existing] = await db
+    .select({ id: qr_codes.id })
+    .from(qr_codes)
+    .where(and(eq(qr_codes.gameId, gameId), eq(qr_codes.isWildcard, true)))
+    .limit(1);
+
+  if (existing && existing.id !== exceptId) {
+    throw new DomainError("VALIDATION", "This game already has a wildcard code.");
+  }
+}
+
 export async function createQrCode(gameId: string, input: QrCodeInput): Promise<QrCode> {
   await requireGame(gameId);
+
+  if (input.isWildcard) {
+    await assertNoOtherWildcard(gameId);
+  }
 
   const [{ maxOrder }] = await db
     .select({ maxOrder: max(qr_codes.sortOrder) })
@@ -54,6 +71,7 @@ export async function createQrCode(gameId: string, input: QrCodeInput): Promise<
           longitude: input.longitude ?? null,
           code: generateRouteCode(),
           sortOrder,
+          isWildcard: input.isWildcard ?? false,
         })
         .returning();
 
@@ -73,6 +91,10 @@ export async function updateQrCode(
   qrCodeId: string,
   patch: UpdateQrCodeInput,
 ): Promise<QrCode> {
+  if (patch.isWildcard) {
+    await assertNoOtherWildcard(gameId, qrCodeId);
+  }
+
   const [updated] = await db
     .update(qr_codes)
     .set({
@@ -80,6 +102,7 @@ export async function updateQrCode(
       ...(patch.hint !== undefined && { hint: patch.hint }),
       ...(patch.latitude !== undefined && { latitude: patch.latitude }),
       ...(patch.longitude !== undefined && { longitude: patch.longitude }),
+      ...(patch.isWildcard !== undefined && { isWildcard: patch.isWildcard }),
       updatedAt: new Date(),
     })
     .where(and(eq(qr_codes.id, qrCodeId), eq(qr_codes.gameId, gameId)))
