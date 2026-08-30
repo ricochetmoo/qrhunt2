@@ -2,6 +2,9 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 
+import { adminGamesRoute } from "./routes/admin-games";
+import { adminUsersRoute } from "./routes/admin-users";
+
 const echoSchema = z.object({
   message: z.string().trim().min(1).max(200),
 });
@@ -30,6 +33,8 @@ export const api = new Hono()
     const { message } = c.req.valid("json");
 
     return c.json({ message });
-  });
+  })
+  .route("/admin/games", adminGamesRoute)
+  .route("/admin/users", adminUsersRoute);
 
 export type AppType = typeof api;
