@@ -29,6 +29,16 @@ function routeCode(): string {
   return out;
 }
 
+// Same confusable-free alphabet the app uses for game/team join codes.
+const JOIN_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function joinCode(): string {
+  let out = "";
+  for (let i = 0; i < 6; i += 1) {
+    out += JOIN_ALPHABET[Math.floor(Math.random() * JOIN_ALPHABET.length)];
+  }
+  return out;
+}
+
 const ROUTE: Array<{ name: string; hint: string; lat: string; lng: string }> = [
   { name: "The Old Oak", hint: "Start where the widest branches meet the path.", lat: "51.5072", lng: "-0.1276" },
   { name: "Bandstand", hint: "Music once played where the roof has eight sides.", lat: "51.5081", lng: "-0.1290" },
@@ -70,6 +80,8 @@ async function seed() {
     id: gameId,
     name: `${SEED_GAME_PREFIX} Autumn Trail`,
     status: "started",
+    gameCode: joinCode(),
+    startedAt: minutes(0),
   });
 
   await db.insert(schema.game_admins).values({
@@ -82,7 +94,6 @@ async function seed() {
   for (const [index, stop] of ROUTE.entries()) {
     const id = randomUUID();
     qrCodeIds.push(id);
-    // No explicit order column: route order is the createdAt order.
     const at = minutes(index);
     await db.insert(schema.qr_codes).values({
       id,
@@ -91,6 +102,7 @@ async function seed() {
       latitude: stop.lat,
       longitude: stop.lng,
       code: routeCode(),
+      sortOrder: index,
       gameId,
       createdAt: at,
       updatedAt: at,
@@ -99,7 +111,7 @@ async function seed() {
 
   for (const team of TEAMS) {
     const teamId = randomUUID();
-    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId });
+    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId, teamCode: joinCode() });
 
     const memberIds: string[] = [];
     for (const player of team.players) {
@@ -110,6 +122,12 @@ async function seed() {
         name: player,
         email: `${team.name.toLowerCase()}-${player.toLowerCase()}${SEED_EMAIL_DOMAIN}`,
         isAnonymous: true,
+      });
+      await db.insert(schema.game_players).values({
+        id: randomUUID(),
+        gameId,
+        userId: id,
+        joinedVia: "game_code",
       });
       await db.insert(schema.team_memberships).values({ id: randomUUID(), teamId, userId: id });
     }
