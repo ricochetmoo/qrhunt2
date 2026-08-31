@@ -58,7 +58,6 @@ export async function buildRouteBundle(
   wildcard: QrCode | null,
   options: {
     foundIds: ReadonlySet<string>;
-    targetIndex: number | null;
     /** Hints have been released to this team (game started; team released if staggered). */
     hintsReleased: boolean;
   },
@@ -66,8 +65,13 @@ export async function buildRouteBundle(
   const entries = await Promise.all(
     route.map(async (code, index): Promise<RouteBundleEntry> => {
       const found = options.foundIds.has(code.id);
-      const unlocked = options.hintsReleased && (found || index === options.targetIndex);
       const previous = index > 0 ? route[index - 1] : null;
+      // A stop is unlocked when found, when it is the first stop, or when the
+      // previous stop has been found — exactly what the offline crypto chain
+      // can decrypt, so online and offline reveal the same information. This
+      // holds for ordered and out-of-order games alike.
+      const unlocked =
+        options.hintsReleased && (found || !previous || options.foundIds.has(previous.id));
       const location =
         code.latitude && code.longitude
           ? { latitude: code.latitude, longitude: code.longitude }

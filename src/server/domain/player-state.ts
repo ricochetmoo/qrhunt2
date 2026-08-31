@@ -27,6 +27,7 @@ export type PlayerState = {
     finishedAt: Date | null;
     wildcard: { enabled: boolean; name: string | null };
     settings: {
+      allowOutOfOrder: boolean;
       allowTeamCreation: boolean;
       allowTeamNames: boolean;
       allowTeamPhotos: boolean;
@@ -52,6 +53,14 @@ export type PlayerState = {
     complete: boolean;
     wildcardFound: boolean;
     lastScanAt: Date | null;
+    /** The stop most recently found, with its clue — "you are here". */
+    lastFound: {
+      position: number;
+      name: string;
+      hint: string;
+      location: { latitude: string; longitude: string } | null;
+      scannedAt: Date;
+    } | null;
     /** Hints have been released to this team (game started; team released if staggered). */
     hintsReleased: boolean;
     /** Scans would be accepted right now. */
@@ -93,12 +102,33 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
 
   // Pre-team previews reveal nothing: the bundle stays fully locked.
   const hintsReleased = team ? hintsReleasedFor(game, team) : false;
-  const progress = team ? computeProgress(route, await listCreditedScans(team.id)) : null;
+  const credited = team ? await listCreditedScans(team.id) : [];
+  const progress = team ? computeProgress(route, credited) : null;
+
+  const lastAccepted = [...credited].reverse().find((scan) => scan.result === "accepted") ?? null;
+  const lastFoundIndex = lastAccepted
+    ? route.findIndex((code) => code.id === lastAccepted.qrCodeId)
+    : -1;
+  const lastFound =
+    lastAccepted && lastFoundIndex !== -1
+      ? {
+          position: lastFoundIndex,
+          name: route[lastFoundIndex].name,
+          hint: route[lastFoundIndex].hint,
+          location:
+            route[lastFoundIndex].latitude && route[lastFoundIndex].longitude
+              ? {
+                  latitude: route[lastFoundIndex].latitude!,
+                  longitude: route[lastFoundIndex].longitude!,
+                }
+              : null,
+          scannedAt: lastAccepted.createdAt,
+        }
+      : null;
 
   const [bundle, members, leaderboard] = await Promise.all([
     buildRouteBundle(game, route, wildcard, {
       foundIds: progress?.foundIds ?? new Set<string>(),
-      targetIndex: hintsReleased ? (progress?.targetIndex ?? null) : null,
       hintsReleased,
     }),
     team ? listTeamMembers(team.id) : Promise.resolve([]),
@@ -117,6 +147,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       finishedAt: game.finishedAt,
       wildcard: { enabled: game.wildcardEnabled, name: game.wildcardName },
       settings: {
+        allowOutOfOrder: game.allowOutOfOrder,
         allowTeamCreation: game.allowSelfSignup && game.allowTeamCreation,
         allowTeamNames: game.allowTeamNames,
         allowTeamPhotos: game.allowTeamPhotos,
@@ -144,6 +175,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           complete: progress.complete,
           wildcardFound: progress.wildcardFound,
           lastScanAt: progress.lastScanAt,
+          lastFound,
           hintsReleased,
           canScan: canScan(game.status) && hintsReleased,
           nextHint: hintsReleased ? (progress.target?.hint ?? null) : null,

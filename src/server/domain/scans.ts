@@ -293,7 +293,9 @@ export async function syncScans(args: {
       result = progress.wildcardFound ? "duplicate" : "wildcard";
     } else if (progress.foundIds.has(code.id)) {
       result = "duplicate";
-    } else if (progress.target?.id === code.id) {
+    } else if (game.allowOutOfOrder || progress.target?.id === code.id) {
+      // Ordered games only credit the next stop; out-of-order games credit
+      // any stop not yet found.
       result = "accepted";
     } else {
       result = "out_of_order";

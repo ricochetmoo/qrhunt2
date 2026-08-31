@@ -14,6 +14,7 @@ import {
   updateTeamSchema,
 } from "@/lib/player-schemas";
 import { DomainError, domainErrorToResponse } from "@/server/domain/errors";
+import { getGame } from "@/server/domain/games";
 import { getGamePreview, getPlayerState, requireTeamMember } from "@/server/domain/player-state";
 import {
   assertJoinable,
@@ -50,11 +51,27 @@ export const playerRoute = new Hono<PlayerEnv>()
   .get("/resolve/:code", zValidator("param", resolveParamSchema), async (c) => {
     const payload = c.req.valid("param").code;
 
-    // A stop QR payload (8-char route code or poster URL) or, failing that,
-    // the 6-char game join code — so /s/<gameCode> links work too.
+    // A stop QR payload (8-char route code or poster URL), the 6-char game
+    // join code, or a team rejoin code — so /s/<anything printed or shown to
+    // a player> works.
+    const upper = payload.trim().toUpperCase();
     const match = await findGameByRouteCode(payload);
-    const game = match?.game ?? (await findGameByCode(payload.trim().toUpperCase()));
-    const kind = match ? ("stop" as const) : ("game" as const);
+    let game = match?.game;
+    let kind: "stop" | "game" | "team" = "stop";
+
+    if (!game) {
+      game = await findGameByCode(upper);
+      kind = "game";
+    }
+
+    if (!game) {
+      const team = await findTeamByCode(upper);
+
+      if (team) {
+        game = await getGame(team.gameId);
+        kind = "team";
+      }
+    }
 
     if (!game || !isPlayerVisible(game.status)) {
       return c.json({ found: false as const });
@@ -73,6 +90,7 @@ export const playerRoute = new Hono<PlayerEnv>()
         name: game.name,
         status: game.status,
         mode: game.gameMode,
+        allowOutOfOrder: game.allowOutOfOrder,
         joinable: isJoinable(game.status),
         routeSignupEnabled: game.routeSignupEnabled,
         allowSelfSignup: game.allowSelfSignup,

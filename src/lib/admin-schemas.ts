@@ -18,6 +18,7 @@ export const createGameSchema = z.object({
 /** Per-game configuration (see AGENTS.md "Admin configuration frontend"). */
 export const gameConfigSchema = z.object({
   gameMode: gameModeSchema,
+  allowOutOfOrder: z.boolean(),
   allowSelfSignup: z.boolean(),
   allowTeamCreation: z.boolean(),
   allowTeamNames: z.boolean(),
