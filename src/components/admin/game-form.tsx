@@ -26,6 +26,7 @@ export type EditableGame = Pick<
   | "pauseReason"
   | "gameCode"
   | "gameMode"
+  | "allowOutOfOrder"
   | "allowSelfSignup"
   | "allowTeamCreation"
   | "allowTeamNames"
@@ -42,6 +43,7 @@ type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
 
 type ConfigState = {
   gameMode: GameMode;
+  allowOutOfOrder: boolean;
   allowSelfSignup: boolean;
   allowTeamCreation: boolean;
   allowTeamNames: boolean;
@@ -65,6 +67,7 @@ function toLocalInputValue(date: Date | null): string {
 function initialConfig(game: EditableGame | null): ConfigState {
   return {
     gameMode: game && isGameMode(game.gameMode) ? game.gameMode : "speed",
+    allowOutOfOrder: game?.allowOutOfOrder ?? false,
     allowSelfSignup: game?.allowSelfSignup ?? true,
     allowTeamCreation: game?.allowTeamCreation ?? true,
     allowTeamNames: game?.allowTeamNames ?? true,
@@ -164,6 +167,7 @@ export function GameForm(props: GameFormProps) {
           status,
           pauseReason: status === "paused" ? pauseReason : null,
           gameMode: config.gameMode,
+          allowOutOfOrder: config.allowOutOfOrder,
           allowSelfSignup: config.allowSelfSignup,
           allowTeamCreation: config.allowTeamCreation,
           allowTeamNames: config.allowTeamNames,
@@ -325,6 +329,13 @@ export function GameForm(props: GameFormProps) {
                 </label>
               ))}
             </div>
+            <Toggle
+              id="cfg-out-of-order"
+              label="Stops can be found in any order"
+              hint="When off, players must follow the route in sequence and early finds are rejected. Any order pairs well with Completeness mode."
+              checked={config.allowOutOfOrder}
+              onChange={set("allowOutOfOrder")}
+            />
           </Section>
 
           <Section title="Players and teams">

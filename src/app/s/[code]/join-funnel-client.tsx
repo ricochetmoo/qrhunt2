@@ -14,13 +14,14 @@ const ONBOARDED_KEY = "qr-hunt:onboarded";
 
 type Resolved = {
   found: boolean;
-  /** "stop" = a poster QR payload; "game" = the typed/linked 6-char game code. */
-  kind?: "stop" | "game";
+  /** "stop" = poster QR payload; "game" = 6-char game code; "team" = rejoin/team code. */
+  kind?: "stop" | "game" | "team";
   game?: {
     id: string;
     name: string;
     status: string;
     mode: string;
+    allowOutOfOrder?: boolean;
     joinable: boolean;
     routeSignupEnabled: boolean;
     allowSelfSignup: boolean;
@@ -181,10 +182,16 @@ export function JoinFunnel({ code }: { code: string }) {
 
     try {
       const playerName = resolved?.viewer?.name ?? name.trim() ?? null;
+      const joinBody =
+        resolved?.kind === "game"
+          ? { gameCode: code }
+          : resolved?.kind === "team"
+            ? { teamCode: code }
+            : { qrCode: code };
       const joinResponse = await fetch("/api/player/join", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(resolved?.kind === "game" ? { gameCode: code } : { qrCode: code }),
+        body: JSON.stringify(joinBody),
       });
 
       if (!joinResponse.ok) {
@@ -246,6 +253,16 @@ export function JoinFunnel({ code }: { code: string }) {
         playerName,
         teamCode: team?.teamCode ?? null,
       });
+      if (resolved?.game) {
+        try {
+          window.localStorage.setItem(
+            "qr-hunt:active-game",
+            JSON.stringify({ gameId: resolved.game.id, name: resolved.game.name }),
+          );
+        } catch {
+          // convenience only
+        }
+      }
       setStage("joined");
     } finally {
       setBusy(false);
@@ -289,6 +306,8 @@ export function JoinFunnel({ code }: { code: string }) {
                   <>
                     You found <strong>{resolved.stop.name}</strong>. Let&apos;s get you into the game.
                   </>
+                ) : resolved?.kind === "team" ? (
+                  <>Your rejoin code worked. Let&apos;s get you back into the game.</>
                 ) : (
                   <>Your game code worked. Let&apos;s get you into the game.</>
                 )}
@@ -296,6 +315,7 @@ export function JoinFunnel({ code }: { code: string }) {
               {isGameMode(game.mode) ? (
                 <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
                   {GAME_MODE_PLAYER_BLURBS[game.mode]}
+                  {game.allowOutOfOrder ? " Stops can be found in any order." : ""}
                 </p>
               ) : null}
             </div>
@@ -390,7 +410,14 @@ export function JoinFunnel({ code }: { code: string }) {
                 </span>
               </p>
             ) : null}
-            <p className="text-xs text-slate-500">(The game screen is being wired up next.)</p>
+            {joined?.teamCode || joined?.playerName ? (
+              <a
+                href={`/play/${game.id}`}
+                className="block w-full rounded-md bg-slate-900 px-3.5 py-2 text-center text-sm font-medium text-white hover:bg-slate-700"
+              >
+                Open your game →
+              </a>
+            ) : null}
           </CardBody>
         </Card>
       ) : null}

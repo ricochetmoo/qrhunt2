@@ -60,6 +60,32 @@ export type ScanOutcome = {
   position: number | null;
 };
 
+export type TeamScan = {
+  id: string;
+  qrCodeId: string;
+  userId: string;
+  result: string;
+  createdAt: Date;
+};
+
+/**
+ * Every persisted scan for a team, oldest first. Retryable and `invalid`
+ * outcomes are never stored, so they cannot appear here.
+ */
+export async function listTeamScans(teamId: string): Promise<TeamScan[]> {
+  return db
+    .select({
+      id: qr_code_scans.id,
+      qrCodeId: qr_code_scans.qrCodeId,
+      userId: qr_code_scans.userId,
+      result: qr_code_scans.result,
+      createdAt: qr_code_scans.createdAt,
+    })
+    .from(qr_code_scans)
+    .where(eq(qr_code_scans.teamId, teamId))
+    .orderBy(asc(qr_code_scans.createdAt));
+}
+
 export async function listCreditedScans(teamId: string): Promise<CreditedScan[]> {
   return db
     .select({
@@ -293,7 +319,9 @@ export async function syncScans(args: {
       result = progress.wildcardFound ? "duplicate" : "wildcard";
     } else if (progress.foundIds.has(code.id)) {
       result = "duplicate";
-    } else if (progress.target?.id === code.id) {
+    } else if (game.allowOutOfOrder || progress.target?.id === code.id) {
+      // Ordered games only credit the next stop; out-of-order games credit
+      // any stop not yet found.
       result = "accepted";
     } else {
       result = "out_of_order";

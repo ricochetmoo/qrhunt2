@@ -2,12 +2,13 @@ import "server-only";
 
 import type { Game, Team } from "@/db/types";
 import { canScan, hasStarted } from "@/lib/game-status";
+import { isCreditedScanResult } from "@/lib/scan-results";
 
 import { DomainError } from "./errors";
 import { requireVisibleGame } from "./players";
 import { listQrCodes } from "./qr-codes";
 import { buildRouteBundle, splitRoute, type RouteBundle } from "./route-bundle";
-import { computeProgress, getLeaderboard, listCreditedScans, type LeaderboardEntry } from "./scans";
+import { computeProgress, getLeaderboard, listTeamScans, type LeaderboardEntry } from "./scans";
 import { getTeamForUser, listTeamMembers } from "./teams";
 
 /**
@@ -27,6 +28,7 @@ export type PlayerState = {
     finishedAt: Date | null;
     wildcard: { enabled: boolean; name: string | null };
     settings: {
+      allowOutOfOrder: boolean;
       allowTeamCreation: boolean;
       allowTeamNames: boolean;
       allowTeamPhotos: boolean;
@@ -52,6 +54,14 @@ export type PlayerState = {
     complete: boolean;
     wildcardFound: boolean;
     lastScanAt: Date | null;
+    /** The stop most recently found, with its clue — "you are here". */
+    lastFound: {
+      position: number;
+      name: string;
+      hint: string;
+      location: { latitude: string; longitude: string } | null;
+      scannedAt: Date;
+    } | null;
     /** Hints have been released to this team (game started; team released if staggered). */
     hintsReleased: boolean;
     /** Scans would be accepted right now. */
@@ -60,8 +70,27 @@ export type PlayerState = {
     nextCodeName: string | null;
     nextPosition: number | null;
   } | null;
+  /**
+   * The team's persisted scans, newest first (capped at HISTORY_LIMIT).
+   * Retryable (`paused`/`not_started`) and `invalid` outcomes are never
+   * persisted, so they cannot appear here.
+   */
+  history: {
+    id: string;
+    /** Authoritative outcome (src/lib/scan-results.ts). */
+    result: string;
+    stopName: string | null;
+    /** 0-based position on the ordered route; null for the wildcard. */
+    position: number | null;
+    isWildcard: boolean;
+    scannedByUserId: string;
+    scannedAt: Date;
+  }[];
   leaderboard: LeaderboardEntry[];
 };
+
+/** History entries returned per state response; older scans are elided, not lost. */
+const HISTORY_LIMIT = 50;
 
 function hintsReleasedFor(game: Game, team: Team): boolean {
   if (!hasStarted(game.status)) return false;
@@ -93,12 +122,49 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
 
   // Pre-team previews reveal nothing: the bundle stays fully locked.
   const hintsReleased = team ? hintsReleasedFor(game, team) : false;
-  const progress = team ? computeProgress(route, await listCreditedScans(team.id)) : null;
+  const scans = team ? await listTeamScans(team.id) : [];
+  const credited = scans.filter((scan) => isCreditedScanResult(scan.result));
+  const progress = team ? computeProgress(route, credited) : null;
+
+  const lastAccepted = [...credited].reverse().find((scan) => scan.result === "accepted") ?? null;
+  const lastFoundIndex = lastAccepted
+    ? route.findIndex((code) => code.id === lastAccepted.qrCodeId)
+    : -1;
+  const lastFound =
+    lastAccepted && lastFoundIndex !== -1
+      ? {
+          position: lastFoundIndex,
+          name: route[lastFoundIndex].name,
+          hint: route[lastFoundIndex].hint,
+          location:
+            route[lastFoundIndex].latitude && route[lastFoundIndex].longitude
+              ? {
+                  latitude: route[lastFoundIndex].latitude!,
+                  longitude: route[lastFoundIndex].longitude!,
+                }
+              : null,
+          scannedAt: lastAccepted.createdAt,
+        }
+      : null;
+
+  const positionOf = new Map(route.map((code, index) => [code.id, index]));
+  const nameOf = new Map(codes.map((code) => [code.id, code.name]));
+  const history = scans
+    .slice(-HISTORY_LIMIT)
+    .reverse()
+    .map((scan) => ({
+      id: scan.id,
+      result: scan.result,
+      stopName: nameOf.get(scan.qrCodeId) ?? null,
+      position: positionOf.get(scan.qrCodeId) ?? null,
+      isWildcard: scan.qrCodeId === wildcard?.id,
+      scannedByUserId: scan.userId,
+      scannedAt: scan.createdAt,
+    }));
 
   const [bundle, members, leaderboard] = await Promise.all([
     buildRouteBundle(game, route, wildcard, {
       foundIds: progress?.foundIds ?? new Set<string>(),
-      targetIndex: hintsReleased ? (progress?.targetIndex ?? null) : null,
       hintsReleased,
     }),
     team ? listTeamMembers(team.id) : Promise.resolve([]),
@@ -117,6 +183,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       finishedAt: game.finishedAt,
       wildcard: { enabled: game.wildcardEnabled, name: game.wildcardName },
       settings: {
+        allowOutOfOrder: game.allowOutOfOrder,
         allowTeamCreation: game.allowSelfSignup && game.allowTeamCreation,
         allowTeamNames: game.allowTeamNames,
         allowTeamPhotos: game.allowTeamPhotos,
@@ -144,6 +211,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           complete: progress.complete,
           wildcardFound: progress.wildcardFound,
           lastScanAt: progress.lastScanAt,
+          lastFound,
           hintsReleased,
           canScan: canScan(game.status) && hintsReleased,
           nextHint: hintsReleased ? (progress.target?.hint ?? null) : null,
@@ -151,6 +219,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           nextPosition: progress.targetIndex,
         }
       : null,
+    history,
     leaderboard,
   };
 }

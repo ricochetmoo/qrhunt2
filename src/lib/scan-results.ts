@@ -45,3 +45,8 @@ export const SCAN_RESULT_MESSAGES: Record<ScanResult, string> = {
 export function isRetryableScanResult(result: ScanResult): boolean {
   return RETRYABLE_SCAN_RESULTS.has(result);
 }
+
+/** Whether a stored result credits the team. Takes the raw DB string. */
+export function isCreditedScanResult(result: string): boolean {
+  return (CREDITED_SCAN_RESULTS as readonly string[]).includes(result);
+}

@@ -90,6 +90,9 @@ export const games = pgTable(
     // How the game is won: "speed" (fastest to finish) or "completeness"
     // (find everything, no time pressure). See src/lib/game-mode.ts.
     gameMode: text("game_mode").notNull().default("speed"),
+    // When true, route stops can be found in any order; when false, players
+    // must follow the route sequence and early finds are rejected.
+    allowOutOfOrder: boolean("allow_out_of_order").notNull().default(false),
     // Code players type (or embed in a QR) to join the game.
     gameCode: text("game_code").notNull().unique(),
     // Player sign-up rules.
