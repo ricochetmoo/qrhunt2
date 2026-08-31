@@ -10,7 +10,6 @@ export interface PosterCode {
   name: string;
   code: string;
 }
-
 export interface BuildGamePosterPdfInput {
   game: { name: string };
   codes: PosterCode[];
