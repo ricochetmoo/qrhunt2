@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     "/api/admin/games/\\[gameId\\]/poster-pdf": [
       "src/server/poster/fonts/**/*",
       "public/brand/logo-linear-white.png",
+      "public/brand/logo-marque-purple.png",
     ],
   },
 };
