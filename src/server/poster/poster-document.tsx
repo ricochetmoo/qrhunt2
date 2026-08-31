@@ -35,6 +35,7 @@ export interface PosterDocumentCode {
 export interface PosterDocumentProps {
   game: { name: string };
   codes: PosterDocumentCode[];
+  appUrl: string;
 }
 
 const styles = StyleSheet.create({
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
   },
 });
 
-export function PosterDocument({ game, codes }: PosterDocumentProps) {
+export function PosterDocument({ game, codes, appUrl }: PosterDocumentProps) {
   return (
     <Document title={`${game.name} — QR posters`}>
       {codes.map((qr, index) => (
@@ -113,7 +114,7 @@ export function PosterDocument({ game, codes }: PosterDocumentProps) {
             <Text style={styles.gameName}>{game.name}</Text>
             <Text style={styles.codeName}>{qr.name}</Text>
             <View style={styles.qr}>
-              {renderQrCode(qr.code, { size: QR_SIZE })}
+              {renderQrCode(`${appUrl}/s/${encodeURIComponent(qr.code)}`, { size: QR_SIZE })}
             </View>
             <Text style={styles.helper}>Can&apos;t scan? Enter this code:</Text>
             <View style={styles.codeBox}>
