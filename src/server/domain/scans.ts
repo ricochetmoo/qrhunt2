@@ -60,6 +60,32 @@ export type ScanOutcome = {
   position: number | null;
 };
 
+export type TeamScan = {
+  id: string;
+  qrCodeId: string;
+  userId: string;
+  result: string;
+  createdAt: Date;
+};
+
+/**
+ * Every persisted scan for a team, oldest first. Retryable and `invalid`
+ * outcomes are never stored, so they cannot appear here.
+ */
+export async function listTeamScans(teamId: string): Promise<TeamScan[]> {
+  return db
+    .select({
+      id: qr_code_scans.id,
+      qrCodeId: qr_code_scans.qrCodeId,
+      userId: qr_code_scans.userId,
+      result: qr_code_scans.result,
+      createdAt: qr_code_scans.createdAt,
+    })
+    .from(qr_code_scans)
+    .where(eq(qr_code_scans.teamId, teamId))
+    .orderBy(asc(qr_code_scans.createdAt));
+}
+
 export async function listCreditedScans(teamId: string): Promise<CreditedScan[]> {
   return db
     .select({

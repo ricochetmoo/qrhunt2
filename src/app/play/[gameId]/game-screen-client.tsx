@@ -24,6 +24,27 @@ type ScanNotice = { result: ScanResult; message: string; stopName: string | null
 
 const timeFormat = new Intl.DateTimeFormat("en-GB", { timeStyle: "short" });
 
+/** History rows shown before "Show all"; keeps the card short on small screens. */
+const HISTORY_PREVIEW_COUNT = 6;
+
+/** Compact labels for history rows; SCAN_RESULT_MESSAGES is too long for a pill. */
+const HISTORY_RESULT_LABELS: Record<string, string> = {
+  accepted: "Found",
+  wildcard: "Wildcard",
+  duplicate: "Duplicate",
+  out_of_order: "Out of order",
+  late: "Too late",
+};
+
+function historyPillClass(result: string): string {
+  const base = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium";
+
+  if (result === "accepted") return `${base} bg-green-100 text-green-800`;
+  if (result === "wildcard") return `${base} bg-amber-100 text-amber-800`;
+
+  return `${base} bg-slate-100 text-slate-600`;
+}
+
 function rememberActiveGame(gameId: string, name: string) {
   try {
     window.localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({ gameId, name }));
@@ -39,6 +60,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<ScanNotice | null>(null);
+  const [showAllHistory, setShowAllHistory] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -171,7 +193,8 @@ export function GameScreen({ gameId }: { gameId: string }) {
     );
   }
 
-  const { game, team, progress, leaderboard } = state;
+  const { game, team, progress, leaderboard, history } = state;
+  const visibleHistory = showAllHistory ? history : history.slice(0, HISTORY_PREVIEW_COUNT);
   const you = leaderboard.find((entry) => entry.isYou) ?? null;
   const yourName = team?.members.find((member) => member.isYou)?.name ?? team?.name ?? "you";
   const percent = progress && progress.total > 0 ? Math.round((progress.found / progress.total) * 100) : 0;
@@ -345,6 +368,62 @@ export function GameScreen({ gameId }: { gameId: string }) {
                 {busy ? "Checking…" : "Submit"}
               </Button>
             </form>
+          </CardBody>
+        </Card>
+      ) : null}
+
+      {/* Scan history */}
+      {team ? (
+        <Card>
+          <CardHeader title="Scan history" description="Every code your team has scanned." />
+          <CardBody className="space-y-2">
+            {history.length === 0 ? (
+              <p className="text-sm text-slate-500">No scans yet — they&apos;ll show up here.</p>
+            ) : (
+              <>
+                <ol className="divide-y divide-slate-100">
+                  {visibleHistory.map((entry) => {
+                    const scanner = team.members.find(
+                      (member) => member.userId === entry.scannedByUserId,
+                    );
+                    const scannerName = scanner ? (scanner.isYou ? "you" : scanner.name) : null;
+
+                    return (
+                      <li key={entry.id} className="flex items-center gap-3 py-2 text-sm">
+                        <span className="w-6 shrink-0 text-right text-xs font-semibold text-slate-400">
+                          {entry.isWildcard
+                            ? "★"
+                            : entry.position !== null
+                              ? `#${entry.position + 1}`
+                              : ""}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-slate-900">
+                            {entry.stopName ?? "Unknown stop"}
+                          </span>
+                          <span className="block text-xs text-slate-500">
+                            {timeFormat.format(new Date(entry.scannedAt))}
+                            {scannerName ? ` · by ${scannerName}` : ""}
+                          </span>
+                        </span>
+                        <span className={historyPillClass(entry.result)}>
+                          {HISTORY_RESULT_LABELS[entry.result] ?? entry.result}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+                {history.length > HISTORY_PREVIEW_COUNT ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAllHistory((current) => !current)}
+                  >
+                    {showAllHistory ? "Show fewer" : `Show all ${history.length}`}
+                  </Button>
+                ) : null}
+              </>
+            )}
           </CardBody>
         </Card>
       ) : null}
