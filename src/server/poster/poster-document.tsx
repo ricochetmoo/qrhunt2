@@ -115,7 +115,7 @@ export function PosterDocument({ game, codes }: PosterDocumentProps) {
             <View style={styles.qr}>{qrCodeSvg(qr.code, QR_SIZE)}</View>
             <Text style={styles.helper}>Can&apos;t scan? Enter this code:</Text>
             <View style={styles.codeBox}>
-              <Text style={styles.codeValue}>{qr.code}</Text>
+              <Text style={styles.codeValue}>{qr.code.toUpperCase()}</Text>
             </View>
           </View>
         </Page>
