@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { GameForm } from "@/components/admin/game-form";
+import { PosterPrintButton } from "@/components/admin/poster-print-button";
 import { QrCodeList } from "@/components/admin/qr-code-list";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/card";
@@ -24,6 +25,7 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
         description={`Game code ${game.gameCode} · ${qrCodes.length} ${qrCodes.length === 1 ? "code" : "codes"} on the route`}
         actions={
           <>
+            <PosterPrintButton gameId={game.id} />
             <Link
               href={`/admin/games/${game.id}/dashboard`}
               className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
