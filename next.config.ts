@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
       "src/server/poster/fonts/**/*",
       "public/brand/logo-linear-white.png",
       "public/brand/logo-marque-purple.png",
+      // pdfkit loads its standard fonts through package `imports`, which
+      // output file tracing cannot resolve from the externalized renderer.
+      "node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**/*",
     ],
   },
 };
