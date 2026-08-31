@@ -6,7 +6,7 @@ import { createElement, type ReactElement } from "react";
 import { Image, Path, Rect, Svg, View } from "@react-pdf/renderer";
 import { create, type QRCodeErrorCorrectionLevel } from "qrcode";
 
-import { QR_SIZE } from "./theme";
+import { ACCENT, QR_SIZE } from "./theme";
 
 const DEFAULT_LOGO_PATH = join(
   process.cwd(),
@@ -14,7 +14,7 @@ const DEFAULT_LOGO_PATH = join(
 );
 const QUIET_ZONE = 4;
 const DEFAULT_LOGO_SCALE = 0.18;
-const LOGO_PADDING = 1;
+const LOGO_PADDING = 0.5;
 const LOGO_ASPECT_RATIO = 2067 / 1884;
 
 export type QRLogoSource = string | Buffer;
@@ -82,23 +82,34 @@ export function renderQrCode(
   const extent = moduleCount + QUIET_ZONE * 2;
   const moduleSize = size / extent;
 
-  let path = "";
-  for (let row = 0; row < moduleCount; row++) {
-    for (let col = 0; col < moduleCount; col++) {
-      if (data[row * moduleCount + col]) {
-        path += `M${col + QUIET_ZONE} ${row + QUIET_ZONE}h1v1h-1z`;
-      }
-    }
-  }
-
   const logoWidth = moduleCount * logoScale;
   const logoHeight = logoWidth / LOGO_ASPECT_RATIO;
   const logoX = (extent - logoWidth) / 2;
   const logoY = (extent - logoHeight) / 2;
-  const knockoutX = logoX - LOGO_PADDING;
-  const knockoutY = logoY - LOGO_PADDING;
-  const knockoutWidth = logoWidth + LOGO_PADDING * 2;
-  const knockoutHeight = logoHeight + LOGO_PADDING * 2;
+  // A fractional SVG knockout edge can cut through a QR module when the PDF
+  // is rasterised. Expand each edge to the next module boundary so the
+  // marque's whitespace always removes complete modules.
+  const knockoutX = Math.floor(logoX - LOGO_PADDING);
+  const knockoutY = Math.floor(logoY - LOGO_PADDING);
+  const knockoutRight = Math.ceil(logoX + logoWidth + LOGO_PADDING);
+  const knockoutBottom = Math.ceil(logoY + logoHeight + LOGO_PADDING);
+
+  const hasLogo = logo !== null;
+  const isKnockedOut = (row: number, col: number) =>
+    hasLogo &&
+    col + QUIET_ZONE >= knockoutX &&
+    col + QUIET_ZONE < knockoutRight &&
+    row + QUIET_ZONE >= knockoutY &&
+    row + QUIET_ZONE < knockoutBottom;
+
+  let path = "";
+  for (let row = 0; row < moduleCount; row++) {
+    for (let col = 0; col < moduleCount; col++) {
+      if (data[row * moduleCount + col] && !isKnockedOut(row, col)) {
+        path += `M${col + QUIET_ZONE} ${row + QUIET_ZONE}h1v1h-1z`;
+      }
+    }
+  }
 
   const qrSvg = createElement(
     Svg,
@@ -115,16 +126,7 @@ export function renderQrCode(
       height: extent,
       fill: "#FFFFFF",
     }),
-    createElement(Path, { d: path, fill: "#000000" }),
-    logo
-      ? createElement(Rect, {
-          x: knockoutX,
-          y: knockoutY,
-          width: knockoutWidth,
-          height: knockoutHeight,
-          fill: "#FFFFFF",
-        })
-      : null,
+    createElement(Path, { d: path, fill: ACCENT }),
   );
 
   return createElement(
