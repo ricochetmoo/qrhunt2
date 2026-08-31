@@ -65,7 +65,14 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <Button variant="primary" size="sm" onClick={handlePrint} disabled={pending} aria-busy={pending}>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="!px-3 !py-1.5 !text-sm"
+        onClick={handlePrint}
+        disabled={pending}
+        aria-busy={pending}
+      >
         {pending ? "Generating…" : "Generate & print posters"}
       </Button>
       <ErrorMessage message={error} />
