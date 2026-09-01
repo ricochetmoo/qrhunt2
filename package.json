@@ -25,10 +25,12 @@
     "hono": "^4.13.5",
     "lucide-react": "^1.37.0",
     "next": "16.3.3",
+    "quagga": "^0.12.1",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.4",
     "zod": "^4.5.2"
   },
   "devDependencies": {

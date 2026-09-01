@@ -5,12 +5,12 @@ import { createElement } from "react";
 import { renderToBuffer } from "@react-pdf/renderer";
 
 import { PosterDocument } from "./poster-document";
+import { getAppUrl } from "./url";
 
 export interface PosterCode {
   name: string;
   code: string;
 }
-
 export interface BuildGamePosterPdfInput {
   game: { name: string };
   codes: PosterCode[];
@@ -28,6 +28,7 @@ export async function buildGamePosterPdf(
   const tree = createElement(PosterDocument, {
     game: input.game,
     codes: input.codes,
+    appUrl: getAppUrl(),
   }) as Parameters<typeof renderToBuffer>[0];
 
   return renderToBuffer(tree);

@@ -1,36 +1,84 @@
+import "server-only";
+
 import { createElement, type ReactElement } from "react";
 
-import { Path, Rect, Svg } from "@react-pdf/renderer";
-import { create } from "qrcode";
+import { Image, Path, Rect, Svg, View } from "@react-pdf/renderer";
 
-import { QR_SIZE } from "./theme";
+import { ACCENT } from "./theme";
+import { buildQrPath, createQrModel } from "./qr-core";
+import type { QRCodeRenderOptions } from "./qr-core";
 
-const QUIET_ZONE = 2;
+export type { BrandedQrSvgOptions, QRCodeRenderOptions, QRLogoSource } from "./qr-core";
+export { buildBrandedQrSvg } from "./qr-core";
 
-export function qrCodeSvg(value: string, size: number = QR_SIZE): ReactElement {
-  const { modules } = create(value, { errorCorrectionLevel: "M" });
-  const { size: count, data } = modules;
-  const extent = count + QUIET_ZONE * 2;
+type QRCodeOptionsOrSize = QRCodeRenderOptions | number;
 
-  let d = "";
-  for (let row = 0; row < count; row++) {
-    for (let col = 0; col < count; col++) {
-      if (data[row * count + col]) {
-        d += `M${col + QUIET_ZONE} ${row + QUIET_ZONE}h1v1h-1z`;
-      }
-    }
+function normalizeOptions(
+  optionsOrSize: QRCodeOptionsOrSize | undefined,
+): QRCodeRenderOptions {
+  if (typeof optionsOrSize === "number") {
+    return { size: optionsOrSize };
   }
 
-  return createElement(
+  return optionsOrSize ?? {};
+}
+
+/** Render a QR code as a React-PDF element with the branded Scouts marque. */
+export function renderQrCode(
+  value: string,
+  optionsOrSize?: QRCodeOptionsOrSize,
+): ReactElement {
+  const model = createQrModel(value, normalizeOptions(optionsOrSize));
+  const moduleSize = model.size / model.extent;
+  const path = buildQrPath(model);
+
+  const qrSvg = createElement(
     Svg,
-    { width: size, height: size, viewBox: `0 0 ${extent} ${extent}` },
+    {
+      width: model.size,
+      height: model.size,
+      viewBox: `0 0 ${model.extent} ${model.extent}`,
+      style: { position: "absolute", left: 0, top: 0 },
+    },
     createElement(Rect, {
       x: 0,
       y: 0,
-      width: extent,
-      height: extent,
+      width: model.extent,
+      height: model.extent,
       fill: "#FFFFFF",
     }),
-    createElement(Path, { d, fill: "#000000" }),
+    createElement(Path, { d: path, fill: ACCENT }),
   );
+
+  return createElement(
+    View,
+    {
+      style: {
+        position: "relative",
+        width: model.size,
+        height: model.size,
+      },
+    },
+    qrSvg,
+    model.logo
+      ? createElement(Image, {
+          src: model.logo,
+          style: {
+            position: "absolute",
+            left: model.logoX * moduleSize,
+            top: model.logoY * moduleSize,
+            width: model.logoWidth * moduleSize,
+            height: model.logoHeight * moduleSize,
+          },
+        })
+      : null,
+  );
+}
+
+/** Backwards-compatible name for callers that previously passed only a size. */
+export function qrCodeSvg(
+  value: string,
+  optionsOrSize?: QRCodeOptionsOrSize,
+): ReactElement {
+  return renderQrCode(value, optionsOrSize);
 }
