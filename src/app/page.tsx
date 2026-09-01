@@ -6,12 +6,12 @@ import { EnterCodeForm } from "./enter-code-form";
 const STEPS = [
   {
     title: "Find a QR Hunt poster",
-    detail: "Head to the start location — your leader will point you at the first poster.",
+    detail: "Head to the start location - your leader will point you at the first poster.",
   },
   {
     title: "Scan it with your Camera app",
     detail:
-      "Point your phone's normal Camera app at the QR code and tap the link that pops up. On iPhone, use the Camera app itself — not the Control Centre code scanner, which forgets who you are.",
+      "Point your phone's normal Camera app at the QR code and tap the link that pops up. On iPhone, use the Camera app itself - not the Control Centre code scanner, which forgets who you are.",
   },
   {
     title: "Tell us your name and you're in",
@@ -29,7 +29,7 @@ export default function Home() {
         </p>
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">QR Hunt</h1>
         <p className="text-sm text-slate-600">
-          A treasure trail of QR codes: scan your way from clue to clue and race — or explore — to
+          A treasure trail of QR codes: scan your way from clue to clue and race - or explore - to
           the end.
         </p>
       </header>

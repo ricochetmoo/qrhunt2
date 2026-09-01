@@ -61,7 +61,7 @@ export default async function UserPage({ params }: PageProps<"/admin/users/[user
         <CardHeader title="Account" />
         <CardBody>
           <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Detail label="Name">{account.name || "—"}</Detail>
+            <Detail label="Name">{account.name || "-"}</Detail>
             <Detail label="Email">
               <span className="font-mono text-xs">{account.email}</span>
               {account.emailVerified ? (

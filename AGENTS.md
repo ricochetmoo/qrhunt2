@@ -54,6 +54,9 @@ brief:
   `node_modules/next/dist/docs/` before changing Next.js code. The Next.js
   version in this repo may have APIs or conventions that differ from prior
   versions.
+- Never use em dashes (—) in user-facing copy (UI text, error messages,
+  labels, PDF content). Use a plain hyphen (-) instead, or reword the
+  sentence. Code comments are exempt.
 - Keep database access and Better Auth server-only. Do not import `src/db` or
   `src/lib/auth` into browser components; use browser-safe types from
   `src/db/types.ts`.

@@ -249,7 +249,7 @@ export function JoinFunnel({ code }: { code: string }) {
       }
 
       setJoined({
-        message: "You're in — your first hint is waiting on the game screen.",
+        message: "You're in - your first hint is waiting on the game screen.",
         playerName,
         teamCode: team?.teamCode ?? null,
       });
@@ -361,7 +361,7 @@ export function JoinFunnel({ code }: { code: string }) {
             </ol>
             <p className="text-sm text-slate-700">
               If your phone remembers you, the game begins. On iPhone, use the normal{" "}
-              <strong>Camera app</strong> — not the Control Centre code scanner, which forgets you.
+              <strong>Camera app</strong> - not the Control Centre code scanner, which forgets you.
             </p>
           </CardBody>
         </Card>
@@ -375,7 +375,7 @@ export function JoinFunnel({ code }: { code: string }) {
                 Welcome back, {viewer.name}! ✅
               </h1>
               <p className="mt-1 text-sm text-slate-600">
-                Your phone remembers you{viewer.teamName ? ` — team ${viewer.teamName}` : ""}.
+                Your phone remembers you{viewer.teamName ? ` - team ${viewer.teamName}` : ""}.
                 {resolved?.stop ? (
                   <>
                     {" "}
@@ -428,7 +428,7 @@ export function JoinFunnel({ code }: { code: string }) {
             <h1 className="text-lg font-semibold text-slate-900">This scanner forgets you 😔</h1>
             <p className="text-sm text-slate-700">
               Some scanners (like the iPhone <strong>Control Centre code scanner</strong> and
-              scanners inside other apps) throw everything away when they close — so the game
+              scanners inside other apps) throw everything away when they close - so the game
               can&apos;t remember who you are.
             </p>
             <ol className="list-decimal space-y-1 pl-5 text-sm text-slate-700">
@@ -442,7 +442,7 @@ export function JoinFunnel({ code }: { code: string }) {
               Still stuck? Open <strong>Safari</strong> and type the address printed on the poster.
             </p>
             <Button variant="secondary" onClick={resolve} disabled={busy} className="w-full">
-              I&apos;ve re-scanned — check again
+              I&apos;ve re-scanned - check again
             </Button>
           </CardBody>
         </Card>

@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
 
 export function PosterDocument({ game, codes }: PosterDocumentProps) {
   return (
-    <Document title={`${game.name} — QR posters`}>
+    <Document title={`${game.name} - QR posters`}>
       {codes.map((qr, index) => (
         <Page key={index} size="A4" orientation="portrait" style={styles.page}>
           <View style={styles.topBar} fixed>

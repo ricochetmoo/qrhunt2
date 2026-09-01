@@ -129,7 +129,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
       });
 
       if (!response.ok) {
-        setError("That didn't go through — try again.");
+        setError("That didn't go through - try again.");
         return;
       }
 
@@ -147,7 +147,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
         setCode("");
       }
     } catch {
-      setError("Could not reach the game — your code wasn't sent. Try again when you have signal.");
+      setError("Could not reach the game - your code wasn't sent. Try again when you have signal.");
     } finally {
       setBusy(false);
     }
@@ -215,7 +215,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
 
       {game.status === "paused" ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          ⏸ Game paused{game.pauseReason ? ` — ${game.pauseReason}` : ""}. Scanning is off until it
+          ⏸ Game paused{game.pauseReason ? ` - ${game.pauseReason}` : ""}. Scanning is off until it
           resumes.
         </div>
       ) : null}
@@ -254,7 +254,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
               </div>
               {progress.complete ? (
                 <p className="text-sm font-medium text-green-700">
-                  🎉 Route complete — you found everything!
+                  🎉 Route complete - you found everything!
                 </p>
               ) : null}
             </>
@@ -263,7 +263,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
           )}
           {team ? (
             <p className="text-xs text-slate-500">
-              Rejoin code: <code className="font-mono font-semibold">{team.teamCode}</code> — use it
+              Rejoin code: <code className="font-mono font-semibold">{team.teamCode}</code> - use it
               if you switch phones.
             </p>
           ) : null}
@@ -277,7 +277,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
             title={game.settings.allowOutOfOrder ? "A clue to chase" : "Your next clue"}
             description={
               game.settings.allowOutOfOrder
-                ? "Stops can be found in any order — this is the next one on the list."
+                ? "Stops can be found in any order - this is the next one on the list."
                 : undefined
             }
           />
@@ -287,7 +287,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
             ) : (
               <p className="text-sm text-slate-500">
                 {game.status === "published" || game.status === "draft"
-                  ? "The game hasn't started yet — your first clue appears here when it does."
+                  ? "The game hasn't started yet - your first clue appears here when it does."
                   : "Your clue will appear here once you're released to start."}
               </p>
             )}
@@ -322,7 +322,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
               ) : null}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">Nothing scanned yet — follow your first clue!</p>
+            <p className="text-sm text-slate-500">Nothing scanned yet - follow your first clue!</p>
           )}
         </CardBody>
       </Card>
@@ -378,7 +378,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
           <CardHeader title="Scan history" description="Every code your team has scanned." />
           <CardBody className="space-y-2">
             {history.length === 0 ? (
-              <p className="text-sm text-slate-500">No scans yet — they&apos;ll show up here.</p>
+              <p className="text-sm text-slate-500">No scans yet - they&apos;ll show up here.</p>
             ) : (
               <>
                 <ol className="divide-y divide-slate-100">

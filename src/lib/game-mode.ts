@@ -21,13 +21,13 @@ export const GAME_MODE_LABELS: Record<GameMode, string> = {
 export const GAME_MODE_DESCRIPTIONS: Record<GameMode, string> = {
   speed: "A race: most stops found wins, with the fastest team breaking ties.",
   completeness:
-    "No rush: finding everything (wildcard included) is what counts — time doesn't affect the ranking.",
+    "No rush: finding everything (wildcard included) is what counts - time doesn't affect the ranking.",
 };
 
 /** Player-facing one-liner shown when joining. */
 export const GAME_MODE_PLAYER_BLURBS: Record<GameMode, string> = {
-  speed: "It's a race — find the stops in order, fastest wins!",
-  completeness: "No rush — take it in and find everything. Completeness wins, not speed.",
+  speed: "It's a race - find the stops in order, fastest wins!",
+  completeness: "No rush - take it in and find everything. Completeness wins, not speed.",
 };
 
 export function isGameMode(value: string): value is GameMode {
