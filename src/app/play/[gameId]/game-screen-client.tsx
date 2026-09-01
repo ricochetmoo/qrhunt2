@@ -8,6 +8,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ErrorMessage } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
+import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
 
@@ -61,6 +62,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<ScanNotice | null>(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [completionViewDismissed, setCompletionViewDismissed] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -198,6 +200,16 @@ export function GameScreen({ gameId }: { gameId: string }) {
   const you = leaderboard.find((entry) => entry.isYou) ?? null;
   const yourName = team?.members.find((member) => member.isYou)?.name ?? team?.name ?? "you";
   const percent = progress && progress.total > 0 ? Math.round((progress.found / progress.total) * 100) : 0;
+
+  if (progress?.complete && team && !completionViewDismissed) {
+    return (
+      <CompletionScreen
+        game={game}
+        team={team}
+        onReturn={() => setCompletionViewDismissed(true)}
+      />
+    );
+  }
 
   return (
     <Shell>
@@ -456,6 +468,73 @@ export function GameScreen({ gameId }: { gameId: string }) {
           )}
         </CardBody>
       </Card>
+    </Shell>
+  );
+}
+
+function CompletionScreen({
+  game,
+  team,
+  onReturn,
+}: {
+  game: PlayerState["game"];
+  team: NonNullable<PlayerState["team"]>;
+  onReturn: () => void;
+}) {
+  const completionTime = team.finishedAt;
+  const message = game.completionMessage?.trim() || DEFAULT_COMPLETION_MESSAGE;
+
+  return (
+    <Shell>
+      <header className="space-y-1">
+        <p className="text-xs font-semibold uppercase tracking-wider text-green-700">Hunt complete</p>
+        <h1 className="text-xl font-semibold text-slate-900">{game.name}</h1>
+      </header>
+
+      <section aria-labelledby="completion-heading" aria-describedby="completion-message">
+        <Card>
+          <CardBody className="space-y-6 text-center">
+            <div
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+              className="space-y-2"
+            >
+              <div
+                aria-hidden="true"
+                className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700"
+              >
+                ✓
+              </div>
+              <h2 id="completion-heading" className="text-2xl font-semibold text-slate-900">
+                Route complete
+              </h2>
+              <p className="text-sm font-medium text-green-700">100% of the route found</p>
+            </div>
+
+            <p id="completion-message" className="whitespace-pre-line text-base leading-7 text-slate-700">
+              {message}
+            </p>
+
+            <dl className="divide-y divide-slate-100 rounded-md border border-slate-200 text-left">
+              <div className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="text-sm text-slate-500">Team</dt>
+                <dd className="text-right text-sm font-semibold text-slate-900">{team.name}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 px-4 py-3">
+                <dt className="text-sm text-slate-500">Completed</dt>
+                <dd className="text-right text-sm font-semibold text-slate-900">
+                  {completionTime ? timeFormat.format(new Date(completionTime)) : "Time recorded"}
+                </dd>
+              </div>
+            </dl>
+
+            <Button className="w-full" variant="secondary" onClick={onReturn}>
+              View progress, history and leaderboard
+            </Button>
+          </CardBody>
+        </Card>
+      </section>
     </Shell>
   );
 }

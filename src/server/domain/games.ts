@@ -123,6 +123,10 @@ export async function updateGame(gameId: string, patch: UpdateGameInput): Promis
       name: patch.name ?? current.name,
       status: nextStatus,
       pauseReason: pauseReason || null,
+      completionMessage:
+        patch.completionMessage === undefined
+          ? current.completionMessage
+          : patch.completionMessage,
       gameMode: patch.gameMode ?? current.gameMode,
       allowOutOfOrder: patch.allowOutOfOrder ?? current.allowOutOfOrder,
       // Remember the first time the game started/finished for timing and leaderboards.
