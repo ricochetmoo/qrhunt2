@@ -146,6 +146,7 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                     hint: code.hint,
                     latitude: code.latitude ?? "",
                     longitude: code.longitude ?? "",
+                    isWildcard: code.isWildcard,
                   }}
                   pending={pending}
                   submitLabel="Save"
@@ -176,10 +177,18 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-400">{index + 1}.</span>
+                      {code.isWildcard ? (
+                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+                          Wildcard
+                        </span>
+                      ) : (
+                        <span className="text-xs font-semibold text-slate-400">
+                          {codes.slice(0, index).filter((c) => !c.isWildcard).length + 1}.
+                        </span>
+                      )}
                       <span className="font-medium text-slate-900">{code.name}</span>
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
-                        {code.code}
+                        {code.code.toUpperCase()}
                       </code>
                       {code.latitude && code.longitude ? (
                         <span className="text-xs text-slate-500">

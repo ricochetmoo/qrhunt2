@@ -9,6 +9,13 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import type { Game } from "@/db/types";
 import { apiClient } from "@/lib/api-client";
 import { readError } from "@/lib/api-errors";
+import {
+  GAME_MODES,
+  GAME_MODE_DESCRIPTIONS,
+  GAME_MODE_LABELS,
+  isGameMode,
+  type GameMode,
+} from "@/lib/game-mode";
 import { GAME_STATUSES, GAME_STATUS_LABELS, isGameStatus, type GameStatus } from "@/lib/game-status";
 
 export type EditableGame = Pick<
@@ -18,6 +25,8 @@ export type EditableGame = Pick<
   | "status"
   | "pauseReason"
   | "gameCode"
+  | "gameMode"
+  | "allowOutOfOrder"
   | "allowSelfSignup"
   | "allowTeamCreation"
   | "allowTeamNames"
@@ -33,6 +42,8 @@ export type EditableGame = Pick<
 type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
 
 type ConfigState = {
+  gameMode: GameMode;
+  allowOutOfOrder: boolean;
   allowSelfSignup: boolean;
   allowTeamCreation: boolean;
   allowTeamNames: boolean;
@@ -55,6 +66,8 @@ function toLocalInputValue(date: Date | null): string {
 
 function initialConfig(game: EditableGame | null): ConfigState {
   return {
+    gameMode: game && isGameMode(game.gameMode) ? game.gameMode : "speed",
+    allowOutOfOrder: game?.allowOutOfOrder ?? false,
     allowSelfSignup: game?.allowSelfSignup ?? true,
     allowTeamCreation: game?.allowTeamCreation ?? true,
     allowTeamNames: game?.allowTeamNames ?? true,
@@ -153,6 +166,8 @@ export function GameForm(props: GameFormProps) {
           name,
           status,
           pauseReason: status === "paused" ? pauseReason : null,
+          gameMode: config.gameMode,
+          allowOutOfOrder: config.allowOutOfOrder,
           allowSelfSignup: config.allowSelfSignup,
           allowTeamCreation: config.allowTeamCreation,
           allowTeamNames: config.allowTeamNames,
@@ -284,6 +299,44 @@ export function GameForm(props: GameFormProps) {
               />
             </Field>
           ) : null}
+
+          <Section title="Game mode">
+            <div className="grid gap-2 sm:grid-cols-2">
+              {GAME_MODES.map((mode) => (
+                <label
+                  key={mode}
+                  htmlFor={`cfg-mode-${mode}`}
+                  className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 ${
+                    config.gameMode === mode ? "border-slate-900 bg-slate-50" : "border-slate-200"
+                  }`}
+                >
+                  <input
+                    id={`cfg-mode-${mode}`}
+                    type="radio"
+                    name="cfg-mode"
+                    className="mt-0.5 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
+                    checked={config.gameMode === mode}
+                    onChange={() => set("gameMode")(mode)}
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-slate-700">
+                      {GAME_MODE_LABELS[mode]}
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      {GAME_MODE_DESCRIPTIONS[mode]}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </div>
+            <Toggle
+              id="cfg-out-of-order"
+              label="Stops can be found in any order"
+              hint="When off, players must follow the route in sequence and early finds are rejected. Any order pairs well with Completeness mode."
+              checked={config.allowOutOfOrder}
+              onChange={set("allowOutOfOrder")}
+            />
+          </Section>
 
           <Section title="Players and teams">
             <Toggle

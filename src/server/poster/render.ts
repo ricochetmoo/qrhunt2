@@ -7,6 +7,22 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { PosterDocument } from "./poster-document";
 import { getAppUrl } from "./url";
 
+const DEFAULT_APP_URL = "http://localhost:3000";
+
+function getAppUrl(): string {
+  const configuredUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.BETTER_AUTH_URL ??
+    DEFAULT_APP_URL;
+  const appUrl = /^https?:\/\//i.test(configuredUrl)
+    ? configuredUrl
+    : `https://${configuredUrl}`;
+
+  return appUrl.replace(/\/+$/, "");
+}
+
 export interface PosterCode {
   name: string;
   code: string;

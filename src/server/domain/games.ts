@@ -123,6 +123,11 @@ export async function updateGame(gameId: string, patch: UpdateGameInput): Promis
       name: patch.name ?? current.name,
       status: nextStatus,
       pauseReason: pauseReason || null,
+      gameMode: patch.gameMode ?? current.gameMode,
+      allowOutOfOrder: patch.allowOutOfOrder ?? current.allowOutOfOrder,
+      // Remember the first time the game started/finished for timing and leaderboards.
+      startedAt: current.startedAt ?? (nextStatus === "started" ? new Date() : null),
+      finishedAt: current.finishedAt ?? (nextStatus === "finished" ? new Date() : null),
       allowSelfSignup: patch.allowSelfSignup ?? current.allowSelfSignup,
       allowTeamCreation: patch.allowTeamCreation ?? current.allowTeamCreation,
       allowTeamNames: patch.allowTeamNames ?? current.allowTeamNames,

@@ -91,7 +91,6 @@ async function seed() {
   for (const [index, stop] of ROUTE.entries()) {
     const id = randomUUID();
     qrCodeIds.push(id);
-    // No explicit order column: route order is the createdAt order.
     const at = minutes(index);
     await db.insert(schema.qr_codes).values({
       id,
@@ -100,6 +99,7 @@ async function seed() {
       latitude: stop.lat,
       longitude: stop.lng,
       code: routeCode(),
+      sortOrder: index,
       gameId,
       createdAt: at,
       updatedAt: at,
@@ -108,7 +108,7 @@ async function seed() {
 
   for (const team of TEAMS) {
     const teamId = randomUUID();
-    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId });
+    await db.insert(schema.teams).values({ id: teamId, name: team.name, gameId, teamCode: gameCode() });
 
     const memberIds: string[] = [];
     for (const player of team.players) {
