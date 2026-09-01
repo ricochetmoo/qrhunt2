@@ -20,20 +20,19 @@ const db = drizzle({ client: neon(databaseUrl), schema });
 const SEED_GAME_PREFIX = "Seed:";
 const SEED_EMAIL_DOMAIN = "@seed.local";
 
-const BASE62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 function routeCode(): string {
   let out = "";
   for (let i = 0; i < 8; i += 1) {
-    out += BASE62[Math.floor(Math.random() * BASE62.length)];
+    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
   }
   return out;
 }
 
-const GAME_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 function gameCode(): string {
   let out = "";
   for (let i = 0; i < 6; i += 1) {
-    out += GAME_CODE_ALPHABET[Math.floor(Math.random() * GAME_CODE_ALPHABET.length)];
+    out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
   }
   return out;
 }

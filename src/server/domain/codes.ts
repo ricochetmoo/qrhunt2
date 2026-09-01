@@ -1,13 +1,15 @@
 import "server-only";
 
-const BASE62 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+// Uppercase letters and digits with visually confusable characters (0/O, 1/I/L)
+// removed, since players type these codes by hand.
+const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-// Largest multiple of 62 that fits in a byte; bytes at or above it are
+// Largest multiple of 31 that fits in a byte; bytes at or above it are
 // rejected so every character is uniformly distributed.
 const MAX_UNBIASED = 248;
 
-/** Random base62 route code (default 8 characters) using Web Crypto. */
-export function generateRouteCode(length = 8): string {
+/** Random, easy-to-type code of `length` uppercase characters using Web Crypto. */
+function generateCode(length: number): string {
   let out = "";
 
   while (out.length < length) {
@@ -15,7 +17,7 @@ export function generateRouteCode(length = 8): string {
 
     for (const byte of bytes) {
       if (byte < MAX_UNBIASED) {
-        out += BASE62[byte % 62];
+        out += CODE_ALPHABET[byte % CODE_ALPHABET.length];
         if (out.length === length) break;
       }
     }
@@ -24,27 +26,14 @@ export function generateRouteCode(length = 8): string {
   return out;
 }
 
-// Uppercase letters and digits with visually confusable characters (0/O, 1/I/L)
-// removed, since players type this by hand.
-const GAME_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-const GAME_CODE_MAX_UNBIASED = 248; // 31 * 8
+/** Random route code (default 8 uppercase characters). */
+export function generateRouteCode(length = 8): string {
+  return generateCode(length);
+}
 
-/** Random, easy-to-type game join code (default 6 characters). */
+/** Random game join code (default 6 uppercase characters). */
 export function generateGameCode(length = 6): string {
-  let out = "";
-
-  while (out.length < length) {
-    const bytes = crypto.getRandomValues(new Uint8Array(length * 2));
-
-    for (const byte of bytes) {
-      if (byte < GAME_CODE_MAX_UNBIASED) {
-        out += GAME_CODE_ALPHABET[byte % GAME_CODE_ALPHABET.length];
-        if (out.length === length) break;
-      }
-    }
-  }
-
-  return out;
+  return generateCode(length);
 }
 
 /** Primary keys are `text` with no DB default, so generate them here. */
