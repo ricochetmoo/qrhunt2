@@ -13,9 +13,10 @@ export type QrCodeFormValues = {
   hint: string;
   latitude: string;
   longitude: string;
+  isWildcard: boolean;
 };
 
-const EMPTY: QrCodeFormValues = { name: "", hint: "", latitude: "", longitude: "" };
+const EMPTY: QrCodeFormValues = { name: "", hint: "", latitude: "", longitude: "", isWildcard: false };
 
 export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
   return {
@@ -23,6 +24,7 @@ export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
     hint: values.hint,
     latitude: values.latitude.trim() || null,
     longitude: values.longitude.trim() || null,
+    isWildcard: values.isWildcard,
   };
 }
 
@@ -47,8 +49,10 @@ export function QrCodeForm({
   const geo = useGeolocation();
   const [accuracy, setAccuracy] = useState<number | null>(null);
 
-  const update = (key: keyof QrCodeFormValues) => (value: string) =>
-    setValues((current) => ({ ...current, [key]: value }));
+  const update =
+    <K extends keyof QrCodeFormValues>(key: K) =>
+    (value: QrCodeFormValues[K]) =>
+      setValues((current) => ({ ...current, [key]: value }));
 
   async function useCurrentLocation() {
     const coords = await geo.request();
@@ -111,6 +115,21 @@ export function QrCodeForm({
           />
         </Field>
       </div>
+      <label className="flex cursor-pointer items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+          checked={values.isWildcard}
+          onChange={(event) => update("isWildcard")(event.target.checked)}
+        />
+        <span className="text-sm text-slate-700">
+          This is the wildcard object
+          <span className="block text-xs text-slate-500">
+            Scanned at any point, outside the route order. One per game; only counts while the
+            wildcard is enabled in game settings.
+          </span>
+        </span>
+      </label>
       <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <Button
             variant="secondary"

@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN "allow_out_of_order" boolean DEFAULT false NOT NULL;

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
+import { gameModeSchema } from "./game-mode";
 import { gameStatusSchema } from "./game-status";
+import { latitude, longitude, optionalText } from "./zod-helpers";
 
 /**
  * Zod request schemas shared by the Hono admin routes and the admin UI forms.
@@ -13,17 +15,10 @@ export const createGameSchema = z.object({
   name: gameName,
 });
 
-const optionalText = (max: number) =>
-  z
-    .string()
-    .trim()
-    .max(max)
-    .nullable()
-    .optional()
-    .transform((value) => (value === "" ? null : value));
-
 /** Per-game configuration (see AGENTS.md "Admin configuration frontend"). */
 export const gameConfigSchema = z.object({
+  gameMode: gameModeSchema,
+  allowOutOfOrder: z.boolean(),
   allowSelfSignup: z.boolean(),
   allowTeamCreation: z.boolean(),
   allowTeamNames: z.boolean(),
@@ -49,24 +44,12 @@ export const updateGameSchema = z
     path: ["wildcardName"],
   });
 
-const decimalString = z.string().trim().regex(/^-?\d+(\.\d+)?$/, "Must be a decimal number.");
-
-const coordinate = (min: number, max: number, label: string) =>
-  decimalString
-    .refine((value) => {
-      const n = Number(value);
-      return n >= min && n <= max;
-    }, `${label} must be between ${min} and ${max}.`)
-    .nullable()
-    .optional()
-    // Treat empty form input as "not set".
-    .or(z.literal("").transform(() => null));
-
 export const qrCodeInputSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(120),
   hint: z.string().trim().min(1, "Hint is required.").max(1000),
-  latitude: coordinate(-90, 90, "Latitude"),
-  longitude: coordinate(-180, 180, "Longitude"),
+  latitude: latitude(),
+  longitude: longitude(),
+  isWildcard: z.boolean().optional(),
 });
 
 export const updateQrCodeSchema = qrCodeInputSchema.partial();

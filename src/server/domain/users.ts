@@ -4,6 +4,7 @@ import { and, count, countDistinct, desc, eq, ilike, inArray, or, type SQL } fro
 
 import { db } from "@/db";
 import { game_admins, games, qr_code_scans, qr_codes, team_memberships, teams, user } from "@/db/schema";
+import { CREDITED_SCAN_RESULTS } from "@/lib/scan-results";
 
 export const USERS_PAGE_SIZE = 25;
 export const RECENT_USERS_LIMIT = 10;
@@ -241,8 +242,15 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | u
 
   const engagements = await Promise.all(
     memberships.map(async (m): Promise<UserGameEngagement> => {
-      const userScanWhere = and(eq(qr_code_scans.userId, userId), eq(qr_code_scans.teamId, m.teamId))!;
-      const teamScanWhere = eq(qr_code_scans.teamId, m.teamId);
+      // Only credited scans (accepted route codes and the wildcard) count here;
+      // rejected attempts are kept for audit but are not "scans" to the admin.
+      const credited = inArray(qr_code_scans.result, [...CREDITED_SCAN_RESULTS]);
+      const userScanWhere = and(
+        eq(qr_code_scans.userId, userId),
+        eq(qr_code_scans.teamId, m.teamId),
+        credited,
+      )!;
+      const teamScanWhere = and(eq(qr_code_scans.teamId, m.teamId), credited)!;
 
       const [
         [{ memberCount }],
@@ -257,11 +265,14 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | u
           .select({ memberCount: count() })
           .from(team_memberships)
           .where(eq(team_memberships.teamId, m.teamId)),
-        db.select({ totalCodes: count() }).from(qr_codes).where(eq(qr_codes.gameId, m.gameId)),
+        db
+          .select({ totalCodes: count() })
+          .from(qr_codes)
+          .where(and(eq(qr_codes.gameId, m.gameId), eq(qr_codes.isWildcard, false))),
         db
           .select({ teamCodesScanned: countDistinct(qr_code_scans.qrCodeId) })
           .from(qr_code_scans)
-          .where(teamScanWhere),
+          .where(and(eq(qr_code_scans.teamId, m.teamId), eq(qr_code_scans.result, "accepted"))),
         countWhere(userScanWhere),
         lastScan(userScanWhere),
         countWhere(teamScanWhere),

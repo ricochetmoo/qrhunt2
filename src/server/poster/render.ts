@@ -6,11 +6,26 @@ import { renderToBuffer } from "@react-pdf/renderer";
 
 import { PosterDocument } from "./poster-document";
 
+const DEFAULT_APP_URL = "http://localhost:3000";
+
+function getAppUrl(): string {
+  const configuredUrl =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.BETTER_AUTH_URL ??
+    DEFAULT_APP_URL;
+  const appUrl = /^https?:\/\//i.test(configuredUrl)
+    ? configuredUrl
+    : `https://${configuredUrl}`;
+
+  return appUrl.replace(/\/+$/, "");
+}
+
 export interface PosterCode {
   name: string;
   code: string;
 }
-
 export interface BuildGamePosterPdfInput {
   game: { name: string };
   codes: PosterCode[];
@@ -28,6 +43,7 @@ export async function buildGamePosterPdf(
   const tree = createElement(PosterDocument, {
     game: input.game,
     codes: input.codes,
+    appUrl: getAppUrl(),
   }) as Parameters<typeof renderToBuffer>[0];
 
   return renderToBuffer(tree);

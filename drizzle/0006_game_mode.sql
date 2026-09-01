@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN "game_mode" text DEFAULT 'speed' NOT NULL;
