@@ -15,6 +15,10 @@ const nextConfig: NextConfig = {
       // output file tracing cannot resolve from the externalized renderer.
       "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**/*",
     ],
+    "/api/admin/games/*/qr-images": [
+      "./public/brand/logo-linear-white.png",
+      "./public/brand/logo-marque-purple.png",
+    ],
   },
 };
 

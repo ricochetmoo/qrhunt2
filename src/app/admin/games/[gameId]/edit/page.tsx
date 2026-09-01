@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { GameForm } from "@/components/admin/game-form";
 import { PosterPrintButton } from "@/components/admin/poster-print-button";
+import { QrImageExportButton } from "@/components/admin/qr-image-export-button";
 import { QrCodeList } from "@/components/admin/qr-code-list";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/card";
@@ -26,6 +27,7 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
         actions={
           <>
             <PosterPrintButton gameId={game.id} />
+            <QrImageExportButton gameId={game.id} />
             <Link
               href={`/admin/games/${game.id}/dashboard`}
               className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"

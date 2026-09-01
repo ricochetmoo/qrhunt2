@@ -11,6 +11,7 @@ import {
 
 import { registerPosterFonts } from "./fonts";
 import { renderQrCode } from "./qr";
+import { buildQrPayload } from "./url";
 import {
   ACCENT,
   BODY_PADDING_X,
@@ -114,7 +115,7 @@ export function PosterDocument({ game, codes, appUrl }: PosterDocumentProps) {
             <Text style={styles.gameName}>{game.name}</Text>
             <Text style={styles.codeName}>{qr.name}</Text>
             <View style={styles.qr}>
-              {renderQrCode(`${appUrl}/s/${encodeURIComponent(qr.code)}`, { size: QR_SIZE })}
+              {renderQrCode(buildQrPayload(qr.code, appUrl), { size: QR_SIZE })}
             </View>
             <Text style={styles.helper}>Can&apos;t scan? Enter this code:</Text>
             <View style={styles.codeBox}>
