@@ -68,6 +68,7 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
       <Button
         variant="secondary"
         size="sm"
+        type="button"
         className="!px-3 !py-1.5 !text-sm"
         onClick={handlePrint}
         disabled={pending}
