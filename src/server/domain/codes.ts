@@ -1,8 +1,10 @@
 import "server-only";
 
+// Uppercase letters and digits with visually confusable characters (0/O, 1/I/L)
+// removed, since players type these codes by hand.
 const CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-// Largest multiple of 62 that fits in a byte; bytes at or above it are
+// Largest multiple of 31 that fits in a byte; bytes at or above it are
 // rejected so every character is uniformly distributed.
 const MAX_UNBIASED = 248;
 
@@ -31,11 +33,6 @@ export function generateRouteCode(length = 8): string {
 
 /** Random game join code (default 6 uppercase characters). */
 export function generateGameCode(length = 6): string {
-  return generateCode(length);
-}
-
-/** Team join codes share the game-code alphabet; both are typed by players. */
-export function generateTeamCode(length = 6): string {
   return generateCode(length);
 }
 
