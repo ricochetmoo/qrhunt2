@@ -16,12 +16,14 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
   }
 
   const { game, qrCodes } = result;
+  const onRoute = qrCodes.filter((code) => code.isActive && !code.isWildcard).length;
+  const spares = qrCodes.filter((code) => !code.isActive).length;
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={game.name}
-        description={`Game code ${game.gameCode} · ${qrCodes.length} ${qrCodes.length === 1 ? "code" : "codes"} on the route`}
+        description={`Game code ${game.gameCode} · ${onRoute} ${onRoute === 1 ? "stop" : "stops"} on the route${spares > 0 ? ` · ${spares} spare ${spares === 1 ? "code" : "codes"}` : ""}`}
         actions={
           <>
             <Link

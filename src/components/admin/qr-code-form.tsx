@@ -14,9 +14,17 @@ export type QrCodeFormValues = {
   latitude: string;
   longitude: string;
   isWildcard: boolean;
+  isActive: boolean;
 };
 
-const EMPTY: QrCodeFormValues = { name: "", hint: "", latitude: "", longitude: "", isWildcard: false };
+const EMPTY: QrCodeFormValues = {
+  name: "",
+  hint: "",
+  latitude: "",
+  longitude: "",
+  isWildcard: false,
+  isActive: true,
+};
 
 export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
   return {
@@ -25,6 +33,7 @@ export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
     latitude: values.latitude.trim() || null,
     longitude: values.longitude.trim() || null,
     isWildcard: values.isWildcard,
+    isActive: values.isActive,
   };
 }
 
@@ -127,6 +136,21 @@ export function QrCodeForm({
           <span className="block text-xs text-slate-500">
             Scanned at any point, outside the route order. One per game; only counts while the
             wildcard is enabled in game settings.
+          </span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+          checked={values.isActive}
+          onChange={(event) => update("isActive")(event.target.checked)}
+        />
+        <span className="text-sm text-slate-700">
+          In use
+          <span className="block text-xs text-slate-500">
+            Untick to keep this as a spare. Spares are printed on posters but are not part of the
+            route, do not count towards progress, and cannot be scanned or used to join.
           </span>
         </span>
       </label>

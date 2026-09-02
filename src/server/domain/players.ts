@@ -1,6 +1,6 @@
 import "server-only";
 
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { games, qr_codes } from "@/db/schema";
@@ -68,7 +68,8 @@ export async function findGameByRouteCode(
     .select({ game: games, qrCode: qr_codes })
     .from(qr_codes)
     .innerJoin(games, eq(qr_codes.gameId, games.id))
-    .where(sql`lower(${qr_codes.code}) = ${code}`)
+    // Spares (inactive codes) cannot be used to find or join a game.
+    .where(and(sql`lower(${qr_codes.code}) = ${code}`, eq(qr_codes.isActive, true)))
     .limit(1);
 
   return row;

@@ -57,6 +57,13 @@
       "when": 1788136131451,
       "tag": "0007_out_of_order",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788348336018,
+      "tag": "0008_qr_code_active",
+      "breakpoints": true
     }
   ]
 }

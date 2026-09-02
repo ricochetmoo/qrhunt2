@@ -188,6 +188,9 @@ export const qr_codes = pgTable(
     sortOrder: integer("sort_order").notNull().default(0),
     // The optional wildcard object sits outside the ordered route.
     isWildcard: boolean("is_wildcard").notNull().default(false),
+    // Spares can be generated and printed ahead of time. Only active codes
+    // form the route, count towards progress, or can be scanned/joined with.
+    isActive: boolean("is_active").notNull().default(true),
     gameId: text("game_id")
       .notNull()
       .references(() => games.id, { onDelete: "cascade" }),
