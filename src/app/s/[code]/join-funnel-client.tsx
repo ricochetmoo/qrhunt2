@@ -6,11 +6,44 @@ import { Button } from "@/components/ui/button";
 import { Card, CardBody } from "@/components/ui/card";
 import { ErrorMessage, Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api-client";
 import { signIn } from "@/lib/auth-client";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { detectScanContext, type ScanContext } from "@/lib/scan-context";
+import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
 
 const ONBOARDED_KEY = "qr-hunt:onboarded";
+const ACTIVE_GAME_KEY = "qr-hunt:active-game";
+const LANDING_SCAN_KEY_PREFIX = "qr-hunt:landing-scan:";
+/** Reloading this page soon after landing replays the same scan rather than logging a second one. */
+const LANDING_SCAN_REUSE_MS = 2 * 60_000;
+
+/** The funnel has no offline queue, so retryable outcomes ask for a re-scan instead. */
+const FUNNEL_SCAN_MESSAGES: Partial<Record<ScanResult, string>> = {
+  not_started: "The game hasn't started yet - scan this poster again once it has.",
+  paused: "The game is paused - scan this poster again when it resumes.",
+};
+
+/** What the player is shown after the poster they scanned has been logged. */
+type ScanView = {
+  result: ScanResult;
+  message: string;
+  stopName: string | null;
+  found: number;
+  total: number;
+  complete: boolean;
+  hintsReleased: boolean;
+  nextHint: string | null;
+};
+
+type Joined = {
+  /** Already enrolled before this visit (a later poster on the route). */
+  returning?: boolean;
+  message: string | null;
+  playerName?: string | null;
+  teamCode?: string | null;
+  scan?: ScanView | null;
+};
 
 type Resolved = {
   found: boolean;
@@ -53,6 +86,84 @@ function rememberOnboarded(gameId: string) {
   }
 }
 
+function rememberActiveGame(gameId: string, name: string) {
+  try {
+    window.localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({ gameId, name }));
+  } catch {
+    // convenience only
+  }
+}
+
+/**
+ * Idempotency key for the scan this landing represents. A reload or
+ * back-navigation within a couple of minutes reuses it, so the server replays
+ * the stored outcome instead of logging a duplicate; a genuine later re-scan
+ * gets a fresh id so a previously out-of-order stop can still be credited.
+ */
+function landingScanId(code: string): string {
+  const key = `${LANDING_SCAN_KEY_PREFIX}${code}`;
+
+  try {
+    const raw = window.sessionStorage.getItem(key);
+
+    if (raw) {
+      const stored = JSON.parse(raw) as { id?: string; at?: number };
+
+      if (stored.id && stored.at && Date.now() - stored.at < LANDING_SCAN_REUSE_MS) {
+        return stored.id;
+      }
+    }
+  } catch {
+    // storage unavailable; fall through to a fresh id
+  }
+
+  const id =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : `landing-${Date.now()}`;
+
+  try {
+    window.sessionStorage.setItem(key, JSON.stringify({ id, at: Date.now() }));
+  } catch {
+    // storage unavailable
+  }
+
+  return id;
+}
+
+function ScanOutcome({ scan }: { scan: ScanView }) {
+  const credited = scan.result === "accepted" || scan.result === "wildcard";
+  const tone = credited
+    ? "border-green-200 bg-green-50 text-green-800"
+    : isRetryableScanResult(scan.result)
+      ? "border-amber-200 bg-amber-50 text-amber-900"
+      : "border-slate-200 bg-slate-50 text-slate-700";
+
+  return (
+    <div className="space-y-3">
+      <div role="status" className={`rounded-md border px-3 py-2 text-sm ${tone}`}>
+        {scan.stopName ? <strong>{scan.stopName}: </strong> : null}
+        {scan.message}
+      </div>
+      {credited && scan.total > 0 ? (
+        <p className="text-sm text-slate-600">
+          {scan.found} of {scan.total} stops found.
+        </p>
+      ) : null}
+      {scan.complete ? (
+        <p className="text-sm font-medium text-green-700">
+          🎉 That&apos;s everything - route complete!
+        </p>
+      ) : scan.hintsReleased && scan.nextHint ? (
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Your next clue</p>
+          <p className="mt-1 whitespace-pre-line text-base text-slate-900">“{scan.nextHint}”</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CameraAdvice({ context }: { context: ScanContext | null }) {
   if (!context || context.platform !== "ios") {
     return null;
@@ -78,11 +189,42 @@ export function JoinFunnel({ code }: { code: string }) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [joined, setJoined] = useState<{
-    message: string;
-    playerName?: string | null;
-    teamCode?: string | null;
-  } | null>(null);
+  const [joined, setJoined] = useState<Joined | null>(null);
+
+  /** Log the poster this page represents as a scan for the player's team. Null on network/API failure. */
+  const submitScan = useCallback(
+    async (gameId: string): Promise<ScanView | null> => {
+      const response = await apiClient.api.player.games[":gameId"].scans.sync.$post({
+        param: { gameId },
+        json: {
+          scans: [{ clientScanId: landingScanId(code), code, scannedAt: new Date().toISOString() }],
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const { results, state } = await response.json();
+      const [outcome] = results;
+      const progress = state.progress;
+
+      return {
+        result: outcome.result,
+        message:
+          FUNNEL_SCAN_MESSAGES[outcome.result] ??
+          SCAN_RESULT_MESSAGES[outcome.result] ??
+          outcome.message,
+        stopName: outcome.qrCodeName,
+        found: progress?.found ?? 0,
+        total: progress?.total ?? 0,
+        complete: progress?.complete ?? false,
+        hintsReleased: progress?.hintsReleased ?? false,
+        nextHint: progress?.nextHint ?? null,
+      };
+    },
+    [code],
+  );
 
   const resolve = useCallback(async () => {
     setStage("loading");
@@ -104,6 +246,21 @@ export function JoinFunnel({ code }: { code: string }) {
       if (data.viewer?.signedIn && data.viewer.named) {
         // The close-and-rescan check has effectively passed: this context
         // remembered the identity across visits.
+        if (data.viewer.enrolled && data.kind === "stop") {
+          // Already playing, so this poster scan IS the scan: log it and show
+          // the outcome and next clue without a detour through "join".
+          const scan = await submitScan(data.game.id).catch(() => null);
+
+          if (scan) {
+            rememberActiveGame(data.game.id, data.game.name);
+            setJoined({ returning: true, message: null, playerName: data.viewer.name, scan });
+            setStage("joined");
+            return;
+          }
+
+          setError("Couldn't log this stop. Check your signal and try again.");
+        }
+
         setStage("welcome-back");
       } else {
         setStage("onboard");
@@ -112,7 +269,7 @@ export function JoinFunnel({ code }: { code: string }) {
       setError("Could not reach the game. Check your signal and try again.");
       setStage("onboard");
     }
-  }, [code]);
+  }, [code, submitScan]);
 
   useEffect(() => {
     const standalone =
@@ -175,94 +332,109 @@ export function JoinFunnel({ code }: { code: string }) {
   /**
    * Teams are one player: the name given at onboarding is the team name, and
    * the auto-created team's code doubles as the player's personal rejoin code.
+   * Once the team exists, the poster that brought the player here is logged
+   * as their first scan, so the stop they are standing at counts.
    */
   async function handleStart() {
+    if (!resolved?.game) return;
+
+    const game = resolved.game;
+    const wasEnrolled = resolved.viewer?.enrolled ?? false;
     setError(null);
     setBusy(true);
 
     try {
-      const playerName = resolved?.viewer?.name ?? name.trim() ?? null;
-      const joinBody =
-        resolved?.kind === "game"
-          ? { gameCode: code }
-          : resolved?.kind === "team"
-            ? { teamCode: code }
-            : { qrCode: code };
-      const joinResponse = await fetch("/api/player/join", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(joinBody),
-      });
+      const playerName = resolved.viewer?.name ?? name.trim() ?? null;
+      let teamCode: string | null = null;
 
-      if (!joinResponse.ok) {
-        const body = (await joinResponse.json().catch(() => null)) as { code?: string } | null;
-
-        if (body?.code === "ROUTE_SIGNUP_DISABLED" || body?.code === "SELF_SIGNUP_DISABLED") {
-          setJoined({
-            message:
-              "This game doesn't allow joining from a poster. Ask your leader for the game code.",
-          });
-          setStage("joined");
-          return;
-        }
-
-        if (body?.code === "GAME_NOT_JOINABLE") {
-          setJoined({ message: "This game isn't open for new players right now." });
-          setStage("joined");
-          return;
-        }
-
-        setError("Something went wrong starting the game. Try again.");
-        return;
-      }
-
-      type JoinState = { state?: { team?: { name: string; teamCode: string } | null } };
-      let team = ((await joinResponse.json().catch(() => null)) as JoinState | null)?.state?.team;
-
-      // Solo-team model: silently create the player's one-person team,
-      // proving capability with whichever code brought them here.
-      if (!team && resolved?.game) {
-        const teamResponse = await fetch(`/api/player/games/${resolved.game.id}/team`, {
+      if (!wasEnrolled) {
+        const joinBody =
+          resolved.kind === "game"
+            ? { gameCode: code }
+            : resolved.kind === "team"
+              ? { teamCode: code }
+              : { qrCode: code };
+        const joinResponse = await fetch("/api/player/join", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({
-            action: "create",
-            name: playerName || undefined,
-            ...(resolved.kind === "game" ? { gameCode: code } : { qrCode: code }),
-          }),
+          body: JSON.stringify(joinBody),
         });
 
-        if (teamResponse.ok) {
-          team = ((await teamResponse.json().catch(() => null)) as JoinState | null)?.state?.team;
-        } else {
-          const body = (await teamResponse.json().catch(() => null)) as { code?: string } | null;
+        if (!joinResponse.ok) {
+          const body = (await joinResponse.json().catch(() => null)) as { code?: string } | null;
 
-          if (body?.code !== "ALREADY_IN_TEAM") {
+          if (body?.code === "ROUTE_SIGNUP_DISABLED" || body?.code === "SELF_SIGNUP_DISABLED") {
             setJoined({
               message:
-                "You're checked in, but couldn't be entered into the game automatically. Ask your leader for help.",
+                "This game doesn't allow joining from a poster. Ask your leader for the game code.",
             });
             setStage("joined");
             return;
           }
+
+          if (body?.code === "GAME_NOT_JOINABLE") {
+            setJoined({ message: "This game isn't open for new players right now." });
+            setStage("joined");
+            return;
+          }
+
+          setError("Something went wrong starting the game. Try again.");
+          return;
         }
+
+        type JoinState = { state?: { team?: { name: string; teamCode: string } | null } };
+        let team = ((await joinResponse.json().catch(() => null)) as JoinState | null)?.state?.team;
+
+        // Solo-team model: silently create the player's one-person team,
+        // proving capability with whichever code brought them here.
+        if (!team) {
+          const teamResponse = await fetch(`/api/player/games/${game.id}/team`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              action: "create",
+              name: playerName || undefined,
+              ...(resolved.kind === "game" ? { gameCode: code } : { qrCode: code }),
+            }),
+          });
+
+          if (teamResponse.ok) {
+            team = ((await teamResponse.json().catch(() => null)) as JoinState | null)?.state?.team;
+          } else {
+            const body = (await teamResponse.json().catch(() => null)) as { code?: string } | null;
+
+            if (body?.code !== "ALREADY_IN_TEAM") {
+              setJoined({
+                message:
+                  "You're checked in, but couldn't be entered into the game automatically. Ask your leader for help.",
+                playerName,
+              });
+              setStage("joined");
+              return;
+            }
+          }
+        }
+
+        teamCode = team?.teamCode ?? null;
       }
 
+      rememberActiveGame(game.id, game.name);
+
+      // A poster brought them here: log that stop now.
+      const scan = resolved.kind === "stop" ? await submitScan(game.id).catch(() => null) : null;
+
       setJoined({
-        message: "You're in - your first hint is waiting on the game screen.",
+        returning: wasEnrolled,
+        message:
+          resolved.kind !== "stop"
+            ? "You're in - open your game for your first clue."
+            : scan
+              ? null
+              : "You're in, but this stop couldn't be logged. Open your game and type the code printed on the poster.",
         playerName,
-        teamCode: team?.teamCode ?? null,
+        teamCode,
+        scan,
       });
-      if (resolved?.game) {
-        try {
-          window.localStorage.setItem(
-            "qr-hunt:active-game",
-            JSON.stringify({ gameId: resolved.game.id, name: resolved.game.name }),
-          );
-        } catch {
-          // convenience only
-        }
-      }
       setStage("joined");
     } finally {
       setBusy(false);
@@ -384,9 +556,24 @@ export function JoinFunnel({ code }: { code: string }) {
                 ) : null}
               </p>
             </div>
-            <Button onClick={handleStart} disabled={busy} className="w-full">
-              {busy ? "Starting…" : viewer.enrolled ? "Back to the game" : "Start the game"}
-            </Button>
+            {viewer.enrolled && resolved?.kind !== "stop" ? (
+              <a
+                href={`/play/${game.id}`}
+                className="block w-full rounded-md bg-slate-900 px-3.5 py-2 text-center text-sm font-medium text-white hover:bg-slate-700"
+              >
+                Back to the game →
+              </a>
+            ) : (
+              <Button onClick={handleStart} disabled={busy} className="w-full">
+                {busy
+                  ? viewer.enrolled
+                    ? "Logging…"
+                    : "Starting…"
+                  : viewer.enrolled
+                    ? "Log this stop"
+                    : "Start the game"}
+              </Button>
+            )}
           </CardBody>
         </Card>
       ) : null}
@@ -395,10 +582,15 @@ export function JoinFunnel({ code }: { code: string }) {
         <Card>
           <CardBody className="space-y-3">
             <h1 className="text-lg font-semibold text-slate-900">
-              {joined?.playerName ? `You're checked in, ${joined.playerName}! 🎉` : game.name}
+              {joined?.playerName
+                ? joined.returning
+                  ? `Welcome back, ${joined.playerName}! ✅`
+                  : `You're checked in, ${joined.playerName}! 🎉`
+                : game.name}
             </h1>
-            <p className="text-sm text-slate-700">{joined?.message}</p>
-            {isGameMode(game.mode) ? (
+            {joined?.scan ? <ScanOutcome scan={joined.scan} /> : null}
+            {joined?.message ? <p className="text-sm text-slate-700">{joined.message}</p> : null}
+            {isGameMode(game.mode) && !joined?.returning ? (
               <p className="text-sm text-slate-600">{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
             ) : null}
             {joined?.teamCode ? (

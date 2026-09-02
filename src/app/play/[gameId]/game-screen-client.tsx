@@ -277,7 +277,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
             title={game.settings.allowOutOfOrder ? "A clue to chase" : "Your next clue"}
             description={
               game.settings.allowOutOfOrder
-                ? "Stops can be found in any order - this is the next one on the list."
+                ? "Stops can be found in any order - this is the next one along from where you are, and the route loops round."
                 : undefined
             }
           />

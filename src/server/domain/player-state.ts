@@ -124,7 +124,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
   const hintsReleased = team ? hintsReleasedFor(game, team) : false;
   const scans = team ? await listTeamScans(team.id) : [];
   const credited = scans.filter((scan) => isCreditedScanResult(scan.result));
-  const progress = team ? computeProgress(route, credited) : null;
+  const progress = team ? computeProgress(route, credited, { loop: game.allowOutOfOrder }) : null;
 
   const lastAccepted = [...credited].reverse().find((scan) => scan.result === "accepted") ?? null;
   const lastFoundIndex = lastAccepted

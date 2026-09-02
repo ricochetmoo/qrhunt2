@@ -26,6 +26,9 @@ import { extractRouteCode } from "./players";
  * - Progress is the set of route codes a team has been credited for. The next
  *   expected code is the first code in the *current* route order the team has
  *   not found, so admin reorders/insertions after play begins do not strand a team.
+ * - Any-order games treat the route as a loop: the next clue is the first
+ *   unfound stop *after* the most recently found one, wrapping at the end, so a
+ *   player who joins at stop 5 carries on to 6, 7, ... and comes round to 1.
  * - Ordering of offline batches follows the client's `scannedAt` (then array
  *   order); every scan is still validated against the authoritative state.
  * - Leaderboard timing uses server receipt time (client clocks are untrusted).
@@ -100,9 +103,59 @@ export async function listCreditedScans(teamId: string): Promise<CreditedScan[]>
     .orderBy(asc(qr_code_scans.createdAt));
 }
 
-export function computeProgress(route: QrCode[], credited: CreditedScan[]): TeamProgress {
+export type ProgressOptions = {
+  /** Any-order game: the next clue continues round the route from the last found stop. */
+  loop: boolean;
+};
+
+/**
+ * Index of the stop whose clue the team should chase next, or -1 when the
+ * route is complete. Ordered games: the first unfound stop. Looping games: the
+ * first unfound stop after the most recently found one, wrapping round.
+ * `credited` must be oldest-first. The looping target is always either
+ * position 0 or directly after a found stop, so its hint is unlocked both
+ * online and in the offline bundle (see route-bundle.ts).
+ */
+function nextTargetIndex(
+  route: QrCode[],
+  foundIds: ReadonlySet<string>,
+  credited: CreditedScan[],
+  loop: boolean,
+): number {
+  if (!loop) {
+    return route.findIndex((code) => !foundIds.has(code.id));
+  }
+
+  const positionOf = new Map(route.map((code, index) => [code.id, index]));
+  let lastFoundPosition = -1;
+
+  for (let i = credited.length - 1; i >= 0; i--) {
+    const position = credited[i].result === "accepted" ? positionOf.get(credited[i].qrCodeId) : undefined;
+
+    if (position !== undefined) {
+      lastFoundPosition = position;
+      break;
+    }
+  }
+
+  for (let step = 1; step <= route.length; step++) {
+    const index = (lastFoundPosition + step) % route.length;
+
+    if (!foundIds.has(route[index].id)) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+export function computeProgress(
+  route: QrCode[],
+  credited: CreditedScan[],
+  options: ProgressOptions = { loop: false },
+): TeamProgress {
   const foundIds = new Set(credited.filter((s) => s.result === "accepted").map((s) => s.qrCodeId));
-  const targetIndex = route.findIndex((code) => !foundIds.has(code.id));
+  const targetIndex = nextTargetIndex(route, foundIds, credited, options.loop);
   const found = route.filter((code) => foundIds.has(code.id)).length;
   const lastScanAt = credited.length > 0 ? credited[credited.length - 1].createdAt : null;
 
@@ -271,7 +324,8 @@ export async function syncScans(args: {
   const positionOf = new Map(route.map((code, index) => [code.id, index]));
 
   const credited = await listCreditedScans(team.id);
-  let progress = computeProgress(route, credited);
+  const progressOptions = { loop: game.allowOutOfOrder };
+  let progress = computeProgress(route, credited, progressOptions);
   const teamStarted = !game.staggeredStart || team.startedAt !== null;
 
   const ordered = [...args.scans].sort(
@@ -347,7 +401,7 @@ export async function syncScans(args: {
 
     if (result === "accepted" || result === "wildcard") {
       credited.push({ qrCodeId: code.id, result, createdAt: new Date() });
-      progress = computeProgress(route, credited);
+      progress = computeProgress(route, credited, progressOptions);
     }
 
     outcomesById.set(scan.clientScanId, outcome(scan, result, code, position));
