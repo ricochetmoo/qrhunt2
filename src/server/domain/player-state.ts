@@ -93,6 +93,9 @@ export type PlayerState = {
     isWildcard: boolean;
     scannedByUserId: string;
     scannedAt: Date;
+    /** The stop's clue and fun fact, only once the team has been credited for it. */
+    hint: string | null;
+    funFact: string | null;
   }[];
   leaderboard: LeaderboardEntry[];
 };
@@ -157,19 +160,31 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       : null;
 
   const positionOf = new Map(route.map((code, index) => [code.id, index]));
-  const nameOf = new Map(codes.map((code) => [code.id, code.name]));
+  const codeById = new Map(codes.map((code) => [code.id, code]));
+  // A stop's clue and fun fact are revealed in history only once the team has
+  // been credited for it, so an out-of-order scan never leaks a locked clue.
+  const revealed = (qrCodeId: string) =>
+    (progress?.foundIds.has(qrCodeId) ?? false) ||
+    (qrCodeId === wildcard?.id && (progress?.wildcardFound ?? false));
   const history = scans
     .slice(-HISTORY_LIMIT)
     .reverse()
-    .map((scan) => ({
-      id: scan.id,
-      result: scan.result,
-      stopName: nameOf.get(scan.qrCodeId) ?? null,
-      position: positionOf.get(scan.qrCodeId) ?? null,
-      isWildcard: scan.qrCodeId === wildcard?.id,
-      scannedByUserId: scan.userId,
-      scannedAt: scan.createdAt,
-    }));
+    .map((scan) => {
+      const code = codeById.get(scan.qrCodeId);
+      const show = code !== undefined && revealed(scan.qrCodeId);
+
+      return {
+        id: scan.id,
+        result: scan.result,
+        stopName: code?.name ?? null,
+        position: positionOf.get(scan.qrCodeId) ?? null,
+        isWildcard: scan.qrCodeId === wildcard?.id,
+        scannedByUserId: scan.userId,
+        scannedAt: scan.createdAt,
+        hint: show ? code.hint : null,
+        funFact: show ? code.funFact : null,
+      };
+    });
 
   const [bundle, members, leaderboard] = await Promise.all([
     buildRouteBundle(game, route, wildcard, {
