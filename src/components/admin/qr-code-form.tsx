@@ -11,6 +11,7 @@ import { useGeolocation } from "@/lib/use-geolocation";
 export type QrCodeFormValues = {
   name: string;
   hint: string;
+  funFact: string;
   latitude: string;
   longitude: string;
   isWildcard: boolean;
@@ -20,6 +21,7 @@ export type QrCodeFormValues = {
 const EMPTY: QrCodeFormValues = {
   name: "",
   hint: "",
+  funFact: "",
   latitude: "",
   longitude: "",
   isWildcard: false,
@@ -30,6 +32,7 @@ export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
   return {
     name: values.name,
     hint: values.hint,
+    funFact: values.funFact.trim() || null,
     latitude: values.latitude.trim() || null,
     longitude: values.longitude.trim() || null,
     isWildcard: values.isWildcard,
@@ -103,6 +106,18 @@ export function QrCodeForm({
           value={values.hint}
           onChange={(event) => update("hint")(event.target.value)}
           required
+          maxLength={1000}
+        />
+      </Field>
+      <Field
+        label="Fun fact"
+        htmlFor={`${idPrefix}-fun-fact`}
+        hint="Optional. Shown with the scan result once players have found this stop."
+      >
+        <Textarea
+          id={`${idPrefix}-fun-fact`}
+          value={values.funFact}
+          onChange={(event) => update("funFact")(event.target.value)}
           maxLength={1000}
         />
       </Field>

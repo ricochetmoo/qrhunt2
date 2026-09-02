@@ -60,6 +60,7 @@ export type PlayerState = {
       position: number;
       name: string;
       hint: string;
+      funFact: string | null;
       location: { latitude: string; longitude: string } | null;
       scannedAt: Date;
     } | null;
@@ -137,6 +138,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           position: lastFoundIndex,
           name: route[lastFoundIndex].name,
           hint: route[lastFoundIndex].hint,
+          funFact: route[lastFoundIndex].funFact,
           location:
             route[lastFoundIndex].latitude && route[lastFoundIndex].longitude
               ? {

@@ -144,6 +144,7 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                   initial={{
                     name: code.name,
                     hint: code.hint,
+                    funFact: code.funFact ?? "",
                     latitude: code.latitude ?? "",
                     longitude: code.longitude ?? "",
                     isWildcard: code.isWildcard,
@@ -208,6 +209,11 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                       ) : null}
                     </div>
                     <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{code.hint}</p>
+                    {code.funFact ? (
+                      <p className="mt-1 whitespace-pre-line text-xs text-slate-500">
+                        <span className="font-semibold">Fun fact:</span> {code.funFact}
+                      </p>
+                    ) : null}
                   </div>
                   <div className="flex shrink-0 gap-1">
                     <Button

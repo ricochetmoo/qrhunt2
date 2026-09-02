@@ -272,6 +272,7 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | u
             and(
               eq(qr_codes.gameId, m.gameId),
               eq(qr_codes.isWildcard, false),
+              eq(qr_codes.isCompletion, false),
               eq(qr_codes.isActive, true),
             ),
           ),

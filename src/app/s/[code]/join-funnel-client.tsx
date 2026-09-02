@@ -29,6 +29,7 @@ type ScanView = {
   result: ScanResult;
   message: string;
   stopName: string | null;
+  funFact: string | null;
   found: number;
   total: number;
   complete: boolean;
@@ -145,6 +146,12 @@ function ScanOutcome({ scan }: { scan: ScanView }) {
         {scan.stopName ? <strong>{scan.stopName}: </strong> : null}
         {scan.message}
       </div>
+      {scan.funFact ? (
+        <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          <span className="font-semibold">Fun fact:</span>{" "}
+          <span className="whitespace-pre-line">{scan.funFact}</span>
+        </p>
+      ) : null}
       {credited && scan.total > 0 ? (
         <p className="text-sm text-slate-600">
           {scan.found} of {scan.total} stops found.
@@ -216,6 +223,7 @@ export function JoinFunnel({ code }: { code: string }) {
           SCAN_RESULT_MESSAGES[outcome.result] ??
           outcome.message,
         stopName: outcome.qrCodeName,
+        funFact: outcome.funFact,
         found: progress?.found ?? 0,
         total: progress?.total ?? 0,
         complete: progress?.complete ?? false,

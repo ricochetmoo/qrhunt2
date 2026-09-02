@@ -49,6 +49,8 @@ export const updateGameSchema = z
 export const qrCodeInputSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(120),
   hint: z.string().trim().min(1, "Hint is required.").max(1000),
+  /** Shown with the scan result once the stop is found. */
+  funFact: optionalText(1000),
   latitude: latitude(),
   longitude: longitude(),
   isWildcard: z.boolean().optional(),
