@@ -58,7 +58,7 @@ export async function computeRouteVersion(codes: QrCode[]): Promise<string> {
   const fingerprint = codes
     .map(
       (code) =>
-        `${code.id}:${code.sortOrder}:${code.isWildcard ? 1 : 0}:${code.isActive ? 1 : 0}:${code.updatedAt.getTime()}`,
+        `${code.id}:${code.sortOrder}:${code.isWildcard ? 1 : 0}:${code.isCompletion ? 1 : 0}:${code.isActive ? 1 : 0}:${code.updatedAt.getTime()}`,
     )
     .sort()
     .join("|");

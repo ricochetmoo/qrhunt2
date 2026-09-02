@@ -18,14 +18,18 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
   }
 
   const { game, qrCodes } = result;
-  const onRoute = qrCodes.filter((code) => code.isActive && !code.isWildcard).length;
+  // Route stops only: the wildcard and the finish-line code sit outside the route.
+  const onRoute = qrCodes.filter(
+    (code) => code.isActive && !code.isWildcard && !code.isCompletion,
+  ).length;
   const spares = qrCodes.filter((code) => !code.isActive).length;
+  const hasFinishLine = qrCodes.some((code) => code.isActive && code.isCompletion);
 
   return (
     <div className="space-y-6">
       <PageHeader
         title={game.name}
-        description={`Game code ${game.gameCode} · ${onRoute} ${onRoute === 1 ? "stop" : "stops"} on the route${spares > 0 ? ` · ${spares} spare ${spares === 1 ? "code" : "codes"}` : ""}`}
+        description={`Game code ${game.gameCode} · ${onRoute} ${onRoute === 1 ? "stop" : "stops"} on the route${hasFinishLine ? " · finish-line code set" : ""}${spares > 0 ? ` · ${spares} spare ${spares === 1 ? "code" : "codes"}` : ""}`}
         actions={
           <>
             <PosterPrintButton gameId={game.id} />
