@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN "completion_message" text;

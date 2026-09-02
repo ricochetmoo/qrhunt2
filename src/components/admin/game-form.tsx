@@ -9,6 +9,7 @@ import { Input, Select, Textarea } from "@/components/ui/input";
 import type { Game } from "@/db/types";
 import { apiClient } from "@/lib/api-client";
 import { readError } from "@/lib/api-errors";
+import { COMPLETION_MESSAGE_MAX_LENGTH } from "@/lib/completion";
 import {
   GAME_MODES,
   GAME_MODE_DESCRIPTIONS,
@@ -24,6 +25,7 @@ export type EditableGame = Pick<
   | "name"
   | "status"
   | "pauseReason"
+  | "completionMessage"
   | "gameCode"
   | "gameMode"
   | "allowOutOfOrder"
@@ -43,6 +45,7 @@ type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
 
 type ConfigState = {
   gameMode: GameMode;
+  completionMessage: string;
   allowOutOfOrder: boolean;
   allowSelfSignup: boolean;
   allowTeamCreation: boolean;
@@ -67,6 +70,7 @@ function toLocalInputValue(date: Date | null): string {
 function initialConfig(game: EditableGame | null): ConfigState {
   return {
     gameMode: game && isGameMode(game.gameMode) ? game.gameMode : "speed",
+    completionMessage: game?.completionMessage ?? "",
     allowOutOfOrder: game?.allowOutOfOrder ?? false,
     allowSelfSignup: game?.allowSelfSignup ?? true,
     allowTeamCreation: game?.allowTeamCreation ?? true,
@@ -166,6 +170,7 @@ export function GameForm(props: GameFormProps) {
           name,
           status,
           pauseReason: status === "paused" ? pauseReason : null,
+          completionMessage: config.completionMessage.trim() || null,
           gameMode: config.gameMode,
           allowOutOfOrder: config.allowOutOfOrder,
           allowSelfSignup: config.allowSelfSignup,
@@ -431,6 +436,22 @@ export function GameForm(props: GameFormProps) {
                 />
               </Field>
             </div>
+          </Section>
+
+          <Section title="Completion">
+            <Field
+              label="Completion message"
+              htmlFor="cfg-completion-message"
+              hint={`Shown to a team when it completes the route. Leave blank for the standard congratulations message. Up to ${COMPLETION_MESSAGE_MAX_LENGTH} characters.`}
+            >
+              <Textarea
+                id="cfg-completion-message"
+                value={config.completionMessage}
+                onChange={(event) => set("completionMessage")(event.target.value)}
+                maxLength={COMPLETION_MESSAGE_MAX_LENGTH}
+                rows={5}
+              />
+            </Field>
           </Section>
         </>
       ) : null}
