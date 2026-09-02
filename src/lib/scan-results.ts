@@ -12,6 +12,7 @@ export const SCAN_RESULTS = [
   "paused", // game is paused; resend when it resumes
   "not_started", // game (or this team, if staggered) has not started; resend later
   "late", // game already finished; recorded but not counted
+  "completion", // the finish-line code: check in via the /s/<code> page, not a scan
 ] as const;
 
 export type ScanResult = (typeof SCAN_RESULTS)[number];
@@ -40,6 +41,8 @@ export const SCAN_RESULT_MESSAGES: Record<ScanResult, string> = {
   paused: "The game is paused. Your scan will be sent when it resumes.",
   not_started: "The game hasn't started yet. Your scan will be sent when it does.",
   late: "The game has finished, so this scan doesn't count.",
+  completion:
+    "That's the finish-line code. Once you've found every stop, scan it with your Camera app at the Digital Team tent to check in.",
 };
 
 export function isRetryableScanResult(result: ScanResult): boolean {

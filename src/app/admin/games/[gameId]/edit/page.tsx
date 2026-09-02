@@ -36,6 +36,12 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
             >
               View dashboard
             </Link>
+            <Link
+              href={`/admin/games/${game.id}/badges`}
+              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              Badges
+            </Link>
             <StatusBadge status={game.status} />
           </>
         }

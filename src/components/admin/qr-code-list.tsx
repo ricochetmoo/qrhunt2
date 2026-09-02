@@ -148,6 +148,7 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                     latitude: code.latitude ?? "",
                     longitude: code.longitude ?? "",
                     isWildcard: code.isWildcard,
+                    isCompletion: code.isCompletion,
                     isActive: code.isActive,
                   }}
                   pending={pending}
@@ -183,13 +184,20 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600">
                           Spare
                         </span>
+                      ) : code.isCompletion ? (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
+                          Finish line
+                        </span>
                       ) : code.isWildcard ? (
                         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
                           Wildcard
                         </span>
                       ) : (
                         <span className="text-xs font-semibold text-slate-400">
-                          {codes.slice(0, index).filter((c) => c.isActive && !c.isWildcard).length + 1}.
+                          {codes
+                            .slice(0, index)
+                            .filter((c) => c.isActive && !c.isWildcard && !c.isCompletion).length + 1}
+                          .
                         </span>
                       )}
                       <span

@@ -139,6 +139,13 @@ export async function joinGame(userId: string, input: JoinGameInput): Promise<Jo
       throw new DomainError("NOT_FOUND", "That QR code is not part of a game.");
     }
 
+    if (match.qrCode.isCompletion) {
+      throw new DomainError(
+        "COMPLETION_CODE",
+        "That's the finish-line code, not a route poster. Scan a poster on the route to join.",
+      );
+    }
+
     game = match.game;
 
     if (isPlayerVisible(game.status) && !game.routeSignupEnabled) {

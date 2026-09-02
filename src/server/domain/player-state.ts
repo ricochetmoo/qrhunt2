@@ -28,6 +28,8 @@ export type PlayerState = {
     finishedAt: Date | null;
     completionMessage: string | null;
     wildcard: { enabled: boolean; name: string | null };
+    /** The "I'm done" finish-line code, if configured; the completion screen points players at it. */
+    completion: { name: string } | null;
     settings: {
       allowOutOfOrder: boolean;
       allowTeamCreation: boolean;
@@ -47,6 +49,10 @@ export type PlayerState = {
     photoUrl: string | null;
     startedAt: Date | null;
     finishedAt: Date | null;
+    /** Checked in at the finish line (scanned the completion code and gave feedback). */
+    reportedCompletedAt: Date | null;
+    /** An organiser has handed over the badge. */
+    prizeIssuedAt: Date | null;
     members: { userId: string; name: string; isYou: boolean }[];
   } | null;
   progress: {
@@ -120,7 +126,7 @@ export async function requireTeamMember(
 
 async function buildState(game: Game, team: Team | null, userId: string): Promise<PlayerState> {
   const codes = await listQrCodes(game.id);
-  const { route, wildcard } = splitRoute(codes);
+  const { route, wildcard, completion } = splitRoute(codes);
 
   // Pre-team previews reveal nothing: the bundle stays fully locked.
   const hintsReleased = team ? hintsReleasedFor(game, team) : false;
@@ -186,6 +192,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       finishedAt: game.finishedAt,
       completionMessage: game.completionMessage ?? null,
       wildcard: { enabled: game.wildcardEnabled, name: game.wildcardName },
+      completion: completion ? { name: completion.name } : null,
       settings: {
         allowOutOfOrder: game.allowOutOfOrder,
         allowTeamCreation: game.allowSelfSignup && game.allowTeamCreation,
@@ -205,6 +212,8 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           photoUrl: team.photoUrl,
           startedAt: team.startedAt,
           finishedAt: team.finishedAt,
+          reportedCompletedAt: team.reportedCompletedAt,
+          prizeIssuedAt: team.prizeIssuedAt,
           members: members.map((member) => ({ ...member, isYou: member.userId === userId })),
         }
       : null,

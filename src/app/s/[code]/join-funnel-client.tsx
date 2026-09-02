@@ -10,6 +10,8 @@ import { apiClient } from "@/lib/api-client";
 import { signIn } from "@/lib/auth-client";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { detectScanContext, type ScanContext } from "@/lib/scan-context";
+
+import { FinishLine } from "./finish-line-client";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
 
 const ONBOARDED_KEY = "qr-hunt:onboarded";
@@ -48,8 +50,11 @@ type Joined = {
 
 type Resolved = {
   found: boolean;
-  /** "stop" = poster QR payload; "game" = 6-char game code; "team" = rejoin/team code. */
-  kind?: "stop" | "game" | "team";
+  /**
+   * "stop" = poster QR payload; "game" = 6-char game code; "team" = rejoin/team
+   * code; "completion" = the "I'm done" finish-line code (handled by FinishLine).
+   */
+  kind?: "stop" | "game" | "team" | "completion";
   game?: {
     id: string;
     name: string;
@@ -451,6 +456,16 @@ export function JoinFunnel({ code }: { code: string }) {
 
   const game = resolved?.game;
   const viewer = resolved?.viewer;
+
+  // The finish-line code has its own flow: feedback then check-in, never join.
+  if (resolved?.kind === "completion" && game) {
+    return (
+      <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 px-4 py-8">
+        <CameraAdvice context={scanContext} />
+        <FinishLine code={code} game={game} viewer={viewer} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 px-4 py-8">

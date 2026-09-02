@@ -15,6 +15,7 @@ export type QrCodeFormValues = {
   latitude: string;
   longitude: string;
   isWildcard: boolean;
+  isCompletion: boolean;
   isActive: boolean;
 };
 
@@ -25,6 +26,7 @@ const EMPTY: QrCodeFormValues = {
   latitude: "",
   longitude: "",
   isWildcard: false,
+  isCompletion: false,
   isActive: true,
 };
 
@@ -36,6 +38,7 @@ export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
     latitude: values.latitude.trim() || null,
     longitude: values.longitude.trim() || null,
     isWildcard: values.isWildcard,
+    isCompletion: values.isCompletion,
     isActive: values.isActive,
   };
 }
@@ -144,13 +147,41 @@ export function QrCodeForm({
           type="checkbox"
           className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
           checked={values.isWildcard}
-          onChange={(event) => update("isWildcard")(event.target.checked)}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              isWildcard: event.target.checked,
+              isCompletion: event.target.checked ? false : current.isCompletion,
+            }))
+          }
         />
         <span className="text-sm text-slate-700">
           This is the wildcard object
           <span className="block text-xs text-slate-500">
             Scanned at any point, outside the route order. One per game; only counts while the
             wildcard is enabled in game settings.
+          </span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+          checked={values.isCompletion}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              isCompletion: event.target.checked,
+              isWildcard: event.target.checked ? false : current.isWildcard,
+            }))
+          }
+        />
+        <span className="text-sm text-slate-700">
+          This is the &quot;I&apos;m done&quot; finish-line code
+          <span className="block text-xs text-slate-500">
+            Put this poster at the Digital Team tent. Never part of the route: once a team has
+            found every stop, scanning it opens the feedback form and checks them in for a
+            badge. One per game.
           </span>
         </span>
       </label>

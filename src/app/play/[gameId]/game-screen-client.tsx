@@ -26,6 +26,8 @@ type ScanNotice = {
   message: string;
   stopName: string | null;
   funFact: string | null;
+  /** Set when the code entered was the finish-line code: where to check in. */
+  checkInHref: string | null;
 };
 
 const timeFormat = new Intl.DateTimeFormat("en-GB", { timeStyle: "short" });
@@ -149,6 +151,8 @@ export function GameScreen({ gameId }: { gameId: string }) {
         message: SCAN_RESULT_MESSAGES[outcome.result] ?? outcome.message,
         stopName: outcome.qrCodeName,
         funFact: outcome.funFact,
+        checkInHref:
+          outcome.result === "completion" ? `/s/${encodeURIComponent(entered)}` : null,
       });
 
       if (outcome.result === "accepted" || outcome.result === "wildcard") {
@@ -376,6 +380,11 @@ export function GameScreen({ gameId }: { gameId: string }) {
                     <span className="font-semibold">Fun fact:</span> {notice.funFact}
                   </span>
                 ) : null}
+                {notice.checkInHref ? (
+                  <Link href={notice.checkInHref} className="mt-2 block font-medium underline">
+                    Check in at the finish line →
+                  </Link>
+                ) : null}
               </div>
             ) : null}
             <form onSubmit={handleSubmitCode} className="flex gap-2">
@@ -531,6 +540,33 @@ function CompletionScreen({
             <p id="completion-message" className="whitespace-pre-line text-base leading-7 text-slate-700">
               {message}
             </p>
+
+            {team.prizeIssuedAt ? (
+              <div className="rounded-md border border-green-200 bg-green-50 px-3 py-3 text-left text-sm text-green-900">
+                🎖 Badge issued at {timeFormat.format(new Date(team.prizeIssuedAt))}. Thanks for
+                playing!
+              </div>
+            ) : team.reportedCompletedAt ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-left text-sm text-amber-900">
+                ✅ You checked in at {timeFormat.format(new Date(team.reportedCompletedAt))}. Show
+                this screen at the <strong>Digital Team tent</strong> to collect your badge.
+              </div>
+            ) : (
+              <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Claim your badge</p>
+                <p className="mt-1">
+                  Head to the <strong>Digital Team tent</strong> and scan the{" "}
+                  {game.completion ? (
+                    <>
+                      <strong>&quot;{game.completion.name}&quot;</strong> QR code
+                    </>
+                  ) : (
+                    <>finish-line QR code</>
+                  )}{" "}
+                  with your Camera app. Tell us how it went and we&apos;ll check you in.
+                </p>
+              </div>
+            )}
 
             <dl className="divide-y divide-slate-100 rounded-md border border-slate-200 text-left">
               <div className="flex items-center justify-between gap-4 px-4 py-3">

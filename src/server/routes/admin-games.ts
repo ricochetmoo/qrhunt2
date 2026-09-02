@@ -7,10 +7,12 @@ import {
   qrCodeInputSchema,
   qrCodeParamSchema,
   reorderQrCodesSchema,
+  teamParamSchema,
   updateGameSchema,
   updateQrCodeSchema,
 } from "@/lib/admin-schemas";
 import { gameDashboard } from "@/server/api/gameDashboard";
+import { listCompletions, setPrizeIssued } from "@/server/domain/completion";
 import { domainErrorToResponse } from "@/server/domain/errors";
 import {
   createGame,
@@ -51,6 +53,32 @@ export const adminGamesRoute = new Hono()
     return c.json(result);
   })
   .get("/:gameId/dashboard", zValidator("param", gameIdParamSchema), gameDashboard)
+  // Badge queue: teams that have checked in at the finish line.
+  .get("/:gameId/completions", zValidator("param", gameIdParamSchema), async (c) =>
+    c.json({ completions: await listCompletions(c.req.valid("param").gameId) }),
+  )
+  .post("/:gameId/teams/:teamId/prize", zValidator("param", teamParamSchema), async (c) => {
+    const { gameId, teamId } = c.req.valid("param");
+
+    try {
+      const team = await setPrizeIssued(gameId, teamId, true);
+
+      return c.json({ team });
+    } catch (error) {
+      return domainErrorToResponse(c, error);
+    }
+  })
+  .delete("/:gameId/teams/:teamId/prize", zValidator("param", teamParamSchema), async (c) => {
+    const { gameId, teamId } = c.req.valid("param");
+
+    try {
+      const team = await setPrizeIssued(gameId, teamId, false);
+
+      return c.json({ team });
+    } catch (error) {
+      return domainErrorToResponse(c, error);
+    }
+  })
   .patch(
     "/:gameId",
     zValidator("param", gameIdParamSchema),

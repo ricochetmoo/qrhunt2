@@ -298,9 +298,11 @@ export async function syncScans(args: {
   userId: string;
   route: QrCode[];
   wildcard: QrCode | null;
+  /** The finish-line code: recognised so players get a pointer to check in, never credited. */
+  completion?: QrCode | null;
   scans: ScanSubmission[];
 }): Promise<{ outcomes: ScanOutcome[]; progress: TeamProgress }> {
-  const { game, team, userId, route, wildcard } = args;
+  const { game, team, userId, route, wildcard, completion = null } = args;
 
   // Idempotency: outcomes already recorded for these client ids win.
   const priorRows = await db
@@ -355,7 +357,14 @@ export async function syncScans(args: {
       continue;
     }
 
-    const code = codesByValue.get(normalizeRouteCode(extractRouteCode(scan.code)));
+    const presented = normalizeRouteCode(extractRouteCode(scan.code));
+    const code = codesByValue.get(presented);
+
+    if (!code && completion && normalizeRouteCode(completion.code) === presented) {
+      // Not a scan: checking in happens on the /s/<code> finish-line page.
+      outcomesById.set(scan.clientScanId, outcome(scan, "completion", completion, null));
+      continue;
+    }
 
     if (!code || (code.isWildcard && !game.wildcardEnabled)) {
       outcomesById.set(scan.clientScanId, outcome(scan, "invalid", null, null));

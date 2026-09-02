@@ -44,11 +44,35 @@ async function assertNoOtherWildcard(gameId: string, exceptId?: string) {
   }
 }
 
+/** One "I'm done" finish-line code per game. */
+async function assertNoOtherCompletion(gameId: string, exceptId?: string) {
+  const [existing] = await db
+    .select({ id: qr_codes.id })
+    .from(qr_codes)
+    .where(and(eq(qr_codes.gameId, gameId), eq(qr_codes.isCompletion, true)))
+    .limit(1);
+
+  if (existing && existing.id !== exceptId) {
+    throw new DomainError("VALIDATION", "This game already has a finish-line code.");
+  }
+}
+
+function assertOneRole(input: { isWildcard?: boolean | null; isCompletion?: boolean | null }) {
+  if (input.isWildcard && input.isCompletion) {
+    throw new DomainError("VALIDATION", "A code cannot be both the wildcard and the finish line.");
+  }
+}
+
 export async function createQrCode(gameId: string, input: QrCodeInput): Promise<QrCode> {
   await requireGame(gameId);
+  assertOneRole(input);
 
   if (input.isWildcard) {
     await assertNoOtherWildcard(gameId);
+  }
+
+  if (input.isCompletion) {
+    await assertNoOtherCompletion(gameId);
   }
 
   const [{ maxOrder }] = await db
@@ -73,6 +97,7 @@ export async function createQrCode(gameId: string, input: QrCodeInput): Promise<
           code: generateRouteCode(),
           sortOrder,
           isWildcard: input.isWildcard ?? false,
+          isCompletion: input.isCompletion ?? false,
           isActive: input.isActive ?? true,
         })
         .returning();
@@ -93,8 +118,29 @@ export async function updateQrCode(
   qrCodeId: string,
   patch: UpdateQrCodeInput,
 ): Promise<QrCode> {
+  if (patch.isWildcard || patch.isCompletion) {
+    const [current] = await db
+      .select({ isWildcard: qr_codes.isWildcard, isCompletion: qr_codes.isCompletion })
+      .from(qr_codes)
+      .where(and(eq(qr_codes.id, qrCodeId), eq(qr_codes.gameId, gameId)))
+      .limit(1);
+
+    if (!current) {
+      throw new DomainError("NOT_FOUND", "QR code not found.");
+    }
+
+    assertOneRole({
+      isWildcard: patch.isWildcard ?? current.isWildcard,
+      isCompletion: patch.isCompletion ?? current.isCompletion,
+    });
+  }
+
   if (patch.isWildcard) {
     await assertNoOtherWildcard(gameId, qrCodeId);
+  }
+
+  if (patch.isCompletion) {
+    await assertNoOtherCompletion(gameId, qrCodeId);
   }
 
   const [updated] = await db
@@ -106,6 +152,7 @@ export async function updateQrCode(
       ...(patch.latitude !== undefined && { latitude: patch.latitude }),
       ...(patch.longitude !== undefined && { longitude: patch.longitude }),
       ...(patch.isWildcard !== undefined && { isWildcard: patch.isWildcard }),
+      ...(patch.isCompletion !== undefined && { isCompletion: patch.isCompletion }),
       ...(patch.isActive !== undefined && { isActive: patch.isActive }),
       updatedAt: new Date(),
     })

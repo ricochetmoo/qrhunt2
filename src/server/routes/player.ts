@@ -8,11 +8,13 @@ import {
   joinGameSchema,
   playerGameIdParamSchema,
   playerTeamIdParamSchema,
+  reportCompletionSchema,
   syncScansSchema,
   teamActionSchema,
   updatePlayerMeSchema,
   updateTeamSchema,
 } from "@/lib/player-schemas";
+import { reportCompletion } from "@/server/domain/completion";
 import { DomainError, domainErrorToResponse } from "@/server/domain/errors";
 import { getGame } from "@/server/domain/games";
 import { getGamePreview, getPlayerState, requireTeamMember } from "@/server/domain/player-state";
@@ -57,7 +59,10 @@ export const playerRoute = new Hono<PlayerEnv>()
     const upper = payload.trim().toUpperCase();
     const match = await findGameByRouteCode(payload);
     let game = match?.game;
-    let kind: "stop" | "game" | "team" = "stop";
+    // "completion" is the game's "I'm done" finish-line code (see domain/completion.ts).
+    let kind: "stop" | "game" | "team" | "completion" = match?.qrCode.isCompletion
+      ? "completion"
+      : "stop";
 
     if (!game) {
       game = await findGameByCode(upper);
@@ -95,7 +100,8 @@ export const playerRoute = new Hono<PlayerEnv>()
         routeSignupEnabled: game.routeSignupEnabled,
         allowSelfSignup: game.allowSelfSignup,
       },
-      stop: match ? { name: match.qrCode.name } : null,
+      stop: match && !match.qrCode.isCompletion ? { name: match.qrCode.name } : null,
+      completion: match?.qrCode.isCompletion ? { name: match.qrCode.name } : null,
       viewer: {
         signedIn: Boolean(session),
         named: Boolean(name) && name !== ANONYMOUS_DEFAULT_NAME,
@@ -149,10 +155,12 @@ export const playerRoute = new Hono<PlayerEnv>()
 
         if (input.action === "create") {
           const viaGameCode = input.gameCode !== undefined && game.gameCode === input.gameCode;
-          const viaQr =
-            !viaGameCode &&
-            input.qrCode !== undefined &&
-            (await findGameByRouteCode(input.qrCode))?.game.id === game.id;
+          const qrMatch =
+            !viaGameCode && input.qrCode !== undefined
+              ? await findGameByRouteCode(input.qrCode)
+              : undefined;
+          // The finish-line code proves nothing about being on the route.
+          const viaQr = qrMatch?.game.id === game.id && !qrMatch.qrCode.isCompletion;
 
           if (!viaGameCode && !viaQr) {
             throw new DomainError("FORBIDDEN", "That code does not match this game.");
@@ -206,11 +214,40 @@ export const playerRoute = new Hono<PlayerEnv>()
 
       try {
         const { game, team } = await requireTeamMember(gameId, user.id);
-        const { route, wildcard } = splitRoute(await listQrCodes(gameId));
-        const { outcomes } = await syncScans({ game, team, userId: user.id, route, wildcard, scans });
+        const { route, wildcard, completion } = splitRoute(await listQrCodes(gameId));
+        const { outcomes } = await syncScans({
+          game,
+          team,
+          userId: user.id,
+          route,
+          wildcard,
+          completion,
+          scans,
+        });
         const state = await getPlayerState(gameId, user.id);
 
         return c.json({ results: outcomes, state });
+      } catch (error) {
+        return domainErrorToResponse(c, error);
+      }
+    },
+  )
+  // Finish line: present the completion code plus feedback to be checked in
+  // for a badge. See domain/completion.ts for the rules.
+  .post(
+    "/games/:gameId/complete",
+    zValidator("param", playerGameIdParamSchema),
+    zValidator("json", reportCompletionSchema),
+    async (c) => {
+      const user = c.get("user");
+      const { gameId } = c.req.valid("param");
+
+      try {
+        const { game, team } = await requireTeamMember(gameId, user.id);
+        await reportCompletion(game, team, user.id, c.req.valid("json"));
+        const state = await getPlayerState(gameId, user.id);
+
+        return c.json({ state });
       } catch (error) {
         return domainErrorToResponse(c, error);
       }

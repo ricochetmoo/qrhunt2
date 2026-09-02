@@ -38,14 +38,20 @@ export type RouteBundle = {
  * entirely: they are not on the route, do not count towards the total, and
  * scan as `invalid` (completion-code handling arrives in a later phase).
  */
-export function splitRoute(codes: QrCode[]): { route: QrCode[]; wildcard: QrCode | null } {
+export function splitRoute(codes: QrCode[]): {
+  route: QrCode[];
+  wildcard: QrCode | null;
+  /** The "I'm done" finish-line code, handled by the completion flow rather than scans. */
+  completion: QrCode | null;
+} {
   const active = codes.filter((code) => code.isActive && !code.isCompletion);
   const route = active
     .filter((code) => !code.isWildcard)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.getTime() - b.createdAt.getTime());
   const wildcard = active.find((code) => code.isWildcard) ?? null;
+  const completion = codes.find((code) => code.isActive && code.isCompletion) ?? null;
 
-  return { route, wildcard };
+  return { route, wildcard, completion };
 }
 
 export async function computeRouteVersion(codes: QrCode[]): Promise<string> {
