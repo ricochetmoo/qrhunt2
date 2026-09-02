@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { COMPLETION_MESSAGE_MAX_LENGTH } from "./completion";
 import { gameModeSchema } from "./game-mode";
 import { gameStatusSchema } from "./game-status";
 import { latitude, longitude, optionalText } from "./zod-helpers";
@@ -18,6 +19,7 @@ export const createGameSchema = z.object({
 /** Per-game configuration (see AGENTS.md "Admin configuration frontend"). */
 export const gameConfigSchema = z.object({
   gameMode: gameModeSchema,
+  completionMessage: optionalText(COMPLETION_MESSAGE_MAX_LENGTH),
   allowOutOfOrder: z.boolean(),
   allowSelfSignup: z.boolean(),
   allowTeamCreation: z.boolean(),

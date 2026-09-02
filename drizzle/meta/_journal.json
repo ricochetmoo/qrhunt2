@@ -64,6 +64,13 @@
       "when": 1788348336018,
       "tag": "0008_qr_code_active",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1788357681737,
+      "tag": "0009_mute_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

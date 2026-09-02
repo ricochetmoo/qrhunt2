@@ -26,6 +26,7 @@ export type PlayerState = {
     pauseReason: string | null;
     startedAt: Date | null;
     finishedAt: Date | null;
+    completionMessage: string | null;
     wildcard: { enabled: boolean; name: string | null };
     settings: {
       allowOutOfOrder: boolean;
@@ -181,6 +182,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       pauseReason: game.status === "paused" ? game.pauseReason : null,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,
+      completionMessage: game.completionMessage ?? null,
       wildcard: { enabled: game.wildcardEnabled, name: game.wildcardName },
       settings: {
         allowOutOfOrder: game.allowOutOfOrder,
