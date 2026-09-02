@@ -21,7 +21,14 @@ type StateResponse = Awaited<
 >;
 type PlayerState = Extract<StateResponse, { state: unknown }>["state"];
 
-type ScanNotice = { result: ScanResult; message: string; stopName: string | null };
+type ScanNotice = {
+  result: ScanResult;
+  message: string;
+  stopName: string | null;
+  funFact: string | null;
+  /** Set when the code entered was the finish-line code: where to check in. */
+  checkInHref: string | null;
+};
 
 const timeFormat = new Intl.DateTimeFormat("en-GB", { timeStyle: "short" });
 
@@ -62,6 +69,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<ScanNotice | null>(null);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
   const [completionViewDismissed, setCompletionViewDismissed] = useState(false);
 
   const refresh = useCallback(async () => {
@@ -143,6 +151,9 @@ export function GameScreen({ gameId }: { gameId: string }) {
         result: outcome.result,
         message: SCAN_RESULT_MESSAGES[outcome.result] ?? outcome.message,
         stopName: outcome.qrCodeName,
+        funFact: outcome.funFact,
+        checkInHref:
+          outcome.result === "completion" ? `/s/${encodeURIComponent(entered)}` : null,
       });
 
       if (outcome.result === "accepted" || outcome.result === "wildcard") {
@@ -198,6 +209,9 @@ export function GameScreen({ gameId }: { gameId: string }) {
   const { game, team, progress, leaderboard, history } = state;
   const visibleHistory = showAllHistory ? history : history.slice(0, HISTORY_PREVIEW_COUNT);
   const you = leaderboard.find((entry) => entry.isYou) ?? null;
+  const completedTeams = leaderboard.filter(
+    (entry) => entry.total > 0 && entry.found === entry.total,
+  ).length;
   const yourName = team?.members.find((member) => member.isYou)?.name ?? team?.name ?? "you";
   const percent = progress && progress.total > 0 ? Math.round((progress.found / progress.total) * 100) : 0;
 
@@ -244,7 +258,12 @@ export function GameScreen({ gameId }: { gameId: string }) {
         <CardHeader
           title={`Your progress, ${yourName}`}
           description={
-            you ? `You're ${ordinal(you.rank)} of ${leaderboard.length}` : undefined
+            !you
+              ? undefined
+              : game.mode === "completeness"
+                ? // No race in completeness mode: rank is meaningless, completion isn't.
+                  `${completedTeams} of ${leaderboard.length} ${leaderboard.length === 1 ? "person has" : "people have"} completed the course${progress?.complete ? " - you included!" : ""}`
+                : `You're ${ordinal(you.rank)} of ${leaderboard.length}`
           }
         />
         <CardBody className="space-y-3">
@@ -327,6 +346,11 @@ export function GameScreen({ gameId }: { gameId: string }) {
               <p className="whitespace-pre-line text-sm text-slate-600">
                 “{progress.lastFound.hint}”
               </p>
+              {progress.lastFound.funFact ? (
+                <p className="whitespace-pre-line rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                  <span className="font-semibold">Fun fact:</span> {progress.lastFound.funFact}
+                </p>
+              ) : null}
               {progress.lastFound.location ? (
                 <p className="text-xs text-slate-500">
                   📍 {progress.lastFound.location.latitude}, {progress.lastFound.location.longitude}
@@ -360,6 +384,16 @@ export function GameScreen({ gameId }: { gameId: string }) {
               >
                 {notice.stopName ? <strong>{notice.stopName}: </strong> : null}
                 {notice.message}
+                {notice.funFact ? (
+                  <span className="mt-2 block whitespace-pre-line">
+                    <span className="font-semibold">Fun fact:</span> {notice.funFact}
+                  </span>
+                ) : null}
+                {notice.checkInHref ? (
+                  <Link href={notice.checkInHref} className="mt-2 block font-medium underline">
+                    Check in at the finish line →
+                  </Link>
+                ) : null}
               </div>
             ) : null}
             <form onSubmit={handleSubmitCode} className="flex gap-2">
@@ -400,27 +434,69 @@ export function GameScreen({ gameId }: { gameId: string }) {
                     );
                     const scannerName = scanner ? (scanner.isYou ? "you" : scanner.name) : null;
 
+                    const hasDetails = Boolean(entry.hint || entry.funFact);
+                    const expanded = hasDetails && expandedHistoryId === entry.id;
+
                     return (
-                      <li key={entry.id} className="flex items-center gap-3 py-2 text-sm">
-                        <span className="w-6 shrink-0 text-right text-xs font-semibold text-slate-400">
-                          {entry.isWildcard
-                            ? "★"
-                            : entry.position !== null
-                              ? `#${entry.position + 1}`
-                              : ""}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-slate-900">
-                            {entry.stopName ?? "Unknown stop"}
+                      <li key={entry.id} className="py-2 text-sm">
+                        <div
+                          role={hasDetails ? "button" : undefined}
+                          tabIndex={hasDetails ? 0 : undefined}
+                          aria-expanded={hasDetails ? expanded : undefined}
+                          onClick={
+                            hasDetails
+                              ? () => setExpandedHistoryId(expanded ? null : entry.id)
+                              : undefined
+                          }
+                          onKeyDown={
+                            hasDetails
+                              ? (event) => {
+                                  if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    setExpandedHistoryId(expanded ? null : entry.id);
+                                  }
+                                }
+                              : undefined
+                          }
+                          className={`flex items-center gap-3 rounded-md ${
+                            hasDetails ? "cursor-pointer -mx-1 px-1 hover:bg-slate-50" : ""
+                          }`}
+                        >
+                          <span className="w-6 shrink-0 text-right text-xs font-semibold text-slate-400">
+                            {entry.isWildcard
+                              ? "★"
+                              : entry.position !== null
+                                ? `#${entry.position + 1}`
+                                : ""}
                           </span>
-                          <span className="block text-xs text-slate-500">
-                            {timeFormat.format(new Date(entry.scannedAt))}
-                            {scannerName ? ` · by ${scannerName}` : ""}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-slate-900">
+                              {entry.stopName ?? "Unknown stop"}
+                            </span>
+                            <span className="block text-xs text-slate-500">
+                              {timeFormat.format(new Date(entry.scannedAt))}
+                              {scannerName ? ` · by ${scannerName}` : ""}
+                              {hasDetails ? (expanded ? " · hide clue" : " · see clue") : ""}
+                            </span>
                           </span>
-                        </span>
-                        <span className={historyPillClass(entry.result)}>
-                          {HISTORY_RESULT_LABELS[entry.result] ?? entry.result}
-                        </span>
+                          <span className={historyPillClass(entry.result)}>
+                            {HISTORY_RESULT_LABELS[entry.result] ?? entry.result}
+                          </span>
+                        </div>
+                        {expanded ? (
+                          <div className="ml-9 mt-2 space-y-2 rounded-md bg-slate-50 px-3 py-2">
+                            {entry.hint ? (
+                              <p className="whitespace-pre-line text-sm text-slate-700">
+                                <span className="font-semibold">Clue:</span> “{entry.hint}”
+                              </p>
+                            ) : null}
+                            {entry.funFact ? (
+                              <p className="whitespace-pre-line text-sm text-slate-700">
+                                <span className="font-semibold">Fun fact:</span> {entry.funFact}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </li>
                     );
                   })}
@@ -515,6 +591,33 @@ function CompletionScreen({
             <p id="completion-message" className="whitespace-pre-line text-base leading-7 text-slate-700">
               {message}
             </p>
+
+            {team.prizeIssuedAt ? (
+              <div className="rounded-md border border-green-200 bg-green-50 px-3 py-3 text-left text-sm text-green-900">
+                🎖 Badge issued at {timeFormat.format(new Date(team.prizeIssuedAt))}. Thanks for
+                playing!
+              </div>
+            ) : team.reportedCompletedAt ? (
+              <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-left text-sm text-amber-900">
+                ✅ You checked in at {timeFormat.format(new Date(team.reportedCompletedAt))}. Show
+                this screen at the <strong>Digital Team tent</strong> to collect your badge.
+              </div>
+            ) : (
+              <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Claim your badge</p>
+                <p className="mt-1">
+                  Head to the <strong>Digital Team tent</strong> and scan the{" "}
+                  {game.completion ? (
+                    <>
+                      <strong>&quot;{game.completion.name}&quot;</strong> QR code
+                    </>
+                  ) : (
+                    <>finish-line QR code</>
+                  )}{" "}
+                  with your Camera app. Tell us how it went and we&apos;ll check you in.
+                </p>
+              </div>
+            )}
 
             <dl className="divide-y divide-slate-100 rounded-md border border-slate-200 text-left">
               <div className="flex items-center justify-between gap-4 px-4 py-3">

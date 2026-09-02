@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { latitude, longitude } from "./zod-helpers";
+import { latitude, longitude, optionalText } from "./zod-helpers";
 
 /**
  * Zod request schemas for `/api/player/*`. Browser-safe: the player UI can
@@ -89,6 +89,44 @@ export const syncScansSchema = z.object({
   scans: z.array(scanSubmissionSchema).min(1).max(100),
 });
 
+export const FUN_SCORE_MIN = 1;
+export const FUN_SCORE_MAX = 10;
+
+const emailOrEmpty = z
+  .string()
+  .trim()
+  .max(254)
+  .nullable()
+  .optional()
+  .transform((value) => (value === "" ? null : (value ?? null)))
+  .refine(
+    (value) => value === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+    "Enter a valid email address.",
+  );
+
+/**
+ * Checking in at the finish line (`POST /games/:gameId/complete`). The
+ * finish-line code is the capability proof; the fun score and comments are
+ * the gate; the keep-updated details are optional but need an email to be
+ * useful.
+ */
+export const reportCompletionSchema = z
+  .object({
+    /** The finish-line QR payload the player scanned. */
+    code: qrPayload,
+    funScore: z.number().int().min(FUN_SCORE_MIN).max(FUN_SCORE_MAX),
+    comments: z.string().trim().min(1, "Share a thought or two before checking in.").max(2000),
+    keepUpdated: z.boolean().default(false),
+    contactName: optionalText(120),
+    contactEmail: emailOrEmpty,
+    contactRole: optionalText(120),
+    additionalInfo: optionalText(2000),
+  })
+  .refine((value) => !value.keepUpdated || Boolean(value.contactEmail), {
+    message: "Add an email address so we can keep you updated.",
+    path: ["contactEmail"],
+  });
+
 /** First name only — shown to teammates and admins; no surnames for child privacy. */
 export const updatePlayerMeSchema = z.object({
   name: z.string().trim().min(1, "Tell us your name.").max(50),
@@ -101,4 +139,5 @@ export type JoinGameInput = z.infer<typeof joinGameSchema>;
 export type TeamActionInput = z.infer<typeof teamActionSchema>;
 export type UpdateTeamInput = z.infer<typeof updateTeamSchema>;
 export type ScanSubmission = z.infer<typeof scanSubmissionSchema>;
+export type ReportCompletionInput = z.infer<typeof reportCompletionSchema>;
 export type SyncScansInput = z.infer<typeof syncScansSchema>;

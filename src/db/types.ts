@@ -1,9 +1,11 @@
 // Type-only entrypoint for components and other browser-safe code.
 export type {
   Account,
+  FeedbackResponse,
   Game,
   GameAdmin,
   NewAccount,
+  NewFeedbackResponse,
   NewGame,
   NewGameAdmin,
   NewQrCode,

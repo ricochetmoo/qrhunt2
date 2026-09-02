@@ -10,6 +10,8 @@ import { apiClient } from "@/lib/api-client";
 import { signIn } from "@/lib/auth-client";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { detectScanContext, type ScanContext } from "@/lib/scan-context";
+
+import { FinishLine } from "./finish-line-client";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
 
 const ONBOARDED_KEY = "qr-hunt:onboarded";
@@ -29,6 +31,7 @@ type ScanView = {
   result: ScanResult;
   message: string;
   stopName: string | null;
+  funFact: string | null;
   found: number;
   total: number;
   complete: boolean;
@@ -47,8 +50,11 @@ type Joined = {
 
 type Resolved = {
   found: boolean;
-  /** "stop" = poster QR payload; "game" = 6-char game code; "team" = rejoin/team code. */
-  kind?: "stop" | "game" | "team";
+  /**
+   * "stop" = poster QR payload; "game" = 6-char game code; "team" = rejoin/team
+   * code; "completion" = the "I'm done" finish-line code (handled by FinishLine).
+   */
+  kind?: "stop" | "game" | "team" | "completion";
   game?: {
     id: string;
     name: string;
@@ -145,6 +151,12 @@ function ScanOutcome({ scan }: { scan: ScanView }) {
         {scan.stopName ? <strong>{scan.stopName}: </strong> : null}
         {scan.message}
       </div>
+      {scan.funFact ? (
+        <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+          <span className="font-semibold">Fun fact:</span>{" "}
+          <span className="whitespace-pre-line">{scan.funFact}</span>
+        </p>
+      ) : null}
       {credited && scan.total > 0 ? (
         <p className="text-sm text-slate-600">
           {scan.found} of {scan.total} stops found.
@@ -216,6 +228,7 @@ export function JoinFunnel({ code }: { code: string }) {
           SCAN_RESULT_MESSAGES[outcome.result] ??
           outcome.message,
         stopName: outcome.qrCodeName,
+        funFact: outcome.funFact,
         found: progress?.found ?? 0,
         total: progress?.total ?? 0,
         complete: progress?.complete ?? false,
@@ -443,6 +456,16 @@ export function JoinFunnel({ code }: { code: string }) {
 
   const game = resolved?.game;
   const viewer = resolved?.viewer;
+
+  // The finish-line code has its own flow: feedback then check-in, never join.
+  if (resolved?.kind === "completion" && game) {
+    return (
+      <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 px-4 py-8">
+        <CameraAdvice context={scanContext} />
+        <FinishLine code={code} game={game} viewer={viewer} />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-md flex-col gap-4 px-4 py-8">

@@ -11,18 +11,22 @@ import { useGeolocation } from "@/lib/use-geolocation";
 export type QrCodeFormValues = {
   name: string;
   hint: string;
+  funFact: string;
   latitude: string;
   longitude: string;
   isWildcard: boolean;
+  isCompletion: boolean;
   isActive: boolean;
 };
 
 const EMPTY: QrCodeFormValues = {
   name: "",
   hint: "",
+  funFact: "",
   latitude: "",
   longitude: "",
   isWildcard: false,
+  isCompletion: false,
   isActive: true,
 };
 
@@ -30,9 +34,11 @@ export function toQrCodeInput(values: QrCodeFormValues): QrCodeInput {
   return {
     name: values.name,
     hint: values.hint,
+    funFact: values.funFact.trim() || null,
     latitude: values.latitude.trim() || null,
     longitude: values.longitude.trim() || null,
     isWildcard: values.isWildcard,
+    isCompletion: values.isCompletion,
     isActive: values.isActive,
   };
 }
@@ -106,6 +112,18 @@ export function QrCodeForm({
           maxLength={1000}
         />
       </Field>
+      <Field
+        label="Fun fact"
+        htmlFor={`${idPrefix}-fun-fact`}
+        hint="Optional. Shown with the scan result once players have found this stop."
+      >
+        <Textarea
+          id={`${idPrefix}-fun-fact`}
+          value={values.funFact}
+          onChange={(event) => update("funFact")(event.target.value)}
+          maxLength={1000}
+        />
+      </Field>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Latitude" htmlFor={`${idPrefix}-lat`} hint="Optional, e.g. 51.5007">
           <Input
@@ -129,13 +147,41 @@ export function QrCodeForm({
           type="checkbox"
           className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
           checked={values.isWildcard}
-          onChange={(event) => update("isWildcard")(event.target.checked)}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              isWildcard: event.target.checked,
+              isCompletion: event.target.checked ? false : current.isCompletion,
+            }))
+          }
         />
         <span className="text-sm text-slate-700">
           This is the wildcard object
           <span className="block text-xs text-slate-500">
             Scanned at any point, outside the route order. One per game; only counts while the
             wildcard is enabled in game settings.
+          </span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-2">
+        <input
+          type="checkbox"
+          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+          checked={values.isCompletion}
+          onChange={(event) =>
+            setValues((current) => ({
+              ...current,
+              isCompletion: event.target.checked,
+              isWildcard: event.target.checked ? false : current.isWildcard,
+            }))
+          }
+        />
+        <span className="text-sm text-slate-700">
+          This is the &quot;I&apos;m done&quot; finish-line code
+          <span className="block text-xs text-slate-500">
+            Put this poster at the Digital Team tent. Never part of the route: once a team has
+            found every stop, scanning it opens the feedback form and checks them in for a
+            badge. One per game.
           </span>
         </span>
       </label>

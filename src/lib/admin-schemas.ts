@@ -49,9 +49,13 @@ export const updateGameSchema = z
 export const qrCodeInputSchema = z.object({
   name: z.string().trim().min(1, "Name is required.").max(120),
   hint: z.string().trim().min(1, "Hint is required.").max(1000),
+  /** Shown with the scan result once the stop is found. */
+  funFact: optionalText(1000),
   latitude: latitude(),
   longitude: longitude(),
   isWildcard: z.boolean().optional(),
+  /** The "I'm done" finish-line code at the admin tent; one per game, never on the route. */
+  isCompletion: z.boolean().optional(),
   /** Inactive codes are spares: printed on posters but not part of the route. */
   isActive: z.boolean().optional(),
 });
@@ -68,6 +72,10 @@ export const gameIdParamSchema = z.object({
 
 export const qrCodeParamSchema = gameIdParamSchema.extend({
   qrCodeId: z.string().min(1),
+});
+
+export const teamParamSchema = gameIdParamSchema.extend({
+  teamId: z.string().min(1),
 });
 
 export type CreateGameInput = z.infer<typeof createGameSchema>;

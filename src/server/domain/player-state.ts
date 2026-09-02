@@ -28,6 +28,8 @@ export type PlayerState = {
     finishedAt: Date | null;
     completionMessage: string | null;
     wildcard: { enabled: boolean; name: string | null };
+    /** The "I'm done" finish-line code, if configured; the completion screen points players at it. */
+    completion: { name: string } | null;
     settings: {
       allowOutOfOrder: boolean;
       allowTeamCreation: boolean;
@@ -47,6 +49,10 @@ export type PlayerState = {
     photoUrl: string | null;
     startedAt: Date | null;
     finishedAt: Date | null;
+    /** Checked in at the finish line (scanned the completion code and gave feedback). */
+    reportedCompletedAt: Date | null;
+    /** An organiser has handed over the badge. */
+    prizeIssuedAt: Date | null;
     members: { userId: string; name: string; isYou: boolean }[];
   } | null;
   progress: {
@@ -60,6 +66,7 @@ export type PlayerState = {
       position: number;
       name: string;
       hint: string;
+      funFact: string | null;
       location: { latitude: string; longitude: string } | null;
       scannedAt: Date;
     } | null;
@@ -86,6 +93,9 @@ export type PlayerState = {
     isWildcard: boolean;
     scannedByUserId: string;
     scannedAt: Date;
+    /** The stop's clue and fun fact, only once the team has been credited for it. */
+    hint: string | null;
+    funFact: string | null;
   }[];
   leaderboard: LeaderboardEntry[];
 };
@@ -119,7 +129,7 @@ export async function requireTeamMember(
 
 async function buildState(game: Game, team: Team | null, userId: string): Promise<PlayerState> {
   const codes = await listQrCodes(game.id);
-  const { route, wildcard } = splitRoute(codes);
+  const { route, wildcard, completion } = splitRoute(codes);
 
   // Pre-team previews reveal nothing: the bundle stays fully locked.
   const hintsReleased = team ? hintsReleasedFor(game, team) : false;
@@ -137,6 +147,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           position: lastFoundIndex,
           name: route[lastFoundIndex].name,
           hint: route[lastFoundIndex].hint,
+          funFact: route[lastFoundIndex].funFact,
           location:
             route[lastFoundIndex].latitude && route[lastFoundIndex].longitude
               ? {
@@ -149,19 +160,31 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       : null;
 
   const positionOf = new Map(route.map((code, index) => [code.id, index]));
-  const nameOf = new Map(codes.map((code) => [code.id, code.name]));
+  const codeById = new Map(codes.map((code) => [code.id, code]));
+  // A stop's clue and fun fact are revealed in history only once the team has
+  // been credited for it, so an out-of-order scan never leaks a locked clue.
+  const revealed = (qrCodeId: string) =>
+    (progress?.foundIds.has(qrCodeId) ?? false) ||
+    (qrCodeId === wildcard?.id && (progress?.wildcardFound ?? false));
   const history = scans
     .slice(-HISTORY_LIMIT)
     .reverse()
-    .map((scan) => ({
-      id: scan.id,
-      result: scan.result,
-      stopName: nameOf.get(scan.qrCodeId) ?? null,
-      position: positionOf.get(scan.qrCodeId) ?? null,
-      isWildcard: scan.qrCodeId === wildcard?.id,
-      scannedByUserId: scan.userId,
-      scannedAt: scan.createdAt,
-    }));
+    .map((scan) => {
+      const code = codeById.get(scan.qrCodeId);
+      const show = code !== undefined && revealed(scan.qrCodeId);
+
+      return {
+        id: scan.id,
+        result: scan.result,
+        stopName: code?.name ?? null,
+        position: positionOf.get(scan.qrCodeId) ?? null,
+        isWildcard: scan.qrCodeId === wildcard?.id,
+        scannedByUserId: scan.userId,
+        scannedAt: scan.createdAt,
+        hint: show ? code.hint : null,
+        funFact: show ? code.funFact : null,
+      };
+    });
 
   const [bundle, members, leaderboard] = await Promise.all([
     buildRouteBundle(game, route, wildcard, {
@@ -184,6 +207,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       finishedAt: game.finishedAt,
       completionMessage: game.completionMessage ?? null,
       wildcard: { enabled: game.wildcardEnabled, name: game.wildcardName },
+      completion: completion ? { name: completion.name } : null,
       settings: {
         allowOutOfOrder: game.allowOutOfOrder,
         allowTeamCreation: game.allowSelfSignup && game.allowTeamCreation,
@@ -203,6 +227,8 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
           photoUrl: team.photoUrl,
           startedAt: team.startedAt,
           finishedAt: team.finishedAt,
+          reportedCompletedAt: team.reportedCompletedAt,
+          prizeIssuedAt: team.prizeIssuedAt,
           members: members.map((member) => ({ ...member, isYou: member.userId === userId })),
         }
       : null,

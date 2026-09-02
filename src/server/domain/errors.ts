@@ -20,7 +20,10 @@ export type DomainErrorCode =
   | "TEAM_CREATION_DISABLED"
   | "FEATURE_DISABLED"
   | "NOT_IN_TEAM"
-  | "ALREADY_IN_TEAM";
+  | "ALREADY_IN_TEAM"
+  // Completion flow
+  | "COMPLETION_CODE"
+  | "ROUTE_INCOMPLETE";
 
 const STATUS_BY_CODE: Record<DomainErrorCode, DomainErrorStatus> = {
   NOT_FOUND: 404,
@@ -37,6 +40,8 @@ const STATUS_BY_CODE: Record<DomainErrorCode, DomainErrorStatus> = {
   FEATURE_DISABLED: 403,
   NOT_IN_TEAM: 403,
   ALREADY_IN_TEAM: 409,
+  COMPLETION_CODE: 403,
+  ROUTE_INCOMPLETE: 409,
 };
 
 export class DomainError extends Error {
