@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-import { auth } from "@/lib/auth";
-import { gameExists, getGameForAdmin } from "@/server/games/access";
 import { listQrCodes } from "@/server/domain/qr-codes";
+import { getGame } from "@/server/domain/games";
 import { buildQrImagesZip, qrImageZipFilename } from "@/server/qr-images/render";
 
 export const runtime = "nodejs";
@@ -23,19 +22,24 @@ export async function POST(
   }
 
   const { gameId } = parsedParams.data;
-  const session = await auth.api.getSession({ headers: request.headers });
+  // TODO(auth): Restore the Better Auth session and game_admins check before
+  // production. The admin UI is intentionally open during early development.
+  //
+  // const session = await auth.api.getSession({ headers: request.headers });
+  // if (!session) {
+  //   return Response.json({ error: "Unauthorized" }, { status: 401 });
+  // }
+  // const game = await getGameForAdmin(session.user.id, gameId);
+  // if (!game) {
+  //   if (await gameExists(gameId)) {
+  //     return Response.json({ error: "Forbidden" }, { status: 403 });
+  //   }
+  //
+  //   return Response.json({ error: "Game not found" }, { status: 404 });
+  // }
 
-  if (!session) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const game = await getGameForAdmin(session.user.id, gameId);
-
+  const game = await getGame(gameId);
   if (!game) {
-    if (await gameExists(gameId)) {
-      return Response.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     return Response.json({ error: "Game not found" }, { status: 404 });
   }
 
