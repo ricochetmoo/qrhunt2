@@ -8,7 +8,7 @@ ALTER TABLE "qr_code_scans" ADD COLUMN "longitude" text;--> statement-breakpoint
 ALTER TABLE "qr_codes" ADD COLUMN "is_wildcard" boolean DEFAULT false NOT NULL;--> statement-breakpoint
 -- team_code is required: add nullable, backfill existing teams, then constrain.
 ALTER TABLE "teams" ADD COLUMN "team_code" text;--> statement-breakpoint
-UPDATE "teams" SET "team_code" = upper(translate(substr(md5(random()::text || id), 1, 6), 01il, WXYZ)) WHERE "team_code" IS NULL;--> statement-breakpoint
+UPDATE "teams" SET "team_code" = upper(translate(substr(md5(random()::text || id), 1, 6), '01il', 'WXYZ')) WHERE "team_code" IS NULL;--> statement-breakpoint
 ALTER TABLE "teams" ALTER COLUMN "team_code" SET NOT NULL;--> statement-breakpoint
 ALTER TABLE "teams" ADD COLUMN "photo_url" text;--> statement-breakpoint
 ALTER TABLE "teams" ADD COLUMN "started_at" timestamp;--> statement-breakpoint
