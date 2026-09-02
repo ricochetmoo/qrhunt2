@@ -20,7 +20,7 @@ export function StalledTeams({ standings, nowMs }: StalledTeamsProps) {
     <Card>
       <CardHeader
         title="Stalled teams"
-        description="No scan in over 20 minutes — they may need help."
+        description="No scan in over 20 minutes - they may need help."
       />
       <CardBody>
         <ul className="flex flex-col gap-2">

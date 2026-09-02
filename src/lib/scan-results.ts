@@ -32,7 +32,7 @@ export const PERSISTED_SCAN_RESULTS: ReadonlySet<ScanResult> = new Set([
 export const CREDITED_SCAN_RESULTS = ["accepted", "wildcard"] as const;
 
 export const SCAN_RESULT_MESSAGES: Record<ScanResult, string> = {
-  accepted: "Code accepted — here is your next hint.",
+  accepted: "Code accepted - here is your next hint.",
   wildcard: "You found the wildcard!",
   duplicate: "Your team has already scanned this code.",
   out_of_order: "That code is on the route, but it isn't the next one. Follow your current hint.",

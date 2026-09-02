@@ -72,6 +72,7 @@ export async function createQrCode(gameId: string, input: QrCodeInput): Promise<
           code: generateRouteCode(),
           sortOrder,
           isWildcard: input.isWildcard ?? false,
+          isActive: input.isActive ?? true,
         })
         .returning();
 
@@ -103,6 +104,7 @@ export async function updateQrCode(
       ...(patch.latitude !== undefined && { latitude: patch.latitude }),
       ...(patch.longitude !== undefined && { longitude: patch.longitude }),
       ...(patch.isWildcard !== undefined && { isWildcard: patch.isWildcard }),
+      ...(patch.isActive !== undefined && { isActive: patch.isActive }),
       updatedAt: new Date(),
     })
     .where(and(eq(qr_codes.id, qrCodeId), eq(qr_codes.gameId, gameId)))

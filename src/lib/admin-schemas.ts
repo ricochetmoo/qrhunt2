@@ -50,6 +50,8 @@ export const qrCodeInputSchema = z.object({
   latitude: latitude(),
   longitude: longitude(),
   isWildcard: z.boolean().optional(),
+  /** Inactive codes are spares: printed on posters but not part of the route. */
+  isActive: z.boolean().optional(),
 });
 
 export const updateQrCodeSchema = qrCodeInputSchema.partial();

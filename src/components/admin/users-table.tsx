@@ -34,7 +34,7 @@ export function UsersTable({ users, emptyMessage }: { users: AdminUser[]; emptyM
             <tr key={u.id} className="hover:bg-slate-50">
               <td className="px-4 py-3 font-medium text-slate-900">
                 <Link href={`/admin/users/${u.id}`} className="hover:underline">
-                  {u.name || "—"}
+                  {u.name || "-"}
                 </Link>
               </td>
               <td className="px-4 py-3 text-slate-600">
@@ -53,7 +53,7 @@ export function UsersTable({ users, emptyMessage }: { users: AdminUser[]; emptyM
               </td>
               <td className="px-4 py-3 text-slate-600">
                 {u.teams.length === 0 ? (
-                  <span className="text-slate-400">—</span>
+                  <span className="text-slate-400">-</span>
                 ) : (
                   <ul className="space-y-0.5">
                     {u.teams.map((team) => (

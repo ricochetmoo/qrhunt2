@@ -268,7 +268,13 @@ export async function getUserDetail(userId: string): Promise<AdminUserDetail | u
         db
           .select({ totalCodes: count() })
           .from(qr_codes)
-          .where(and(eq(qr_codes.gameId, m.gameId), eq(qr_codes.isWildcard, false))),
+          .where(
+            and(
+              eq(qr_codes.gameId, m.gameId),
+              eq(qr_codes.isWildcard, false),
+              eq(qr_codes.isActive, true),
+            ),
+          ),
         db
           .select({ teamCodesScanned: countDistinct(qr_code_scans.qrCodeId) })
           .from(qr_code_scans)

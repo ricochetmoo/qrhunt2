@@ -1,0 +1,1 @@
+ALTER TABLE "qr_codes" ADD COLUMN "is_active" boolean DEFAULT true NOT NULL;

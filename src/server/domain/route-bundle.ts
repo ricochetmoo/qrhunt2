@@ -32,19 +32,27 @@ export type RouteBundle = {
   wildcard: { id: string; name: string; codeHash: string; hint: string | null } | null;
 };
 
-/** Ordered route codes (wildcard excluded) and the wildcard, from a game's codes. */
+/**
+ * Ordered route codes (wildcard excluded) and the wildcard, from a game's codes.
+ * Inactive codes (spares) are dropped entirely: they are not on the route, do
+ * not count towards the total, and scan as `invalid`.
+ */
 export function splitRoute(codes: QrCode[]): { route: QrCode[]; wildcard: QrCode | null } {
-  const route = codes
+  const active = codes.filter((code) => code.isActive);
+  const route = active
     .filter((code) => !code.isWildcard)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.getTime() - b.createdAt.getTime());
-  const wildcard = codes.find((code) => code.isWildcard) ?? null;
+  const wildcard = active.find((code) => code.isWildcard) ?? null;
 
   return { route, wildcard };
 }
 
 export async function computeRouteVersion(codes: QrCode[]): Promise<string> {
   const fingerprint = codes
-    .map((code) => `${code.id}:${code.sortOrder}:${code.isWildcard ? 1 : 0}:${code.updatedAt.getTime()}`)
+    .map(
+      (code) =>
+        `${code.id}:${code.sortOrder}:${code.isWildcard ? 1 : 0}:${code.isActive ? 1 : 0}:${code.updatedAt.getTime()}`,
+    )
     .sort()
     .join("|");
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprint));

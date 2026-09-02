@@ -111,7 +111,7 @@ export function CookieDemo() {
   const tab = env?.tab ?? null;
 
   const addLog = useCallback((message: string) => {
-    setLog((current) => [`${new Date().toLocaleTimeString()} — ${message}`, ...current].slice(0, 20));
+    setLog((current) => [`${new Date().toLocaleTimeString()} - ${message}`, ...current].slice(0, 20));
   }, []);
 
   const checkSession = useCallback(async () => {
@@ -157,8 +157,8 @@ export function CookieDemo() {
         "User agent": navigator.userAgent,
         "Display mode": standaloneMedia || iosStandalone ? "standalone (installed PWA)" : "browser tab",
         "Cookies enabled": String(navigator.cookieEnabled),
-        Referrer: document.referrer || "(none — typical for camera/QR entry)",
-        "Visible cookies (non-HttpOnly)": document.cookie || "(none visible — the session cookie is HttpOnly)",
+        Referrer: document.referrer || "(none - typical for camera/QR entry)",
+        "Visible cookies (non-HttpOnly)": document.cookie || "(none visible - the session cookie is HttpOnly)",
         "Opened at": new Date().toLocaleString(),
       },
     });
@@ -281,7 +281,7 @@ export function CookieDemo() {
 
       <Card>
         <CardHeader
-          title="Persistence probe — should a player onboard here?"
+          title="Persistence probe - should a player onboard here?"
           description="The check the real /s/<code> join page will run. It writes a test cookie and proves the session cookie round-trips. Throwaway contexts (e.g. the iOS Control Centre Code Scanner) fail it."
         />
         <CardBody className="space-y-3">
@@ -299,8 +299,8 @@ export function CookieDemo() {
                 }`}
               >
                 {probe.verdict === "keeps"
-                  ? "✅ This context keeps you — safe to onboard players here."
-                  : "⚠️ This context looks throwaway — don't onboard here. The join page would show: “Open Safari and go to the game address printed on the poster.”"}
+                  ? "✅ This context keeps you - safe to onboard players here."
+                  : "⚠️ This context looks throwaway - don't onboard here. The join page would show: “Open Safari and go to the game address printed on the poster.”"}
               </p>
               <dl>
                 <Row label="JS cookie write/read" value={probe.cookieWrite} mono={false} />
@@ -316,7 +316,7 @@ export function CookieDemo() {
               </dl>
               <p className="text-xs text-slate-500">
                 A pass here can’t prove survival after this view closes: close this scanner, scan the
-                QR again, and compare the user ID in the panel below — a changed ID means the context
+                QR again, and compare the user ID in the panel below - a changed ID means the context
                 discarded the session on close.
               </p>
             </>
@@ -368,7 +368,7 @@ export function CookieDemo() {
             <Row label="Device marker (localStorage)" value={device ? shortId(device.id) : "unavailable"} />
             <Row
               label="First seen"
-              value={device ? new Date(device.firstSeen).toLocaleString() : "—"}
+              value={device ? new Date(device.firstSeen).toLocaleString() : "-"}
               mono={false}
             />
             <Row label="Tab marker (sessionStorage)" value={tab ? shortId(tab.id) : "unavailable"} />
@@ -395,7 +395,7 @@ export function CookieDemo() {
       <Card>
         <CardHeader
           title="4 · Jump contexts"
-          description="Scan this with the native camera, an in-app scanner, or open it in an installed PWA — then compare panels 1 and 2 with this screen."
+          description="Scan this with the native camera, an in-app scanner, or open it in an installed PWA - then compare panels 1 and 2 with this screen."
         />
         <CardBody className="flex flex-col items-center gap-3">
           {qrDataUrl ? (
