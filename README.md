@@ -37,7 +37,3 @@ If you are migrating to a fresh database, you need to run
 pnpm db:generate
 pnpm db:migrate
 ```
-
-for the initial schema migration before starting the app.
-
-fucking deploy already!!!!
