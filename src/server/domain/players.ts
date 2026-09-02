@@ -21,7 +21,8 @@ import { findTeamByCode, joinTeam } from "./teams";
  */
 
 /**
- * QR payload format (decision): posters encode `${NEXT_PUBLIC_APP_URL}/s/<code>`.
+ * QR payload format (decision): posters encode the app's production URL plus
+ * `/s/<code>`.
  * Accept that URL, any URL with a `code` query parameter, or the bare code, so
  * the poster format can change without breaking older prints.
  */

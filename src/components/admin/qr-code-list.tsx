@@ -199,7 +199,7 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
                         {code.name}
                       </span>
                       <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
-                        {code.code}
+                        {code.code.toUpperCase()}
                       </code>
                       {code.latitude && code.longitude ? (
                         <span className="text-xs text-slate-500">
