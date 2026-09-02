@@ -61,6 +61,8 @@ export type ScanOutcome = {
   qrCodeName: string | null;
   /** Position on the ordered route (0-based), when the code is a route code. */
   position: number | null;
+  /** The stop's fun fact, revealed once the team has found it (credited or duplicate). */
+  funFact: string | null;
 };
 
 export type TeamScan = {
@@ -282,6 +284,10 @@ function outcome(
     qrCodeId: code?.id ?? null,
     qrCodeName: code?.name ?? null,
     position,
+    funFact:
+      code && (result === "accepted" || result === "wildcard" || result === "duplicate")
+        ? code.funFact
+        : null,
   };
 }
 

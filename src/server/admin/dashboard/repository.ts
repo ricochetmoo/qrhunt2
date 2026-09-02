@@ -14,12 +14,18 @@ export const drizzleDashboardRepository: DashboardRepository = {
     return db.query.teams.findMany({ where: eq(teams.gameId, gameId) });
   },
   getQrCodes(gameId) {
-    // Spares (inactive codes) are not checkpoints, so they are left out of
-    // the progress matrix and totals.
+    // Spares (inactive codes) and the completion code are not checkpoints, so
+    // they are left out of the progress matrix and totals.
     return db
       .select()
       .from(qr_codes)
-      .where(and(eq(qr_codes.gameId, gameId), eq(qr_codes.isActive, true)))
+      .where(
+        and(
+          eq(qr_codes.gameId, gameId),
+          eq(qr_codes.isActive, true),
+          eq(qr_codes.isCompletion, false),
+        ),
+      )
       .orderBy(asc(qr_codes.sortOrder), asc(qr_codes.createdAt));
   },
   getScans(gameId) {

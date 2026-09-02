@@ -34,11 +34,12 @@ export type RouteBundle = {
 
 /**
  * Ordered route codes (wildcard excluded) and the wildcard, from a game's codes.
- * Inactive codes (spares) are dropped entirely: they are not on the route, do
- * not count towards the total, and scan as `invalid`.
+ * Inactive codes (spares) and the "I'm done" completion code are dropped
+ * entirely: they are not on the route, do not count towards the total, and
+ * scan as `invalid` (completion-code handling arrives in a later phase).
  */
 export function splitRoute(codes: QrCode[]): { route: QrCode[]; wildcard: QrCode | null } {
-  const active = codes.filter((code) => code.isActive);
+  const active = codes.filter((code) => code.isActive && !code.isCompletion);
   const route = active
     .filter((code) => !code.isWildcard)
     .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.getTime() - b.createdAt.getTime());

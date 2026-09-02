@@ -21,7 +21,12 @@ type StateResponse = Awaited<
 >;
 type PlayerState = Extract<StateResponse, { state: unknown }>["state"];
 
-type ScanNotice = { result: ScanResult; message: string; stopName: string | null };
+type ScanNotice = {
+  result: ScanResult;
+  message: string;
+  stopName: string | null;
+  funFact: string | null;
+};
 
 const timeFormat = new Intl.DateTimeFormat("en-GB", { timeStyle: "short" });
 
@@ -143,6 +148,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
         result: outcome.result,
         message: SCAN_RESULT_MESSAGES[outcome.result] ?? outcome.message,
         stopName: outcome.qrCodeName,
+        funFact: outcome.funFact,
       });
 
       if (outcome.result === "accepted" || outcome.result === "wildcard") {
@@ -327,6 +333,11 @@ export function GameScreen({ gameId }: { gameId: string }) {
               <p className="whitespace-pre-line text-sm text-slate-600">
                 “{progress.lastFound.hint}”
               </p>
+              {progress.lastFound.funFact ? (
+                <p className="whitespace-pre-line rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                  <span className="font-semibold">Fun fact:</span> {progress.lastFound.funFact}
+                </p>
+              ) : null}
               {progress.lastFound.location ? (
                 <p className="text-xs text-slate-500">
                   📍 {progress.lastFound.location.latitude}, {progress.lastFound.location.longitude}
@@ -360,6 +371,11 @@ export function GameScreen({ gameId }: { gameId: string }) {
               >
                 {notice.stopName ? <strong>{notice.stopName}: </strong> : null}
                 {notice.message}
+                {notice.funFact ? (
+                  <span className="mt-2 block whitespace-pre-line">
+                    <span className="font-semibold">Fun fact:</span> {notice.funFact}
+                  </span>
+                ) : null}
               </div>
             ) : null}
             <form onSubmit={handleSubmitCode} className="flex gap-2">

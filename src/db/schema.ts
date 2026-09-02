@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   pgTable,
@@ -149,9 +150,15 @@ export const teams = pgTable(
     teamCode: text("team_code").notNull().unique(),
     // https URL or a small `data:image/...;base64,` payload.
     photoUrl: text("photo_url"),
-    // Staggered start: when the team was released. Finished: route complete.
+    // Staggered start: when the team was released. Finished: route complete
+    // (set by the server when the last needed code is credited).
     startedAt: timestamp("started_at"),
     finishedAt: timestamp("finished_at"),
+    // Completion tracking after the route is done. Reported: the team scanned
+    // the "I'm done" completion code at the admin tent. Prize: an organiser
+    // has handed over the prize. Both are wired up in later phases.
+    reportedCompletedAt: timestamp("reported_completed_at"),
+    prizeIssuedAt: timestamp("prize_issued_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -183,12 +190,18 @@ export const qr_codes = pgTable(
     id: text("id").primaryKey(),
     name: text("name").notNull(),
     hint: text("hint").notNull(),
+    // Shown with the scan result once this stop has been found.
+    funFact: text("fun_fact"),
     latitude: text("latitude"),
     longitude: text("longitude"),
     code: text("code").notNull().unique(),
     sortOrder: integer("sort_order").notNull().default(0),
     // The optional wildcard object sits outside the ordered route.
     isWildcard: boolean("is_wildcard").notNull().default(false),
+    // The "I'm done" code at the admin tent: scanning it records the team as
+    // reported complete (teams.reported_completed_at). Never part of the
+    // route. Scan handling is wired up in a later phase.
+    isCompletion: boolean("is_completion").notNull().default(false),
     // Spares can be generated and printed ahead of time. Only active codes
     // form the route, count towards progress, or can be scanned/joined with.
     isActive: boolean("is_active").notNull().default(true),
@@ -241,6 +254,49 @@ export const qr_code_scans = pgTable(
   ],
 );
 
+/**
+ * Post-hunt feedback and "keep me updated" details, one row per player per
+ * team (re-submitting updates the row). Every field is optional: the survey
+ * and the contact form are separate steps in the UI. Contact details are
+ * personal data collected with `keepUpdated` consent; see AGENTS.md "Open
+ * decisions" on privacy and retention.
+ */
+export const feedback_responses = pgTable(
+  "feedback_responses",
+  {
+    id: text("id").primaryKey(),
+    gameId: text("game_id")
+      .notNull()
+      .references(() => games.id, { onDelete: "cascade" }),
+    teamId: text("team_id")
+      .notNull()
+      .references(() => teams.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    // Survey.
+    funScore: integer("fun_score"),
+    comments: text("comments"),
+    // "Want to keep updated?" form.
+    keepUpdated: boolean("keep_updated").notNull().default(false),
+    contactName: text("contact_name"),
+    contactEmail: text("contact_email"),
+    contactRole: text("contact_role"),
+    additionalInfo: text("additional_info"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("feedback_responses_game_id_idx").on(table.gameId),
+    index("feedback_responses_team_id_idx").on(table.teamId),
+    uniqueIndex("feedback_responses_team_user_idx").on(table.teamId, table.userId),
+    check(
+      "feedback_responses_fun_score_range",
+      sql`${table.funScore} is null or (${table.funScore} between 1 and 10)`,
+    ),
+  ],
+);
+
 export const gameSchema = {
   games,
   game_admins,
@@ -248,6 +304,7 @@ export const gameSchema = {
   team_memberships,
   qr_codes,
   qr_code_scans,
+  feedback_responses,
 };
 
 export type User = typeof user.$inferSelect;
@@ -270,3 +327,5 @@ export type QrCode = typeof qr_codes.$inferSelect;
 export type NewQrCode = typeof qr_codes.$inferInsert;
 export type QrCodeScan = typeof qr_code_scans.$inferSelect;
 export type NewQrCodeScan = typeof qr_code_scans.$inferInsert;
+export type FeedbackResponse = typeof feedback_responses.$inferSelect;
+export type NewFeedbackResponse = typeof feedback_responses.$inferInsert;

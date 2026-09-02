@@ -67,6 +67,7 @@ export async function createQrCode(gameId: string, input: QrCodeInput): Promise<
           gameId,
           name: input.name,
           hint: input.hint,
+          funFact: input.funFact ?? null,
           latitude: input.latitude ?? null,
           longitude: input.longitude ?? null,
           code: generateRouteCode(),
@@ -101,6 +102,7 @@ export async function updateQrCode(
     .set({
       ...(patch.name !== undefined && { name: patch.name }),
       ...(patch.hint !== undefined && { hint: patch.hint }),
+      ...(patch.funFact !== undefined && { funFact: patch.funFact }),
       ...(patch.latitude !== undefined && { latitude: patch.latitude }),
       ...(patch.longitude !== undefined && { longitude: patch.longitude }),
       ...(patch.isWildcard !== undefined && { isWildcard: patch.isWildcard }),
