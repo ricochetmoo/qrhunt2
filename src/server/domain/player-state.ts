@@ -27,6 +27,7 @@ export type PlayerState = {
     startedAt: Date | null;
     finishedAt: Date | null;
     completionMessage: string | null;
+    feedbackUrl: string | null;
     wildcard: { enabled: boolean; name: string | null };
     /** The "I'm done" finish-line code, if configured; the completion screen points players at it. */
     completion: { name: string } | null;
@@ -206,6 +207,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,
       completionMessage: game.completionMessage ?? null,
+      feedbackUrl: game.feedbackUrl ?? null,
       wildcard: { enabled: game.wildcardEnabled, name: game.wildcardName },
       completion: completion ? { name: completion.name } : null,
       settings: {
