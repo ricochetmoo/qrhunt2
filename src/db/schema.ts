@@ -112,6 +112,7 @@ export const games = pgTable(
     staggeredStart: boolean("staggered_start").notNull().default(false),
     qrRemoveBy: timestamp("qr_remove_by"),
     issueContactPhone: text("issue_contact_phone"),
+    feedbackUrl: text("feedback_url"),
     // Set the first time the game enters `started` / `finished`.
     startedAt: timestamp("started_at"),
     finishedAt: timestamp("finished_at"),
