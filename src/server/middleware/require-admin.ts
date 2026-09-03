@@ -3,12 +3,19 @@ import { createMiddleware } from "hono/factory";
 /**
  * Gate for `/api/admin/*`.
  *
- * TODO(auth): resolve the Better Auth session via
- * `auth.api.getSession({ headers: c.req.raw.headers })` (dynamic import, as in
- * `/api/me`), reject anonymous users, and when a `gameId` param is present
- * check for a matching `game_admins` row. Intentionally a no-op for now — the
- * admin area is open during early development.
+ * The admin auth instance has a separate cookie prefix and does not enable
+ * Better Auth's anonymous plugin, so a valid session here is an administrator
+ * session rather than a player session.
  */
-export const requireAdmin = createMiddleware(async (_c, next) => {
+export const requireAdmin = createMiddleware(async (c, next) => {
+  const { adminAuth } = await import("@/lib/admin-auth");
+  const session = await adminAuth.api.getSession({
+    headers: c.req.raw.headers,
+  });
+
+  if (!session) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
   await next();
 });
