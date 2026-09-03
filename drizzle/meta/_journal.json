@@ -78,6 +78,13 @@
       "when": 1788358535680,
       "tag": "0010_completion_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1788443313213,
+      "tag": "0011_wide_malcolm_colcord",
+      "breakpoints": true
     }
   ]
 }
