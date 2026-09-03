@@ -1,23 +1,27 @@
 import "server-only";
 
 import { headers } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { adminAuth } from "@/lib/admin-auth";
+import { resolveAdminPrincipal } from "./admin-principal";
 
 /**
  * Gate for the `/admin` pages (called from `src/app/admin/layout.tsx`).
  *
  * The admin auth instance has its own cookie prefix and session configuration,
- * so a player session cannot satisfy this page gate. Per-game authorization
- * still belongs in the API layer (`src/server/middleware/require-admin.ts`).
+ * so a player session cannot satisfy this page gate. The shared principal
+ * resolver also checks the persisted application-level administrator role.
+ * Per-game authorization still belongs in the API layer
+ * (`src/server/middleware/require-admin.ts`).
  */
 export async function requireAdminPage(): Promise<void> {
-  const session = await adminAuth.api.getSession({
-    headers: await headers(),
-  });
+  const result = await resolveAdminPrincipal(await headers());
 
-  if (!session) {
+  if (result.status === "unauthenticated") {
     redirect("/admin-auth/sign-in");
+  }
+
+  if (result.status === "forbidden") {
+    notFound();
   }
 }
