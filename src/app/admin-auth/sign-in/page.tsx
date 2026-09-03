@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -13,12 +13,19 @@ import {
   ScoutsHeading,
   ScoutsLogo,
 } from "@/components/ui";
-import { adminSignIn } from "@/lib/admin-auth-client";
+import { adminSignIn, useAdminSession } from "@/lib/admin-auth-client";
 
 export default function AdminSignInPage() {
   const router = useRouter();
+  const { data: session, isPending } = useAdminSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      router.replace("/admin");
+    }
+  }, [isPending, router, session]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -50,6 +57,18 @@ export default function AdminSignInPage() {
     }
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key !== "Enter" && event.key !== "NumpadEnter") {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (!isSubmitting) {
+      event.currentTarget.requestSubmit();
+    }
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 py-10" aria-labelledby="admin-sign-in-title">
       <header className="space-y-4 text-center">
@@ -66,7 +85,7 @@ export default function AdminSignInPage() {
 
       <Card>
         <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} className="space-y-5">
             <ErrorMessage message={error} />
 
             <Field label="Email address" htmlFor="admin-email" required>
