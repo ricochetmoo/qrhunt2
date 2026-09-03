@@ -8,6 +8,15 @@
   --foreground: #111111;
   --brand: #7413dc;
 
+  --scouts-black: #000000;
+  --scouts-white: #ffffff;
+  --scouts-hotpink: #e6007e;
+  --scouts-explorers: #00425e;
+  --scouts-grey-80: #333333;
+  --scouts-grey-60: #666666;
+  --scouts-grey-40: #999999;
+  --scouts-grey-20: #cccccc;
+
   --scouts-purple-light: #eadcff;
   --scouts-purple: #7413dc;
   --scouts-purple-dark: #4d0b99;
@@ -41,12 +50,114 @@
   --scouts-grey-light: #f0f0f0;
   --scouts-grey: #cccccc;
   --scouts-grey-dark: #666666;
+
+  --scouts-colour-primary: var(--scouts-purple);
+  --scouts-colour-secondary: var(--scouts-teal);
+  --scouts-colour-text: var(--scouts-black);
+  --scouts-colour-text-inverse: var(--scouts-white);
+  --scouts-colour-bg: var(--scouts-white);
+  --scouts-colour-surface: var(--scouts-white);
+  --scouts-colour-border: var(--scouts-black);
+  --scouts-colour-border-muted: var(--scouts-grey-20);
+  --scouts-colour-muted: var(--scouts-grey-60);
+  --scouts-colour-focus: var(--scouts-yellow);
+  --scouts-colour-focus-text: var(--scouts-black);
+  --scouts-colour-link: var(--scouts-colour-primary);
+  --scouts-colour-link-hover: color-mix(in srgb, var(--scouts-colour-link), black 25%);
+  --scouts-colour-primary-light: color-mix(in srgb, var(--scouts-colour-primary), white 70%);
+  --scouts-colour-primary-dark: color-mix(in srgb, var(--scouts-colour-primary), black 45%);
+  --scouts-colour-primary-hover: color-mix(in srgb, var(--scouts-colour-primary), black 14%);
+  --scouts-colour-primary-pastel: color-mix(in srgb, var(--scouts-colour-primary) 14%, var(--scouts-colour-surface));
+  --scouts-colour-primary-foreground: lch(from var(--scouts-colour-primary) calc((60 - l) * infinity) 0 0);
+  --scouts-colour-secondary-light: color-mix(in srgb, var(--scouts-colour-secondary), white 70%);
+  --scouts-colour-secondary-dark: color-mix(in srgb, var(--scouts-colour-secondary), black 45%);
+  --scouts-colour-secondary-hover: color-mix(in srgb, var(--scouts-colour-secondary), black 14%);
+  --scouts-colour-secondary-pastel: color-mix(in srgb, var(--scouts-colour-secondary) 14%, var(--scouts-colour-surface));
+  --scouts-colour-secondary-foreground: lch(from var(--scouts-colour-secondary) calc((60 - l) * infinity) 0 0);
+  --scouts-colour-primary-header: color-mix(in srgb, var(--scouts-colour-primary), black 10%);
+  --scouts-colour-primary-header-foreground: lch(from var(--scouts-colour-primary-header) calc((60 - l) * infinity) 0 0);
+
+  --scouts-colour-success: var(--scouts-green);
+  --scouts-colour-info: var(--scouts-blue);
+  --scouts-colour-warning: var(--scouts-orange);
+  --scouts-colour-danger: var(--scouts-red);
+  --scouts-colour-success-light: color-mix(in srgb, var(--scouts-colour-success), white 70%);
+  --scouts-colour-info-light: color-mix(in srgb, var(--scouts-colour-info), white 70%);
+  --scouts-colour-warning-light: color-mix(in srgb, var(--scouts-colour-warning), white 70%);
+  --scouts-colour-danger-light: color-mix(in srgb, var(--scouts-colour-danger), white 70%);
+
+  --scouts-colour-purple: var(--scouts-purple);
+  --scouts-colour-teal: var(--scouts-teal);
+  --scouts-colour-red: var(--scouts-red);
+  --scouts-colour-pink: var(--scouts-pink);
+  --scouts-colour-navy: var(--scouts-navy);
+  --scouts-colour-blue: var(--scouts-blue);
+  --scouts-colour-forest: var(--scouts-forest);
+  --scouts-colour-green: var(--scouts-green);
+  --scouts-colour-orange: var(--scouts-orange);
+  --scouts-colour-yellow: var(--scouts-yellow);
+  --scouts-colour-grey: var(--scouts-grey);
+  --scouts-colour-black: var(--scouts-black);
+  --scouts-colour-white: var(--scouts-white);
+  --scouts-colour-hotpink: var(--scouts-hotpink);
+  --scouts-colour-squirrels: var(--scouts-red);
+  --scouts-colour-beavers: var(--scouts-blue);
+  --scouts-colour-cubs: var(--scouts-green);
+  --scouts-colour-scouts: #004952;
+  --scouts-colour-explorers: #00425e;
+  --scouts-colour-network: var(--scouts-black);
+  --scouts-colour-adult: var(--scouts-purple);
+  --scouts-colour-dev: var(--scouts-hotpink);
+  --scouts-colour-scouts-light: color-mix(in srgb, var(--scouts-colour-scouts), white 70%);
+  --scouts-colour-scouts-dark: color-mix(in srgb, var(--scouts-colour-scouts), black 45%);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
+  --color-scouts-primary: var(--scouts-colour-primary);
+  --color-scouts-primary-light: var(--scouts-colour-primary-light);
+  --color-scouts-primary-dark: var(--scouts-colour-primary-dark);
+  --color-scouts-primary-hover: var(--scouts-colour-primary-hover);
+  --color-scouts-primary-pastel: var(--scouts-colour-primary-pastel);
+  --color-scouts-primary-foreground: var(--scouts-colour-primary-foreground);
+  --color-scouts-secondary: var(--scouts-colour-secondary);
+  --color-scouts-secondary-light: var(--scouts-colour-secondary-light);
+  --color-scouts-secondary-dark: var(--scouts-colour-secondary-dark);
+  --color-scouts-secondary-hover: var(--scouts-colour-secondary-hover);
+  --color-scouts-secondary-pastel: var(--scouts-colour-secondary-pastel);
+  --color-scouts-secondary-foreground: var(--scouts-colour-secondary-foreground);
+  --color-scouts-primary-header: var(--scouts-colour-primary-header);
+  --color-scouts-primary-header-foreground: var(--scouts-colour-primary-header-foreground);
+  --color-scouts-text: var(--scouts-colour-text);
+  --color-scouts-text-inverse: var(--scouts-colour-text-inverse);
+  --color-scouts-bg: var(--scouts-colour-bg);
+  --color-scouts-surface: var(--scouts-colour-surface);
+  --color-scouts-border: var(--scouts-colour-border);
+  --color-scouts-border-muted: var(--scouts-colour-border-muted);
+  --color-scouts-muted: var(--scouts-colour-muted);
+  --color-scouts-focus: var(--scouts-colour-focus);
+  --color-scouts-focus-text: var(--scouts-colour-focus-text);
+  --color-scouts-link: var(--scouts-colour-link);
+  --color-scouts-link-hover: var(--scouts-colour-link-hover);
+  --color-scouts-success: var(--scouts-colour-success);
+  --color-scouts-success-light: var(--scouts-colour-success-light);
+  --color-scouts-info: var(--scouts-colour-info);
+  --color-scouts-info-light: var(--scouts-colour-info-light);
+  --color-scouts-warning: var(--scouts-colour-warning);
+  --color-scouts-warning-light: var(--scouts-colour-warning-light);
+  --color-scouts-danger: var(--scouts-colour-danger);
+  --color-scouts-danger-light: var(--scouts-colour-danger-light);
+  --color-scouts-squirrels: var(--scouts-colour-squirrels);
+  --color-scouts-beavers: var(--scouts-colour-beavers);
+  --color-scouts-cubs: var(--scouts-colour-cubs);
+  --color-scouts-scouts: var(--scouts-colour-scouts);
+  --color-scouts-scouts-foreground: var(--scouts-colour-text-inverse);
+  --color-scouts-explorers: var(--scouts-colour-explorers);
+  --color-scouts-network: var(--scouts-colour-network);
+  --color-scouts-adult: var(--scouts-colour-adult);
+  --color-scouts-dev: var(--scouts-colour-dev);
   --color-scouts-purple-light: var(--scouts-purple-light);
   --color-scouts-purple: var(--scouts-purple);
   --color-scouts-purple-dark: var(--scouts-purple-dark);
@@ -94,7 +205,7 @@ body {
 }
 
 a {
-  color: var(--scouts-purple);
+  color: var(--scouts-colour-link);
 }
 
 button,
@@ -105,12 +216,72 @@ textarea {
 }
 
 ::selection {
-  background: var(--scouts-purple-light);
-  color: var(--scouts-purple-dark);
+  background: var(--scouts-colour-primary-light);
+  color: var(--scouts-colour-primary-dark);
+}
+
+.scouts-site {
+  display: block;
+  background-color: var(--scouts-colour-bg);
+  color: var(--scouts-colour-text);
+  --scouts-site-primary: var(--scouts-colour-primary);
+  --scouts-site-secondary: var(--scouts-colour-secondary);
+  --scouts-colour-link: var(--scouts-colour-primary);
+  --scouts-colour-link-hover: color-mix(in srgb, var(--scouts-colour-link), black 25%);
+  --scouts-colour-primary-light: color-mix(in srgb, var(--scouts-colour-primary), white 70%);
+  --scouts-colour-primary-dark: color-mix(in srgb, var(--scouts-colour-primary), black 45%);
+  --scouts-colour-primary-hover: color-mix(in srgb, var(--scouts-colour-primary), black 14%);
+  --scouts-colour-primary-pastel: color-mix(in srgb, var(--scouts-colour-primary) 14%, var(--scouts-colour-surface));
+  --scouts-colour-primary-foreground: lch(from var(--scouts-colour-primary) calc((60 - l) * infinity) 0 0);
+  --scouts-colour-secondary-light: color-mix(in srgb, var(--scouts-colour-secondary), white 70%);
+  --scouts-colour-secondary-dark: color-mix(in srgb, var(--scouts-colour-secondary), black 45%);
+  --scouts-colour-secondary-hover: color-mix(in srgb, var(--scouts-colour-secondary), black 14%);
+  --scouts-colour-secondary-pastel: color-mix(in srgb, var(--scouts-colour-secondary) 14%, var(--scouts-colour-surface));
+  --scouts-colour-secondary-foreground: lch(from var(--scouts-colour-secondary) calc((60 - l) * infinity) 0 0);
+  --scouts-colour-primary-header: color-mix(in srgb, var(--scouts-colour-primary), black 10%);
+  --scouts-colour-primary-header-foreground: lch(from var(--scouts-colour-primary-header) calc((60 - l) * infinity) 0 0);
+}
+
+[data-theme="dark"] {
+  --scouts-colour-bg: #1a1a1a;
+  --scouts-colour-surface: #2a2a2a;
+  --scouts-colour-text: #f5f5f5;
+  --scouts-colour-border: #ededed;
+  --scouts-colour-border-muted: #4a4a4a;
+  --scouts-colour-muted: #c4c4c4;
+  --scouts-colour-link: color-mix(in srgb, var(--scouts-colour-primary), white 45%);
+  --scouts-colour-link-hover: color-mix(in srgb, var(--scouts-colour-primary), white 65%);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] {
+    --scouts-colour-bg: #1a1a1a;
+    --scouts-colour-surface: #2a2a2a;
+    --scouts-colour-text: #f5f5f5;
+    --scouts-colour-border: #ededed;
+    --scouts-colour-border-muted: #4a4a4a;
+    --scouts-colour-muted: #c4c4c4;
+    --scouts-colour-link: color-mix(in srgb, var(--scouts-colour-primary), white 45%);
+    --scouts-colour-link-hover: color-mix(in srgb, var(--scouts-colour-primary), white 65%);
+  }
+}
+
+[data-theme="dark"] .scouts-site,
+.scouts-site[data-theme="dark"] {
+  --scouts-colour-link: color-mix(in srgb, var(--scouts-colour-primary), white 45%);
+  --scouts-colour-link-hover: color-mix(in srgb, var(--scouts-colour-primary), white 65%);
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme="auto"] .scouts-site,
+  .scouts-site[data-theme="auto"] {
+    --scouts-colour-link: color-mix(in srgb, var(--scouts-colour-primary), white 45%);
+    --scouts-colour-link-hover: color-mix(in srgb, var(--scouts-colour-primary), white 65%);
+  }
 }
 
 .scouts-text-muted {
-  color: var(--scouts-grey-dark);
+  color: var(--scouts-colour-muted);
 }
 
 .scouts-text-small {

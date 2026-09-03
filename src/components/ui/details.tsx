@@ -9,8 +9,8 @@ export function Details({
   ...props
 }: { summary: ReactNode } & Omit<HTMLAttributes<HTMLDetailsElement>, "children"> & { children: ReactNode }) {
   return (
-    <details className={cn("border-y border-scouts-grey py-3", className)} {...props}>
-      <summary className="cursor-pointer font-bold text-scouts-purple underline decoration-2 underline-offset-2 marker:text-scouts-purple focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-purple">
+    <details className={cn("border-y border-scouts-border-muted py-3", className)} {...props}>
+      <summary className="cursor-pointer font-bold text-scouts-primary underline decoration-2 underline-offset-2 marker:text-scouts-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus">
         {summary}
       </summary>
       <div className="pt-3 text-base">{children}</div>
@@ -21,7 +21,7 @@ export function Details({
 export function InsetText({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("my-5 border-l-4 border-scouts-purple bg-scouts-purple-light px-5 py-4 text-black", className)}
+      className={cn("my-5 border-l-4 border-scouts-primary bg-scouts-primary-light px-5 py-4 text-scouts-text", className)}
       {...props}
     >
       {children}

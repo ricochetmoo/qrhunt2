@@ -52,7 +52,7 @@ export function Accordion({
         <button
           type="button"
           onClick={toggleAll}
-          className="mb-2 font-bold text-scouts-purple underline decoration-2 underline-offset-2 hover:text-scouts-purple-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-purple"
+          className="mb-2 font-bold text-scouts-primary underline decoration-2 underline-offset-2 hover:text-scouts-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
         >
           {allOpen ? "Hide all" : "Show all"}
         </button>
@@ -60,23 +60,23 @@ export function Accordion({
       {items.map((item) => {
         const open = openItems.has(item.id);
         return (
-          <section key={item.id} className="border-b border-scouts-grey">
+          <section key={item.id} className="border-b border-scouts-border-muted">
             <h3 className="m-0">
               <button
                 type="button"
                 aria-expanded={open}
                 onClick={() => toggle(item.id)}
-                className="flex w-full items-center justify-between gap-4 py-4 text-left text-xl font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-purple"
+                className="flex w-full items-center justify-between gap-4 py-4 text-left text-xl font-extrabold text-scouts-text focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
               >
                 <span>{item.title}</span>
-                <span className={cn("text-scouts-purple transition-transform", open && "rotate-180")} aria-hidden>
+                <span className={cn("text-scouts-primary transition-transform", open && "rotate-180")} aria-hidden>
                   ↓
                 </span>
               </button>
             </h3>
             {open ? (
               <div className="pb-5">
-                {item.summary ? <p className="mb-2 text-sm text-scouts-grey-dark">{item.summary}</p> : null}
+                {item.summary ? <p className="mb-2 text-sm text-scouts-muted">{item.summary}</p> : null}
                 {item.content}
               </div>
             ) : null}

@@ -25,7 +25,7 @@ export function Pagination({
             aria-disabled={currentPage === 1}
             className={cn(
               "inline-flex px-2 py-1 font-bold underline decoration-2 underline-offset-2",
-              currentPage === 1 && "pointer-events-none text-scouts-grey",
+              currentPage === 1 && "pointer-events-none text-scouts-muted",
             )}
           >
             Previous
@@ -34,7 +34,7 @@ export function Pagination({
         {visiblePages.map((page, index) => (
           <li key={`${page}-${index}`}>
             {page === -1 ? (
-              <span className="px-1 text-scouts-grey-dark" aria-hidden>
+              <span className="px-1 text-scouts-muted" aria-hidden>
                 ...
               </span>
             ) : (
@@ -44,8 +44,8 @@ export function Pagination({
                 className={cn(
                   "inline-flex min-w-8 justify-center border-2 px-2 py-1 font-bold",
                   page === currentPage
-                    ? "border-scouts-purple bg-scouts-purple text-white"
-                    : "border-transparent text-scouts-purple underline decoration-2 underline-offset-2 hover:border-scouts-purple-light",
+                    ? "border-scouts-primary bg-scouts-primary text-scouts-primary-foreground"
+                    : "border-transparent text-scouts-link underline decoration-2 underline-offset-2 hover:border-scouts-primary-light",
                 )}
               >
                 <span className="sr-only">Page </span>
@@ -60,7 +60,7 @@ export function Pagination({
             aria-disabled={currentPage === totalPages}
             className={cn(
               "inline-flex px-2 py-1 font-bold underline decoration-2 underline-offset-2",
-              currentPage === totalPages && "pointer-events-none text-scouts-grey",
+              currentPage === totalPages && "pointer-events-none text-scouts-muted",
             )}
           >
             Next

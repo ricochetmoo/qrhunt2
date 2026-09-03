@@ -34,7 +34,7 @@ export function RadioGroup({
 
   return (
     <fieldset className={cn("space-y-3", className)}>
-      <legend className="mb-2 text-base font-bold text-black">{legend}</legend>
+      <legend className="mb-2 text-base font-bold text-scouts-text">{legend}</legend>
       {options.map((option) => (
         <label key={option.value} htmlFor={`${id}-${option.value}`} className="flex cursor-pointer items-start gap-3">
           <input
@@ -48,11 +48,11 @@ export function RadioGroup({
               if (controlledValue === undefined) setUncontrolledValue(option.value);
               onChange?.(option.value);
             }}
-            className="mt-1 h-5 w-5 accent-scouts-purple"
+            className="mt-1 h-5 w-5 accent-scouts-primary"
           />
           <span>
-            <span className="block font-bold text-black">{option.label}</span>
-            {option.hint ? <span className="block text-sm text-scouts-grey-dark">{option.hint}</span> : null}
+            <span className="block font-bold text-scouts-text">{option.label}</span>
+            {option.hint ? <span className="block text-sm text-scouts-muted">{option.hint}</span> : null}
           </span>
         </label>
       ))}
@@ -89,7 +89,7 @@ export function CheckboxGroup({
 
   return (
     <fieldset className={cn("space-y-3", className)}>
-      <legend className="mb-2 text-base font-bold text-black">{legend}</legend>
+      <legend className="mb-2 text-base font-bold text-scouts-text">{legend}</legend>
       {options.map((option) => (
         <label key={option.value} htmlFor={`${id}-${option.value}`} className="flex cursor-pointer items-start gap-3">
           <input
@@ -100,11 +100,11 @@ export function CheckboxGroup({
             checked={value.includes(option.value)}
             disabled={option.disabled}
             onChange={() => toggle(option.value)}
-            className="mt-1 h-5 w-5 accent-scouts-purple"
+            className="mt-1 h-5 w-5 accent-scouts-primary"
           />
           <span>
-            <span className="block font-bold text-black">{option.label}</span>
-            {option.hint ? <span className="block text-sm text-scouts-grey-dark">{option.hint}</span> : null}
+            <span className="block font-bold text-scouts-text">{option.label}</span>
+            {option.hint ? <span className="block text-sm text-scouts-muted">{option.hint}</span> : null}
           </span>
         </label>
       ))}

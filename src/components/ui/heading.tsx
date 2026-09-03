@@ -33,7 +33,7 @@ export function ScoutsHeading({
 
   return (
     <Heading
-      className={cn("font-extrabold tracking-tight text-black", HEADING_CLASSES[size], className)}
+      className={cn("font-extrabold tracking-tight text-scouts-text", HEADING_CLASSES[size], className)}
       {...props}
     />
   );

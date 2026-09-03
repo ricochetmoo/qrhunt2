@@ -38,7 +38,7 @@ export function Tabs({
 
   return (
     <div className={cn("w-full", className)}>
-      <div role="tablist" aria-label="Sections" className="flex flex-wrap border-b-2 border-scouts-purple">
+      <div role="tablist" aria-label="Sections" className="flex flex-wrap border-b-2 border-scouts-primary">
         {items.map((item) => {
           const selected = item.id === active.id;
           return (
@@ -52,10 +52,10 @@ export function Tabs({
               disabled={item.disabled}
               onClick={() => select(item.id)}
               className={cn(
-                "border-b-4 px-4 py-2 font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-purple focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50",
+                "border-b-4 px-4 py-2 font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus focus-visible:ring-inset disabled:cursor-not-allowed disabled:opacity-50",
                 selected
-                  ? "border-scouts-purple bg-scouts-purple-light text-scouts-purple-dark"
-                  : "border-transparent text-scouts-grey-dark hover:border-scouts-purple-light hover:text-scouts-purple",
+                  ? "border-scouts-primary bg-scouts-primary-light text-scouts-primary-dark"
+                  : "border-transparent text-scouts-muted hover:border-scouts-primary-light hover:text-scouts-primary",
               )}
             >
               {item.label}
