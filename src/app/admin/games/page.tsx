@@ -2,10 +2,12 @@ import Link from "next/link";
 
 import { GamesTable } from "@/components/admin/games-table";
 import { PageHeader } from "@/components/ui/card";
-import { listGames } from "@/server/domain/games";
+import { requireAdminPage } from "@/server/auth/require-admin-page";
+import { listGamesForAdmin } from "@/server/games/access";
 
 export default async function GamesPage() {
-  const games = await listGames();
+  const { userId } = await requireAdminPage();
+  const games = await listGamesForAdmin(userId);
 
   return (
     <>

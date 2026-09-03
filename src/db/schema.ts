@@ -137,6 +137,7 @@ export const game_admins = pgTable(
   (table) => [
     index("game_admins_game_id_idx").on(table.gameId),
     index("game_admins_user_id_idx").on(table.userId),
+    uniqueIndex("game_admins_game_user_idx").on(table.gameId, table.userId),
   ],
 );
 

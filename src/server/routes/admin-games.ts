@@ -18,10 +18,10 @@ import {
   createGame,
   deleteGame,
   getGameWithRoute,
-  listGames,
   regenerateGameCode,
   updateGame,
 } from "@/server/domain/games";
+import { listGamesForAdmin } from "@/server/games/access";
 import {
   createQrCode,
   deleteQrCode,
@@ -29,17 +29,22 @@ import {
   reorderQrCodes,
   updateQrCode,
 } from "@/server/domain/qr-codes";
-import { requireAdmin } from "@/server/middleware/require-admin";
+import { requireAdmin, type AdminMiddlewareEnv } from "@/server/middleware/require-admin";
 
 /**
  * Admin game management. Mounted at `/api/admin/games` from `src/server/api.ts`.
  * Kept as one chained expression so the Hono RPC types flow into `AppType`.
  */
-export const adminGamesRoute = new Hono()
+export const adminGamesRoute = new Hono<AdminMiddlewareEnv>()
   .use("*", requireAdmin)
-  .get("/", async (c) => c.json({ games: await listGames() }))
+  .get("/", async (c) =>
+    c.json({ games: await listGamesForAdmin(c.var.adminPrincipal.userId) }),
+  )
   .post("/", zValidator("json", createGameSchema), async (c) => {
-    const game = await createGame(c.req.valid("json"));
+    const game = await createGame(
+      c.req.valid("json"),
+      c.var.adminPrincipal.userId,
+    );
 
     return c.json({ game }, 201);
   })

@@ -1,8 +1,12 @@
 import { createMiddleware } from "hono/factory";
 
+import {
+  requireAdminGameRequest,
+  requireAdminRequest,
+} from "@/server/auth/require-admin-request";
 import type { AdminPrincipal } from "@/server/auth/admin-principal";
 
-type AdminMiddlewareEnv = {
+export type AdminMiddlewareEnv = {
   Variables: {
     adminPrincipal: AdminPrincipal;
   };
@@ -16,26 +20,14 @@ type AdminMiddlewareEnv = {
  * role as well as the session before allowing a request through.
  */
 export const requireAdmin = createMiddleware<AdminMiddlewareEnv>(async (c, next) => {
-  const { resolveAdminPrincipal } = await import("@/server/auth/admin-principal");
-  const result = await resolveAdminPrincipal(c.req.raw.headers);
-
-  if (result.status === "unauthenticated") {
-    return c.json({ error: "Unauthorized" }, 401);
-  }
-
-  if (result.status === "forbidden") {
-    return c.json({ error: "Forbidden" }, 403);
-  }
-
   const gameId = c.req.param("gameId");
 
-  if (gameId) {
-    const { getGameForAdmin } = await import("@/server/games/access");
-    const game = await getGameForAdmin(result.principal.userId, gameId);
+  const result = gameId
+    ? await requireAdminGameRequest(c.req.raw, gameId)
+    : await requireAdminRequest(c.req.raw);
 
-    if (!game) {
-      return c.json({ error: "Game not found.", code: "NOT_FOUND" }, 404);
-    }
+  if (!result.ok) {
+    return result.response;
   }
 
   c.set("adminPrincipal", result.principal);

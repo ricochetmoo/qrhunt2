@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
 import { type Game, game_admins, games } from "@/db/schema";
@@ -13,6 +13,18 @@ export async function gameExists(gameId: string): Promise<boolean> {
     .limit(1);
 
   return rows.length > 0;
+}
+
+/** Returns only the games that the administrator is assigned to manage. */
+export async function listGamesForAdmin(userId: string): Promise<Game[]> {
+  const rows = await db
+    .selectDistinct({ game: games })
+    .from(games)
+    .innerJoin(game_admins, eq(game_admins.gameId, games.id))
+    .where(eq(game_admins.userId, userId))
+    .orderBy(desc(games.updatedAt));
+
+  return rows.map(({ game }) => game);
 }
 
 /**

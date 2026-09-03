@@ -1,8 +1,7 @@
 import { z } from "zod";
 
 import { listQrCodes } from "@/server/domain/qr-codes";
-import { resolveAdminPrincipal } from "@/server/auth/admin-principal";
-import { gameExists, getGameForAdmin } from "@/server/games/access";
+import { requireAdminGameRequest } from "@/server/auth/require-admin-request";
 import { buildQrImagesZip, qrImageZipFilename } from "@/server/qr-images/render";
 
 export const runtime = "nodejs";
@@ -24,25 +23,13 @@ export async function POST(
 
   const { gameId } = parsedParams.data;
 
-  const auth = await resolveAdminPrincipal(request.headers);
+  const auth = await requireAdminGameRequest(request, gameId);
 
-  if (auth.status === "unauthenticated") {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  if (!auth.ok) {
+    return auth.response;
   }
 
-  if (auth.status === "forbidden") {
-    return Response.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const game = await getGameForAdmin(auth.principal.userId, gameId);
-
-  if (!game) {
-    if (await gameExists(gameId)) {
-      return Response.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    return Response.json({ error: "Game not found" }, { status: 404 });
-  }
+  const { game } = auth;
 
   const qrCodes = await listQrCodes(gameId);
 

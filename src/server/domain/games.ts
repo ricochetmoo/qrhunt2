@@ -3,7 +3,7 @@ import "server-only";
 import { asc, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { games, qr_codes } from "@/db/schema";
+import { game_admins, games, qr_codes } from "@/db/schema";
 import type { Game, QrCode } from "@/db/types";
 import type { CreateGameInput, UpdateGameInput } from "@/lib/admin-schemas";
 import { isGameStatus } from "@/lib/game-status";
@@ -42,13 +42,30 @@ export async function getGameWithRoute(
   return { game, qrCodes: codes };
 }
 
-export async function createGame(input: CreateGameInput): Promise<Game> {
+/** Create a game and assign its creator as the first administrator. */
+export async function createGame(
+  input: CreateGameInput,
+  adminUserId: string,
+): Promise<Game> {
   for (let attempt = 1; ; attempt++) {
     try {
-      const [game] = await db
-        .insert(games)
-        .values({ id: generateId(), name: input.name, status: "draft", gameCode: generateGameCode() })
-        .returning();
+      const gameId = generateId();
+      const [gameRows] = await db.batch([
+        db
+          .insert(games)
+          .values({ id: gameId, name: input.name, status: "draft", gameCode: generateGameCode() })
+          .returning(),
+        db
+          .insert(game_admins)
+          .values({ id: generateId(), gameId, userId: adminUserId })
+          .returning(),
+      ]);
+
+      const game = gameRows[0];
+
+      if (!game) {
+        throw new Error("The game was created without a game record.");
+      }
 
       return game;
     } catch (error) {
