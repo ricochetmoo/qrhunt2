@@ -144,6 +144,7 @@ export async function updateGame(gameId: string, patch: UpdateGameInput): Promis
         patch.completionMessage === undefined
           ? current.completionMessage
           : patch.completionMessage,
+      feedbackUrl: patch.feedbackUrl === undefined ? current.feedbackUrl : patch.feedbackUrl,
       gameMode: patch.gameMode ?? current.gameMode,
       allowOutOfOrder: patch.allowOutOfOrder ?? current.allowOutOfOrder,
       // Remember the first time the game started/finished for timing and leaderboards.
