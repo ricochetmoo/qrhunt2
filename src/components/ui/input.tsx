@@ -3,16 +3,16 @@ import type { InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes 
 import { cn } from "@/lib/cn";
 
 export const fieldClasses =
-  "block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500 disabled:bg-slate-50 disabled:text-slate-500";
+  "block w-full border-2 border-black bg-white px-2 py-2 text-base text-black placeholder:text-scouts-grey-dark focus:border-scouts-purple focus:outline-none focus:ring-2 focus:ring-scouts-purple/25 disabled:bg-scouts-grey-light disabled:text-scouts-grey-dark";
 
 export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return <input className={cn(fieldClasses, className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cn(fieldClasses, "min-h-20", className)} {...props} />;
+  return <textarea className={cn(fieldClasses, "min-h-24", className)} {...props} />;
 }
 
 export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select className={cn(fieldClasses, className)} {...props} />;
+  return <select className={cn(fieldClasses, "appearance-auto", className)} {...props} />;
 }

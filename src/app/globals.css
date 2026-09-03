@@ -1,24 +1,166 @@
+@import "@fontsource/nunito-sans/400.css";
+@import "@fontsource/nunito-sans/700.css";
+@import "@fontsource/nunito-sans/800.css";
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --brand: #7143dc;
+  --background: #f7f7f7;
+  --foreground: #111111;
+  --brand: #7413dc;
+
+  --scouts-purple-light: #eadcff;
+  --scouts-purple: #7413dc;
+  --scouts-purple-dark: #4d0b99;
+  --scouts-teal-light: #d5f0ef;
+  --scouts-teal: #088486;
+  --scouts-teal-dark: #04595a;
+  --scouts-red-light: #ffe0d9;
+  --scouts-red: #ed3f23;
+  --scouts-red-dark: #a62d1a;
+  --scouts-navy-light: #d8e8fa;
+  --scouts-navy: #003982;
+  --scouts-navy-dark: #00224f;
+  --scouts-blue-light: #d6eaff;
+  --scouts-blue: #006ddf;
+  --scouts-blue-dark: #004697;
+  --scouts-forest-light: #dff0e6;
+  --scouts-forest: #205b41;
+  --scouts-forest-dark: #123825;
+  --scouts-green-light: #d7f3df;
+  --scouts-green: #25b755;
+  --scouts-green-dark: #177536;
+  --scouts-orange-light: #ffead7;
+  --scouts-orange: #ff912a;
+  --scouts-orange-dark: #a9540c;
+  --scouts-yellow-light: #fff6ae;
+  --scouts-yellow: #ffe627;
+  --scouts-yellow-dark: #8d7600;
+  --scouts-pink-light: #ffe2f3;
+  --scouts-pink: #ffb4e5;
+  --scouts-pink-dark: #8f3f70;
+  --scouts-grey-light: #f0f0f0;
+  --scouts-grey: #cccccc;
+  --scouts-grey-dark: #666666;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-brand: var(--brand);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --color-scouts-purple-light: var(--scouts-purple-light);
+  --color-scouts-purple: var(--scouts-purple);
+  --color-scouts-purple-dark: var(--scouts-purple-dark);
+  --color-scouts-teal-light: var(--scouts-teal-light);
+  --color-scouts-teal: var(--scouts-teal);
+  --color-scouts-teal-dark: var(--scouts-teal-dark);
+  --color-scouts-red-light: var(--scouts-red-light);
+  --color-scouts-red: var(--scouts-red);
+  --color-scouts-red-dark: var(--scouts-red-dark);
+  --color-scouts-navy-light: var(--scouts-navy-light);
+  --color-scouts-navy: var(--scouts-navy);
+  --color-scouts-navy-dark: var(--scouts-navy-dark);
+  --color-scouts-blue-light: var(--scouts-blue-light);
+  --color-scouts-blue: var(--scouts-blue);
+  --color-scouts-blue-dark: var(--scouts-blue-dark);
+  --color-scouts-forest-light: var(--scouts-forest-light);
+  --color-scouts-forest: var(--scouts-forest);
+  --color-scouts-forest-dark: var(--scouts-forest-dark);
+  --color-scouts-green-light: var(--scouts-green-light);
+  --color-scouts-green: var(--scouts-green);
+  --color-scouts-green-dark: var(--scouts-green-dark);
+  --color-scouts-orange-light: var(--scouts-orange-light);
+  --color-scouts-orange: var(--scouts-orange);
+  --color-scouts-orange-dark: var(--scouts-orange-dark);
+  --color-scouts-yellow-light: var(--scouts-yellow-light);
+  --color-scouts-yellow: var(--scouts-yellow);
+  --color-scouts-yellow-dark: var(--scouts-yellow-dark);
+  --color-scouts-pink-light: var(--scouts-pink-light);
+  --color-scouts-pink: var(--scouts-pink);
+  --color-scouts-pink-dark: var(--scouts-pink-dark);
+  --color-scouts-grey-light: var(--scouts-grey-light);
+  --color-scouts-grey: var(--scouts-grey);
+  --color-scouts-grey-dark: var(--scouts-grey-dark);
+  --font-sans: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Nunito Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
   margin: 0;
+}
+
+a {
+  color: var(--scouts-purple);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: var(--scouts-purple-light);
+  color: var(--scouts-purple-dark);
+}
+
+.scouts-text-muted {
+  color: var(--scouts-grey-dark);
+}
+
+.scouts-text-small {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.scouts-text-purple {
+  color: var(--scouts-purple);
+}
+
+.scouts-text-teal {
+  color: var(--scouts-teal);
+}
+
+.scouts-text-forest {
+  color: var(--scouts-forest);
+}
+
+.scouts-text-red {
+  color: var(--scouts-red);
+}
+
+.scouts-text-yellow {
+  color: var(--scouts-yellow-dark);
+}
+
+.scouts-bg-purple {
+  background: var(--scouts-purple);
+  color: white;
+}
+
+.scouts-bg-teal {
+  background: var(--scouts-teal);
+  color: white;
+}
+
+.scouts-bg-navy {
+  background: var(--scouts-navy);
+  color: white;
+}
+
+.scouts-bg-yellow {
+  background: var(--scouts-yellow);
+  color: #111111;
+}
+
+.scouts-bg-teal-light {
+  background: var(--scouts-teal-light);
+  color: #111111;
 }
 
 #qr-hunt-scanner-viewport video {

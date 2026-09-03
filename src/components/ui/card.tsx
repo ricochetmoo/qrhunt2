@@ -5,7 +5,7 @@ import { cn } from "@/lib/cn";
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("rounded-lg border border-slate-200 bg-white shadow-sm", className)}
+      className={cn("border border-black bg-white p-5", className)}
       {...props}
     />
   );
@@ -15,16 +15,18 @@ export function CardHeader({
   title,
   description,
   actions,
+  className,
 }: {
-  title: string;
+  title: ReactNode;
   description?: string;
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4">
-      <div>
-        <h2 className="text-base font-semibold text-slate-900">{title}</h2>
-        {description ? <p className="mt-0.5 text-sm text-slate-500">{description}</p> : null}
+    <div className={cn("mb-4 flex items-start justify-between gap-4", className)}>
+      <div className="min-w-0">
+        <h2 className="text-xl font-extrabold leading-tight text-black">{title}</h2>
+        {description ? <p className="mt-1 text-sm text-scouts-grey-dark">{description}</p> : null}
       </div>
       {actions}
     </div>
@@ -32,7 +34,7 @@ export function CardHeader({
 }
 
 export function CardBody({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("px-5 py-4", className)} {...props} />;
+  return <div className={cn(className)} {...props} />;
 }
 
 export function PageHeader({
@@ -40,17 +42,34 @@ export function PageHeader({
   description,
   actions,
 }: {
-  title: string;
+  title: ReactNode;
   description?: string;
   actions?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+    <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-black pb-5">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
-        {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
+        <h1 className="text-4xl font-extrabold tracking-tight text-black">{title}</h1>
+        {description ? <p className="mt-1 text-base text-scouts-grey-dark">{description}</p> : null}
       </div>
-      {actions ? <div className="flex gap-2">{actions}</div> : null}
+      {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+    </div>
+  );
+}
+
+export function SectionHeading({
+  title,
+  description,
+  className,
+}: {
+  title: ReactNode;
+  description?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("mb-4", className)}>
+      <h2 className="text-3xl font-extrabold tracking-tight text-black">{title}</h2>
+      {description ? <p className="mt-1 text-base text-scouts-grey-dark">{description}</p> : null}
     </div>
   );
 }
