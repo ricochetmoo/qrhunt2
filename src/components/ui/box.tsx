@@ -6,7 +6,7 @@ export type BoxVariant = "default" | "success" | "warning" | "navy" | "yellow" |
 export type BoxSize = "xs" | "sm" | "md" | "lg" | "xl";
 
 const VARIANT_CLASSES: Record<BoxVariant, string> = {
-  default: "bg-scouts-grey-light text-black",
+  default: "bg-scouts-grey-light text-scouts-text",
   success: "bg-scouts-green text-black",
   warning: "bg-scouts-orange text-black",
   navy: "bg-scouts-navy text-white",

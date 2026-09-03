@@ -27,6 +27,7 @@ import {
   ScoutsHeader,
   ScoutsList,
   ScoutsLink,
+  ScoutSite,
   SectionHeading,
   Select,
   SideNav,
@@ -160,6 +161,20 @@ export function ComponentLibraryShowcase() {
                       <div className="p-2 text-sm font-bold capitalize">{name}</div>
                     </div>
                   ))}
+                </CardBody>
+              </Card>
+              <Card>
+                <CardHeader title="Site theming" description="Primary and secondary colours scope to every component inside a ScoutSite." />
+                <CardBody>
+                  <ScoutSite primary="scouts" secondary="forest" className="space-y-4 border border-dashed border-scouts-border-muted p-4">
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm">Primary button</Button>
+                      <Button variant="secondary" size="sm">Secondary button</Button>
+                      <Tag variant="primary">Primary tag</Tag>
+                    </div>
+                    <ScoutsLink href="#foundations">A re-themed link</ScoutsLink>
+                    <ProgressBar value={60} label="60%" labelPosition="inside" />
+                  </ScoutSite>
                 </CardBody>
               </Card>
             </Grid>

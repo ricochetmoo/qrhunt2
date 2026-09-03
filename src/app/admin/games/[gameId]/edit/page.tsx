@@ -7,10 +7,12 @@ import { QrImageExportButton } from "@/components/admin/qr-image-export-button";
 import { QrCodeList } from "@/components/admin/qr-code-list";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/card";
+import { requireAdminGamePage } from "@/server/auth/require-admin-page";
 import { getGameWithRoute } from "@/server/domain/games";
 
 export default async function GameEditPage({ params }: PageProps<"/admin/games/[gameId]/edit">) {
   const { gameId } = await params;
+  await requireAdminGamePage(gameId);
   const result = await getGameWithRoute(gameId);
 
   if (!result) {

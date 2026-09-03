@@ -15,16 +15,16 @@ export function Breadcrumbs({ items, className }: { items: BreadcrumbItem[]; cla
         {items.map((item, index) => (
           <li key={`${index}-${String(item.label)}`} className="inline-flex items-center gap-2">
             {index > 0 ? (
-              <span className="text-scouts-grey-dark" aria-hidden>
+              <span className="text-scouts-muted" aria-hidden>
                 /
               </span>
             ) : null}
             {item.href ? (
-              <Link href={item.href} className="font-bold underline decoration-2 underline-offset-2 hover:text-scouts-purple-dark">
+              <Link href={item.href} className="font-bold text-scouts-link underline decoration-2 underline-offset-2 hover:text-scouts-link-hover">
                 {item.label}
               </Link>
             ) : (
-              <span aria-current="page" className="font-bold text-black">
+              <span aria-current="page" className="font-bold text-scouts-text">
                 {item.label}
               </span>
             )}

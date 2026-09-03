@@ -17,6 +17,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   isAnonymous: boolean("is_anonymous").notNull().default(false),
+  isAdmin: boolean("is_admin").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -42,6 +43,7 @@ export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
+    issuer: text("issuer").notNull().default("local:credential"),
     accountId: text("account_id").notNull(),
     providerId: text("provider_id").notNull(),
     userId: text("user_id")
@@ -59,8 +61,8 @@ export const account = pgTable(
   },
   (table) => [
     index("account_user_id_idx").on(table.userId),
-    uniqueIndex("account_provider_account_idx").on(
-      table.providerId,
+    uniqueIndex("account_issuer_account_idx").on(
+      table.issuer,
       table.accountId,
     ),
   ],
@@ -135,6 +137,7 @@ export const game_admins = pgTable(
   (table) => [
     index("game_admins_game_id_idx").on(table.gameId),
     index("game_admins_user_id_idx").on(table.userId),
+    uniqueIndex("game_admins_game_user_idx").on(table.gameId, table.userId),
   ],
 );
 

@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "game_admins_game_user_idx" ON "game_admins" USING btree ("game_id","user_id");

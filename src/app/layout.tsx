@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ScoutSite } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "The Lost Signal · QR Hunt",
@@ -9,7 +10,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="h-full">
+        <ScoutSite primary="blue" secondary="orange" className="min-h-full flex flex-col">
+          {children}
+        </ScoutSite>
+      </body>
     </html>
   );
 }

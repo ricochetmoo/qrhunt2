@@ -37,24 +37,24 @@ export function Stepper({
 
           return (
             <li key={step.id} className="flex items-center gap-3">
-              {index > 0 ? <span className="h-px w-8 bg-scouts-purple/40" aria-hidden /> : null}
+              {index > 0 ? <span className="h-px w-8 bg-scouts-primary/40" aria-hidden /> : null}
               <button
                 type="button"
                 aria-current={active ? "step" : undefined}
                 onClick={() => selectStep(index)}
                 className={cn(
-                  "flex items-center gap-2 font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-purple focus-visible:ring-offset-2",
-                  active || complete ? "text-black" : "text-scouts-grey-dark",
+                  "flex items-center gap-2 font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus focus-visible:ring-offset-2",
+                  active || complete ? "text-scouts-text" : "text-scouts-muted",
                 )}
               >
                 <span
                   className={cn(
                     "inline-flex h-8 w-8 items-center justify-center rounded-full border-2 text-sm",
                     active
-                      ? "border-scouts-purple bg-scouts-purple text-white"
+                      ? "border-scouts-primary bg-scouts-primary text-scouts-primary-foreground"
                       : complete
-                        ? "border-scouts-purple bg-white text-scouts-purple"
-                        : "border-scouts-grey-dark bg-transparent text-scouts-grey-dark",
+                        ? "border-scouts-primary bg-scouts-surface text-scouts-primary"
+                        : "border-scouts-muted bg-transparent text-scouts-muted",
                   )}
                 >
                   {index + 1}

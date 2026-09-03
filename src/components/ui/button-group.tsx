@@ -52,14 +52,14 @@ export function ButtonGroup({
             disabled={item.disabled}
             onClick={() => select(item.id)}
             className={cn(
-              "inline-flex items-center gap-2 border-2 px-3 font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-purple focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+              "inline-flex items-center gap-2 border-2 px-3 font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
               size === "sm" && "py-1 text-sm",
               size === "md" && "py-2 text-base",
               size === "lg" && "px-5 py-3 text-xl",
               selected
-                ? "border-scouts-purple bg-scouts-purple text-white"
-                : "border-scouts-grey bg-white text-black hover:border-scouts-purple",
-              item.count === 0 && !selected && "text-scouts-grey-dark",
+                ? "border-scouts-primary bg-scouts-primary text-scouts-primary-foreground"
+                : "border-scouts-grey bg-scouts-surface text-scouts-text hover:border-scouts-primary",
+              item.count === 0 && !selected && "text-scouts-muted",
             )}
           >
             {item.label}
@@ -67,7 +67,7 @@ export function ButtonGroup({
               <span
                 className={cn(
                   "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs leading-5",
-                  selected ? "bg-white text-scouts-purple" : "bg-scouts-grey-light text-black",
+                  selected ? "bg-scouts-surface text-scouts-primary" : "bg-scouts-grey-light text-scouts-text",
                 )}
               >
                 {item.count}

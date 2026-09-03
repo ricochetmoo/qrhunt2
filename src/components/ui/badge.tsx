@@ -8,7 +8,7 @@ const STATUS_CLASSES: Record<GameStatus, string> = {
   published: "bg-scouts-blue-light text-scouts-blue-dark",
   started: "bg-scouts-green-light text-scouts-green-dark",
   paused: "bg-scouts-orange-light text-scouts-orange-dark",
-  finished: "bg-scouts-purple-light text-scouts-purple-dark",
+  finished: "bg-scouts-primary-light text-scouts-primary-dark",
   archived: "bg-scouts-grey text-scouts-grey-dark",
 };
 
@@ -41,8 +41,8 @@ export type TagVariant =
   | "adult";
 
 const TAG_CLASSES: Record<TagVariant, string> = {
-  primary: "bg-scouts-purple text-white",
-  secondary: "bg-scouts-teal text-white",
+  primary: "bg-scouts-primary text-scouts-primary-foreground",
+  secondary: "bg-scouts-secondary text-scouts-secondary-foreground",
   success: "bg-scouts-green text-black",
   info: "bg-scouts-blue text-white",
   warning: "bg-scouts-orange text-black",
@@ -63,10 +63,10 @@ const TAG_CLASSES: Record<TagVariant, string> = {
   squirrels: "bg-scouts-red text-white",
   beavers: "bg-scouts-blue text-white",
   cubs: "bg-scouts-green text-black",
-  scouts: "bg-scouts-purple text-white",
+  scouts: "bg-scouts-scouts text-scouts-scouts-foreground",
   explorers: "bg-scouts-orange text-black",
-  network: "bg-scouts-teal text-white",
-  adult: "bg-scouts-navy text-white",
+  network: "bg-scouts-network text-white",
+  adult: "bg-scouts-adult text-white",
 };
 
 export interface TagProps {

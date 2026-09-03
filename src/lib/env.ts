@@ -32,3 +32,13 @@ export function getAuthSecret() {
 
   return secret === undefined ? undefined : authSecretSchema.parse(secret);
 }
+
+export function getAdminAuthSecret() {
+  const secret = process.env.ADMIN_AUTH_SECRET;
+
+  if (secret === undefined && process.env.NEXT_PHASE === "phase-production-build") {
+    return "build-only-secret-do-not-use-in-runtime-123456789";
+  }
+
+  return secret === undefined ? undefined : authSecretSchema.parse(secret);
+}

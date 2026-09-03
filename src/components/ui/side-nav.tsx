@@ -14,9 +14,9 @@ export interface SideNavItem {
 }
 
 const ACCENT_CLASSES: Partial<Record<TagVariant, string>> = {
-  primary: "border-scouts-purple",
+  primary: "border-scouts-primary",
   purple: "border-scouts-purple",
-  secondary: "border-scouts-teal",
+  secondary: "border-scouts-secondary",
   teal: "border-scouts-teal",
   info: "border-scouts-blue",
   blue: "border-scouts-blue",
@@ -28,6 +28,31 @@ const ACCENT_CLASSES: Partial<Record<TagVariant, string>> = {
   red: "border-scouts-red",
   navy: "border-scouts-navy",
   forest: "border-scouts-forest",
+  scouts: "border-scouts-scouts",
+  explorers: "border-scouts-explorers",
+  network: "border-scouts-network",
+  adult: "border-scouts-adult",
+};
+
+const COUNT_CLASSES: Partial<Record<TagVariant, string>> = {
+  primary: "bg-scouts-primary text-scouts-primary-foreground",
+  secondary: "bg-scouts-secondary text-scouts-secondary-foreground",
+  purple: "bg-scouts-purple text-white",
+  teal: "bg-scouts-teal text-white",
+  info: "bg-scouts-blue text-white",
+  blue: "bg-scouts-blue text-white",
+  success: "bg-scouts-green text-black",
+  green: "bg-scouts-green text-black",
+  warning: "bg-scouts-orange text-black",
+  orange: "bg-scouts-orange text-black",
+  danger: "bg-scouts-red text-white",
+  red: "bg-scouts-red text-white",
+  navy: "bg-scouts-navy text-white",
+  forest: "bg-scouts-forest text-white",
+  scouts: "bg-scouts-scouts text-scouts-scouts-foreground",
+  explorers: "bg-scouts-explorers text-white",
+  network: "bg-scouts-network text-white",
+  adult: "bg-scouts-adult text-white",
 };
 
 export function SideNav({ items, activeId, className }: { items: SideNavItem[]; activeId?: string; className?: string }) {
@@ -42,18 +67,21 @@ export function SideNav({ items, activeId, className }: { items: SideNavItem[]; 
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center justify-between gap-3 border-l-4 px-4 py-3 text-black transition-colors hover:bg-scouts-grey-light",
-                  ACCENT_CLASSES[item.variant ?? "primary"] ?? "border-scouts-purple",
+                  "flex items-center justify-between gap-3 border-l-4 px-4 py-3 text-scouts-text transition-colors hover:bg-scouts-grey-light",
+                  ACCENT_CLASSES[item.variant ?? "primary"] ?? "border-scouts-primary",
                   active && "bg-scouts-grey-light font-extrabold",
-                  item.muted && "text-scouts-grey-dark",
+                  item.muted && "text-scouts-muted",
                 )}
               >
                 <span className="min-w-0">
                   <span className="block truncate">{item.label}</span>
-                  {item.description ? <span className="block text-sm font-normal text-scouts-grey-dark">{item.description}</span> : null}
+                  {item.description ? <span className="block text-sm font-normal text-scouts-muted">{item.description}</span> : null}
                 </span>
                 {item.count !== undefined ? (
-                  <span className="inline-flex min-w-6 items-center justify-center rounded-full bg-scouts-grey-light px-1.5 text-sm font-bold">
+                  <span className={cn(
+                    "inline-flex min-w-6 items-center justify-center rounded-full px-1.5 text-sm font-bold",
+                    COUNT_CLASSES[item.variant ?? "primary"] ?? "bg-scouts-grey-light text-scouts-text",
+                  )}>
                     {item.count}
                   </span>
                 ) : null}

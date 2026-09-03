@@ -1,7 +1,10 @@
 # Brand logos
 
-Nine PNG lockups in `public/brand/`, served at `/brand/...`:
+Nine PNG lockups and one SVG lockup in `public/brand/`, served at `/brand/...`:
 `logo-{linear,stacked,marque}-{black,white,purple}.png`.
+
+`logo-stacked-digital.svg` is the vector stacked Scouts Digital lockup. It uses
+Nunito Sans for both wordmark lines and the QR Hunt purple accent.
 
 - `linear` — wordmark beside the mark (~2196×620).
 - `stacked` — wordmark under the mark (~1374×1003).

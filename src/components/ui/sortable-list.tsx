@@ -47,7 +47,7 @@ export function SortableList({
   }
 
   return (
-    <ol className={cn("divide-y divide-scouts-grey border-y border-scouts-grey", className)}>
+    <ol className={cn("divide-y divide-scouts-border-muted border-y border-scouts-border-muted", className)}>
       {orderedItems.map((item, index) => (
         <li
           key={item.id}
@@ -57,12 +57,12 @@ export function SortableList({
           onDrop={() => drop(item.id)}
           className="grid gap-3 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center"
         >
-          <span className="hidden cursor-grab text-xl text-scouts-grey-dark sm:inline" aria-hidden>
+          <span className="hidden cursor-grab text-xl text-scouts-muted sm:inline" aria-hidden>
             ⠿
           </span>
           <div className="min-w-0">
-            <h3 className="font-bold text-black">{item.title}</h3>
-            {item.description ? <p className="mt-1 text-sm text-scouts-grey-dark">{item.description}</p> : null}
+            <h3 className="font-bold text-scouts-text">{item.title}</h3>
+            {item.description ? <p className="mt-1 text-sm text-scouts-muted">{item.description}</p> : null}
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             {renderActions?.(item)}
@@ -71,7 +71,7 @@ export function SortableList({
               onClick={() => move(index, index - 1)}
               disabled={index === 0}
               aria-label={`Move ${String(item.title)} up`}
-              className="border-2 border-black px-2 py-1 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-30"
+              className="border-2 border-scouts-border px-2 py-1 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-30"
             >
               ↑
             </button>
@@ -80,7 +80,7 @@ export function SortableList({
               onClick={() => move(index, index + 1)}
               disabled={index === orderedItems.length - 1}
               aria-label={`Move ${String(item.title)} down`}
-              className="border-2 border-black px-2 py-1 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-30"
+              className="border-2 border-scouts-border px-2 py-1 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-30"
             >
               ↓
             </button>

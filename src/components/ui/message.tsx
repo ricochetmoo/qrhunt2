@@ -7,10 +7,10 @@ import { cn } from "@/lib/cn";
 export type MessageVariant = "success" | "info" | "warning" | "danger";
 
 const MESSAGE_CLASSES: Record<MessageVariant, string> = {
-  success: "bg-scouts-green-light",
-  info: "bg-scouts-blue-light",
-  warning: "bg-scouts-orange-light",
-  danger: "bg-scouts-red-light",
+  success: "bg-scouts-success-light",
+  info: "bg-scouts-info-light",
+  warning: "bg-scouts-warning-light",
+  danger: "bg-scouts-danger-light",
 };
 
 const MESSAGE_ACCENTS: Record<MessageVariant, string> = {
@@ -40,7 +40,7 @@ export function Message({
     <div
       role={variant === "danger" ? "alert" : "region"}
       aria-label={title}
-      className={cn("relative border-l-4 px-5 py-4 text-black", MESSAGE_CLASSES[variant], MESSAGE_ACCENTS[variant], className)}
+      className={cn("relative border-l-4 px-5 py-4 text-scouts-text", MESSAGE_CLASSES[variant], MESSAGE_ACCENTS[variant], className)}
     >
       <div className="pr-10">
         <h3 className="text-lg font-extrabold">{title}</h3>
@@ -51,7 +51,7 @@ export function Message({
           type="button"
           onClick={() => setDismissed(true)}
           aria-label={`Dismiss ${title}`}
-          className="absolute right-3 top-3 p-1 text-xl leading-none hover:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-black"
+          className="absolute right-3 top-3 p-1 text-xl leading-none hover:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
         >
           ×
         </button>
