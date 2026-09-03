@@ -20,6 +20,7 @@ export const createGameSchema = z.object({
 export const gameConfigSchema = z.object({
   gameMode: gameModeSchema,
   completionMessage: optionalText(COMPLETION_MESSAGE_MAX_LENGTH),
+  feedbackUrl: z.httpUrl().max(2048).nullable().optional(),
   allowOutOfOrder: z.boolean(),
   allowSelfSignup: z.boolean(),
   allowTeamCreation: z.boolean(),

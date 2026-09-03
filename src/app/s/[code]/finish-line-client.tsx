@@ -92,6 +92,13 @@ export function FinishLine({
         return;
       }
 
+      const feedbackUrl = state.game.feedbackUrl?.trim();
+
+      if (feedbackUrl) {
+        window.location.replace(feedbackUrl);
+        return;
+      }
+
       setPhase({ kind: "form" });
     } catch {
       setPhase({

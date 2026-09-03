@@ -26,6 +26,7 @@ export type EditableGame = Pick<
   | "status"
   | "pauseReason"
   | "completionMessage"
+  | "feedbackUrl"
   | "gameCode"
   | "gameMode"
   | "allowOutOfOrder"
@@ -46,6 +47,7 @@ type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
 type ConfigState = {
   gameMode: GameMode;
   completionMessage: string;
+  feedbackUrl: string;
   allowOutOfOrder: boolean;
   allowSelfSignup: boolean;
   allowTeamCreation: boolean;
@@ -71,6 +73,7 @@ function initialConfig(game: EditableGame | null): ConfigState {
   return {
     gameMode: game && isGameMode(game.gameMode) ? game.gameMode : "speed",
     completionMessage: game?.completionMessage ?? "",
+    feedbackUrl: game?.feedbackUrl ?? "",
     allowOutOfOrder: game?.allowOutOfOrder ?? false,
     allowSelfSignup: game?.allowSelfSignup ?? true,
     allowTeamCreation: game?.allowTeamCreation ?? true,
@@ -171,6 +174,7 @@ export function GameForm(props: GameFormProps) {
           status,
           pauseReason: status === "paused" ? pauseReason : null,
           completionMessage: config.completionMessage.trim() || null,
+          feedbackUrl: config.feedbackUrl.trim() || null,
           gameMode: config.gameMode,
           allowOutOfOrder: config.allowOutOfOrder,
           allowSelfSignup: config.allowSelfSignup,
@@ -439,6 +443,20 @@ export function GameForm(props: GameFormProps) {
           </Section>
 
           <Section title="Completion">
+            <Field
+              label="Feedback URL"
+              htmlFor="cfg-feedback-url"
+              hint="Optional. Players are sent here after scanning the finish-line code."
+            >
+              <Input
+                id="cfg-feedback-url"
+                type="url"
+                value={config.feedbackUrl}
+                onChange={(event) => set("feedbackUrl")(event.target.value)}
+                maxLength={2048}
+                placeholder="https://example.com/feedback"
+              />
+            </Field>
             <Field
               label="Completion message"
               htmlFor="cfg-completion-message"

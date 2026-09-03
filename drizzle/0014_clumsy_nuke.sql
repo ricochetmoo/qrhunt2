@@ -1,0 +1,1 @@
+ALTER TABLE "games" ADD COLUMN "feedback_url" text;
