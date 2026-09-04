@@ -11,7 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
-import { HeaderBar, ScoutsHeader, ScoutsLink, Timeline } from "@/components/ui";
+import { HeaderBar, ScoutsHeader, ScoutsLink, ScoutsNavigation, Timeline } from "@/components/ui";
 
 const ACTIVE_GAME_KEY = "qr-hunt:active-game";
 
@@ -232,9 +232,11 @@ export function GameScreen({ gameId }: { gameId: string }) {
         <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
         <HeaderBar level={1}>
           <nav aria-label="Component sections" className="mx-auto flex max-w-6xl gap-6 overflow-x-auto">
-            <ScoutsLink variant="text" className="shrink-0" href="/test">
-              Test
-            </ScoutsLink>
+            <ScoutsNavigation
+              items={[
+                { href: "#your-progress", label: "Your progress" },
+              ]}
+             />
           </nav>
         </HeaderBar>
       </div>

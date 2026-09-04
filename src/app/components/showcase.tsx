@@ -25,6 +25,7 @@ import {
   RadioGroup,
   ScoutsHeading,
   ScoutsHeader,
+  ScoutsNavigation,
   ScoutsList,
   ScoutsLink,
   ScoutSite,
@@ -81,13 +82,15 @@ export function ComponentLibraryShowcase() {
         subtitle="Scouts-inspired building blocks for the player and admin experiences."
       />
       <HeaderBar level={1}>
-        <nav aria-label="Component sections" className="mx-auto flex max-w-6xl gap-6 overflow-x-auto">
-          {SECTIONS.map((item) => (
-            <ScoutsLink key={item.id} href={item.href} variant="text" className="shrink-0 text-white">
-              {item.label}
-            </ScoutsLink>
-          ))}
-        </nav>
+        <ScoutsNavigation
+          label="Component sections"
+          items={SECTIONS.map((item) => ({
+            id: item.id,
+            label: item.label,
+            href: item.href,
+            current: item.id === "overview",
+          }))}
+        />
       </HeaderBar>
       <Stepper
         steps={[

@@ -19,16 +19,21 @@ export function ScoutsHeader({
   return (
     <header
       className={cn(
-        "flex items-center justify-between gap-8 bg-scouts-primary px-6 py-8 text-scouts-primary-foreground",
+        "scouts-header",
+        logo && "scouts-header--with-logo",
         className,
       )}
       {...props}
     >
-      <div>
-        <h1 className="text-4xl font-extrabold leading-tight sm:text-5xl">{title}</h1>
-        {subtitle ? <p className="mt-2 text-lg text-scouts-primary-foreground/85 sm:text-xl">{subtitle}</p> : null}
+      <div className="scouts-header__content">
+        <h1 className="scouts-header__title">{title}</h1>
+        {subtitle ? <p className="scouts-header__subtitle">{subtitle}</p> : null}
       </div>
-      {logo ? <ScoutsLogo inverse className="hidden shrink-0 sm:inline-flex" /> : null}
+      {logo ? (
+        <div className="scouts-header__logo">
+          <ScoutsLogo inverse />
+        </div>
+      ) : null}
     </header>
   );
 }
@@ -46,7 +51,10 @@ export function HeaderBar({
   };
 
   return (
-    <div className={cn("px-6 py-3", levelClasses[level], className)} {...props}>
+    <div
+      className={cn("scouts-header-bar", `scouts-header-bar--level-${level}`, levelClasses[level], className)}
+      {...props}
+    >
       {children}
     </div>
   );
