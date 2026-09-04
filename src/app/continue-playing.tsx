@@ -1,10 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { Button } from "@/components/ui";
 
 /** Shows a "carry on" link when this browser has an active game remembered. */
 export function ContinuePlaying() {
+  const router = useRouter();
   const [active, setActive] = useState<{ gameId: string; name: string } | null>(null);
 
   useEffect(() => {
@@ -27,11 +30,14 @@ export function ContinuePlaying() {
   if (!active) return null;
 
   return (
-    <Link
-      href={`/play/${active.gameId}`}
-      className="block rounded-lg border border-slate-900 bg-slate-900 px-4 py-3 text-center text-sm font-medium text-white shadow-sm hover:bg-slate-700"
+    <Button
+      type="button"
+      variant="primary"
+      size="lg"
+      className="w-full"
+      onClick={() => router.push(`/play/${active.gameId}`)}
     >
-      ▶ Carry on playing “{active.name}”
-    </Link>
+      Carry on playing {active.name}
+    </Button>
   );
 }

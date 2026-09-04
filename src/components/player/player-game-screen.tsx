@@ -15,6 +15,7 @@ import {
   startQuaggaScanner,
   type ScannerStatus,
 } from "./scanner-adapter";
+import { normalizeCodeInput } from "@/lib/player-schemas";
 
 const RETRY_INTERVAL_MS = 5000;
 const PENDING_SCANS_KEY = "qr-hunt:pending-scans:v1";
@@ -356,10 +357,12 @@ export function PlayerGameScreen() {
             className="min-h-11 min-w-0 flex-1 rounded border border-slate-300 px-3 text-sm uppercase outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-200"
             id="manual-code"
             inputMode="text"
+            autoCapitalize="characters"
             maxLength={16}
+            pattern="[A-Z0-9]*"
             placeholder="e.g. MOOR6N3B"
             value={manualCode}
-            onChange={(event) => setManualCode(event.target.value)}
+            onChange={(event) => setManualCode(normalizeCodeInput(event.target.value))}
           />
           <button className="min-h-11 rounded bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-50" disabled={!manualCode.trim()} type="submit">Submit</button>
         </form>

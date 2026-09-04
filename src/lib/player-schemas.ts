@@ -15,6 +15,11 @@ const joinCode = z
   .max(16)
   .transform((value) => value.toUpperCase());
 
+/** Keeps manually entered codes to the characters used by game codes. */
+export function normalizeCodeInput(value: string): string {
+  return value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
 /** A route QR payload: either the bare 8-character code or a poster URL containing it. */
 const qrPayload = z.string().trim().min(1).max(2048);
 

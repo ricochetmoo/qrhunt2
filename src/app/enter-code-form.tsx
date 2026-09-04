@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/ui";
+import { normalizeCodeInput } from "@/lib/player-schemas";
 
 /**
  * Hands any typed code to the /s/<code> funnel, which resolves game codes,
@@ -25,23 +25,25 @@ export function EnterCodeForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2 sm:gap-3">
       <label htmlFor="enter-code" className="sr-only">
         Game, poster, or rejoin code
       </label>
       <Input
         id="enter-code"
         value={code}
-        onChange={(event) => setCode(event.target.value)}
+        onChange={(event) => setCode(normalizeCodeInput(event.target.value))}
         placeholder="e.g. V6F3TX"
+        inputMode="text"
         autoCapitalize="characters"
         autoComplete="off"
         spellCheck={false}
         maxLength={16}
+        pattern="[A-Z0-9]*"
         className="font-mono tracking-widest"
       />
       <Button type="submit" disabled={busy || !code.trim()}>
-        {busy ? "Opening…" : "Go"}
+        {busy ? "Opening…" : "Submit"}
       </Button>
     </form>
   );

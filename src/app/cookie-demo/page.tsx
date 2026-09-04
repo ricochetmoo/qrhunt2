@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CookieDemo } from "./cookie-demo-client";
 
 export const metadata: Metadata = {
-  title: "Cookie context demo · QR Hunt",
+  title: "QR Hunt",
   robots: { index: false, follow: false },
 };
 

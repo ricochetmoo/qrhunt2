@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { HelpPage } from "./help-page-client";
 
 export const metadata: Metadata = {
-  title: "Help · QR Hunt",
+  title: "QR Hunt",
   robots: { index: false, follow: false },
 };
 

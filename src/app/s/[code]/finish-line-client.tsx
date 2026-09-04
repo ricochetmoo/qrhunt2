@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardBody } from "@/components/ui/card";
-import { ErrorMessage, Field } from "@/components/ui/field";
-import { Input, Textarea } from "@/components/ui/input";
+import { Button, Field, Input, Message, ScoutsCard, ScoutsLink, Textarea } from "@/components/ui";
 import { apiClient } from "@/lib/api-client";
 import { readError } from "@/lib/api-errors";
 import { FUN_SCORE_MAX, FUN_SCORE_MIN } from "@/lib/player-schemas";
@@ -52,6 +49,7 @@ export function FinishLine({
   game: { id: string; name: string };
   viewer: Viewer | undefined;
 }) {
+  const router = useRouter();
   const enrolled = Boolean(viewer?.signedIn && viewer.enrolled);
   const [phase, setPhase] = useState<Phase>(enrolled ? { kind: "loading" } : { kind: "not-playing" });
   const [error, setError] = useState<string | null>(null);
@@ -193,22 +191,23 @@ export function FinishLine({
   const firstName = viewer?.name ? `, ${viewer.name}` : "";
 
   return (
-    <Card>
-      <CardBody className="space-y-4">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-green-700">Finish line</p>
-          <h1 className="text-xl font-semibold text-slate-900">{game.name}</h1>
-        </div>
-
-        <ErrorMessage message={error} />
+    <ScoutsCard title="Finish line" description={game.name} variant="success">
+      <div className="space-y-4">
+        {error ? (
+          <Message title="Something went wrong" variant="danger">
+            {error}
+          </Message>
+        ) : null}
 
         {phase.kind === "loading" ? (
-          <p className="text-sm text-slate-500">Checking your hunt…</p>
+          <p className="text-scouts-muted">Checking your hunt…</p>
         ) : null}
 
         {phase.kind === "error" ? (
           <>
-            <p className="text-sm text-slate-700">{phase.message}</p>
+            <Message title="Could not load your hunt" variant="danger">
+              {phase.message}
+            </Message>
             <Button variant="secondary" onClick={load} className="w-full">
               Try again
             </Button>
@@ -216,45 +215,41 @@ export function FinishLine({
         ) : null}
 
         {phase.kind === "not-playing" ? (
-          <>
-            <p className="text-sm text-slate-700">
+          <Message title="You&apos;re not playing yet" variant="info">
+            <p>
               This is the finish-line code for teams who have completed the hunt. Scan a poster on
               the route to start playing, or use your rejoin code if you switched phones.
             </p>
-            <Link href="/" className="block text-sm font-medium underline">
+            <ScoutsLink href="/" className="mt-3 inline-block">
               Go to the start page
-            </Link>
-          </>
+            </ScoutsLink>
+          </Message>
         ) : null}
 
         {phase.kind === "incomplete" ? (
-          <>
-            <h2 className="text-lg font-semibold text-slate-900">Not quite yet{firstName}!</h2>
-            <p className="text-sm text-slate-700">
+          <Message title={`Not quite yet${firstName}!`} variant="warning">
+            <p>
               You&apos;ve found <strong>{phase.found}</strong> of <strong>{phase.total}</strong>{" "}
               stops. Come back and scan this code once you&apos;ve found them all.
             </p>
-            <a
-              href={`/play/${game.id}`}
-              className="block w-full rounded-md bg-slate-900 px-3.5 py-2 text-center text-sm font-medium text-white hover:bg-slate-700"
-            >
+            <Button size="lg" onClick={() => router.push(`/play/${game.id}`)} className="mt-3 w-full">
               Back to your game →
-            </a>
-          </>
+            </Button>
+          </Message>
         ) : null}
 
         {phase.kind === "form" ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">🏁 You made it{firstName}!</h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <h2 className="text-xl font-bold text-scouts-text">🏁 You made it{firstName}!</h2>
+              <p className="mt-1 text-scouts-muted">
                 Before we check you in for your badge, tell us how it went.
               </p>
             </div>
 
             <fieldset>
-              <legend className="text-sm font-medium text-slate-700">How much fun was it?</legend>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <legend className="text-base font-bold text-scouts-text">How much fun was it?</legend>
+              <p className="mt-0.5 text-sm text-scouts-muted">
                 {FUN_SCORE_MIN} = not much, {FUN_SCORE_MAX} = the best
               </p>
               <div className="mt-2 grid grid-cols-5 gap-2" role="radiogroup" aria-label="Fun score">
@@ -262,20 +257,18 @@ export function FinishLine({
                   const selected = funScore === score;
 
                   return (
-                    <button
+                    <Button
                       key={score}
                       type="button"
+                      variant={selected ? "primary" : "grey"}
+                      outline={!selected}
+                      className="h-11 w-full"
                       role="radio"
                       aria-checked={selected}
                       onClick={() => setFunScore(score)}
-                      className={`h-11 rounded-md border text-base font-semibold transition ${
-                        selected
-                          ? "border-slate-900 bg-slate-900 text-white"
-                          : "border-slate-300 bg-white text-slate-800 hover:bg-slate-50"
-                      }`}
                     >
                       {score}
-                    </button>
+                    </Button>
                   );
                 })}
               </div>
@@ -299,59 +292,61 @@ export function FinishLine({
             <label className="flex cursor-pointer items-start gap-2">
               <input
                 type="checkbox"
-                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+                className="mt-0.5 h-4 w-4 rounded border-scouts-border text-scouts-primary focus:ring-scouts-focus"
                 checked={keepUpdated}
                 onChange={(event) => setKeepUpdated(event.target.checked)}
               />
-              <span className="text-sm text-slate-700">
+              <span className="text-base text-scouts-text">
                 Keep me updated about future hunts and what the Digital Team is up to
-                <span className="block text-xs text-slate-500">
+                <span className="block text-sm text-scouts-muted">
                   Optional. We&apos;ll only use these details to keep you updated.
                 </span>
               </span>
             </label>
 
             {keepUpdated ? (
-              <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
-                <Field label="Name" htmlFor="finish-name">
-                  <Input
-                    id="finish-name"
-                    value={contactName}
-                    onChange={(event) => setContactName(event.target.value)}
-                    maxLength={120}
-                    autoComplete="name"
-                  />
-                </Field>
-                <Field label="Email" htmlFor="finish-email">
-                  <Input
-                    id="finish-email"
-                    type="email"
-                    inputMode="email"
-                    value={contactEmail}
-                    onChange={(event) => setContactEmail(event.target.value)}
-                    required={keepUpdated}
-                    maxLength={254}
-                    autoComplete="email"
-                  />
-                </Field>
-                <Field label="Your role" htmlFor="finish-role" hint="e.g. Leader, Scout, Parent">
-                  <Input
-                    id="finish-role"
-                    value={contactRole}
-                    onChange={(event) => setContactRole(event.target.value)}
-                    maxLength={120}
-                  />
-                </Field>
-                <Field label="Anything else?" htmlFor="finish-more">
-                  <Textarea
-                    id="finish-more"
-                    value={additionalInfo}
-                    onChange={(event) => setAdditionalInfo(event.target.value)}
-                    maxLength={2000}
-                    rows={3}
-                  />
-                </Field>
-              </div>
+              <ScoutsCard title="Contact details" variant="grey">
+                <div className="space-y-3">
+                  <Field label="Name" htmlFor="finish-name">
+                    <Input
+                      id="finish-name"
+                      value={contactName}
+                      onChange={(event) => setContactName(event.target.value)}
+                      maxLength={120}
+                      autoComplete="name"
+                    />
+                  </Field>
+                  <Field label="Email" htmlFor="finish-email" required>
+                    <Input
+                      id="finish-email"
+                      type="email"
+                      inputMode="email"
+                      value={contactEmail}
+                      onChange={(event) => setContactEmail(event.target.value)}
+                      required={keepUpdated}
+                      maxLength={254}
+                      autoComplete="email"
+                    />
+                  </Field>
+                  <Field label="Your role" htmlFor="finish-role" hint="e.g. Leader, Scout, Parent">
+                    <Input
+                      id="finish-role"
+                      value={contactRole}
+                      onChange={(event) => setContactRole(event.target.value)}
+                      maxLength={120}
+                    />
+                  </Field>
+                  <Field label="Anything else?" htmlFor="finish-more">
+                    <Textarea
+                      id="finish-more"
+                      value={additionalInfo}
+                      onChange={(event) => setAdditionalInfo(event.target.value)}
+                      maxLength={2000}
+                      rows={3}
+                    />
+                  </Field>
+                </div>
+              </ScoutsCard>
             ) : null}
 
             <Button
@@ -367,17 +362,17 @@ export function FinishLine({
         {phase.kind === "confirm" ? (
           <>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">🏁 You made it{firstName}!</h2>
-              <p className="mt-1 text-sm text-slate-700">You&apos;ve found every stop. Amazing work!</p>
+              <h2 className="text-xl font-bold text-scouts-text">🏁 You made it{firstName}!</h2>
+              <p className="mt-1 text-scouts-text">You&apos;ve found every stop. Amazing work!</p>
             </div>
-            <p className="text-sm text-slate-700">
+            <p className="text-scouts-text">
               Tap the button below to complete the hunt. We&apos;ll then take you to a short
               feedback form. Your feedback is really valuable and helps the Digital Team make the
               next hunt even better.
             </p>
-            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            <Message title="Badge reward" variant="warning">
               🎖 Once you&apos;ve completed the hunt, the Digital Team can hand over your badge.
-            </p>
+            </Message>
             <Button
               onClick={() => handleComplete(phase.feedbackUrl)}
               disabled={busy}
@@ -392,19 +387,19 @@ export function FinishLine({
           <>
             <div
               aria-hidden="true"
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700"
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-scouts-green-light text-3xl text-scouts-green-dark"
             >
               ✓
             </div>
-            <h2 className="text-center text-lg font-semibold text-slate-900">
+            <h2 className="text-center text-xl font-bold text-scouts-text">
               Hunt complete{firstName}!
             </h2>
-            <p role="status" className="text-center text-sm text-slate-700">
-              Taking you to the feedback form…
-            </p>
-            <a href={phase.feedbackUrl} className="block text-center text-sm font-medium underline">
-              If nothing happens, tap here to open the feedback form.
-            </a>
+            <Message title="Opening feedback" variant="success">
+              <p role="status">Taking you to the feedback form…</p>
+              <ScoutsLink href={phase.feedbackUrl} className="mt-3 inline-block">
+                If nothing happens, tap here to open the feedback form.
+              </ScoutsLink>
+            </Message>
           </>
         ) : null}
 
@@ -412,33 +407,30 @@ export function FinishLine({
           <>
             <div
               aria-hidden="true"
-              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700"
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-scouts-green-light text-3xl text-scouts-green-dark"
             >
               ✓
             </div>
-            <h2 className="text-center text-lg font-semibold text-slate-900">
+            <h2 className="text-center text-xl font-bold text-scouts-text">
               {phase.already ? `You're already checked in${firstName}` : `You're checked in${firstName}!`}
             </h2>
             {phase.prizeIssuedAt ? (
-              <p className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-center text-sm text-green-900">
+              <Message title="Badge issued" variant="success" className="text-center">
                 🎖 Badge issued at {timeFormat.format(new Date(phase.prizeIssuedAt))}. Thanks for
                 playing!
-              </p>
+              </Message>
             ) : (
-              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm text-amber-900">
+              <Message title="Collect your badge" variant="warning" className="text-center">
                 Show this screen to the Digital Team to collect your badge.
                 {phase.reportedAt ? ` Checked in at ${timeFormat.format(new Date(phase.reportedAt))}.` : ""}
-              </p>
+              </Message>
             )}
-            <a
-              href={`/play/${game.id}`}
-              className="block w-full rounded-md bg-slate-900 px-3.5 py-2 text-center text-sm font-medium text-white hover:bg-slate-700"
-            >
+            <Button size="lg" onClick={() => router.push(`/play/${game.id}`)} className="w-full">
               Back to your game →
-            </a>
+            </Button>
           </>
         ) : null}
-      </CardBody>
-    </Card>
+      </div>
+    </ScoutsCard>
   );
 }
