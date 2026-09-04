@@ -1,3 +1,7 @@
+"use client";
+
+import { useCallback, useEffect, useSyncExternalStore } from "react";
+
 import { ErrorMessage } from "@/components/ui/field";
 import {
   HeaderBar,
@@ -6,6 +10,7 @@ import {
   Spinner,
 } from "@/components/ui";
 import { cn } from "@/lib/cn";
+import { readCachedGameName, rememberActiveGame } from "@/lib/player-storage";
 
 export type PlayerPage = "game" | "history" | "hints" | "help";
 
@@ -20,6 +25,15 @@ const PLAYER_NAVIGATION: readonly {
   { page: "help", label: "Help", path: "help" },
 ];
 
+function subscribeToPlayerStorage(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function getServerCachedGameName() {
+  return null;
+}
+
 export function PlayerPageHeader({
   gameId,
   gameName,
@@ -29,9 +43,24 @@ export function PlayerPageHeader({
   gameName?: string | null;
   activePage: PlayerPage;
 }) {
+  const getCachedGameName = useCallback(() => readCachedGameName(gameId), [gameId]);
+  const cachedGameName = useSyncExternalStore(
+    subscribeToPlayerStorage,
+    getCachedGameName,
+    getServerCachedGameName,
+  );
+
+  useEffect(() => {
+    if (!gameName?.trim()) return;
+
+    rememberActiveGame(gameId, gameName);
+  }, [gameId, gameName]);
+
+  const displayName = gameName ?? cachedGameName;
+
   return (
     <div>
-      <ScoutsHeader title="QR Hunt" subtitle={gameName ?? null} logo />
+      <ScoutsHeader title="QR Hunt" subtitle={displayName} logo />
       <HeaderBar level={1}>
         <ScoutsNavigation
           label="Game navigation"

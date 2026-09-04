@@ -11,6 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
+import { rememberActiveGame } from "@/lib/player-storage";
 import { PlayerPageHeader, PlayerPageLoading } from "@/components/player/player-page-layout";
 import {
   ScoutsCard,
@@ -21,8 +22,6 @@ import {
   Box,
   Message,
 } from "@/components/ui";
-
-const ACTIVE_GAME_KEY = "qr-hunt:active-game";
 
 type StateResponse = Awaited<
   ReturnType<
@@ -61,14 +60,6 @@ function historyPillClass(result: string): string {
   if (result === "wildcard") return `${base} bg-amber-100 text-amber-800`;
 
   return `${base} bg-slate-100 text-slate-600`;
-}
-
-function rememberActiveGame(gameId: string, name: string) {
-  try {
-    window.localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({ gameId, name }));
-  } catch {
-    // convenience only
-  }
 }
 
 export function GameScreen({ gameId }: { gameId: string }) {
