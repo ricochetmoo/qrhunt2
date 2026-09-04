@@ -23,9 +23,12 @@ import { computeProgress, listCreditedScans } from "./scans";
  *   Digital Team tent. It is never a route stop.
  * - Checking in requires the route to be complete against the *current* route,
  *   the same rule the completion screen uses.
- * - The fun score and comments are the gate. Keep-updated contact details are
- *   optional and only stored when the player opts in; one row per player per
- *   team, and checking in again revises it.
+ * - The fun score and comments are the gate when feedback is collected here.
+ *   A game with a feedback URL collects it on that external form instead, so
+ *   the check-in is recorded on its own: the player confirms with one tap and
+ *   is then sent to the form without coming back. Keep-updated contact details
+ *   are optional and only stored when the player opts in; one row per player
+ *   per team, and checking in again revises it.
  * - `reportedCompletedAt` is set once (first check-in); `prizeIssuedAt` is set
  *   by an organiser from the admin badge queue and can be undone.
  */
@@ -54,25 +57,36 @@ export async function reportCompletion(
     );
   }
 
-  const now = new Date();
-  // Contact details are personal data: keep them only with consent.
-  const feedback = {
-    funScore: input.funScore,
-    comments: input.comments,
-    keepUpdated: input.keepUpdated,
-    contactName: input.keepUpdated ? (input.contactName ?? null) : null,
-    contactEmail: input.keepUpdated ? (input.contactEmail ?? null) : null,
-    contactRole: input.keepUpdated ? (input.contactRole ?? null) : null,
-    additionalInfo: input.keepUpdated ? (input.additionalInfo ?? null) : null,
-  };
+  const feedbackCollectedExternally = Boolean(game.feedbackUrl?.trim());
+  const feedbackGiven =
+    input.funScore !== undefined || input.comments !== undefined || input.keepUpdated;
 
-  await db
-    .insert(feedback_responses)
-    .values({ id: generateId(), gameId: game.id, teamId: team.id, userId, ...feedback })
-    .onConflictDoUpdate({
-      target: [feedback_responses.teamId, feedback_responses.userId],
-      set: { ...feedback, updatedAt: now },
-    });
+  if (!feedbackCollectedExternally && (input.funScore === undefined || !input.comments)) {
+    throw new DomainError("VALIDATION", "Tell us how it went before checking in.");
+  }
+
+  const now = new Date();
+
+  if (feedbackGiven) {
+    // Contact details are personal data: keep them only with consent.
+    const feedback = {
+      funScore: input.funScore ?? null,
+      comments: input.comments ?? null,
+      keepUpdated: input.keepUpdated,
+      contactName: input.keepUpdated ? (input.contactName ?? null) : null,
+      contactEmail: input.keepUpdated ? (input.contactEmail ?? null) : null,
+      contactRole: input.keepUpdated ? (input.contactRole ?? null) : null,
+      additionalInfo: input.keepUpdated ? (input.additionalInfo ?? null) : null,
+    };
+
+    await db
+      .insert(feedback_responses)
+      .values({ id: generateId(), gameId: game.id, teamId: team.id, userId, ...feedback })
+      .onConflictDoUpdate({
+        target: [feedback_responses.teamId, feedback_responses.userId],
+        set: { ...feedback, updatedAt: now },
+      });
+  }
 
   const [updated] = await db
     .update(teams)

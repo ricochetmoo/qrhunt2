@@ -101,6 +101,15 @@ function rememberActiveGame(gameId: string, name: string) {
 }
 
 /**
+ * Route complete: the game screen takes over (completion message and badge
+ * instructions), so the scan outcome is not shown here. `replace` keeps this
+ * landing out of history; coming back would only log the poster again.
+ */
+function openGame(gameId: string) {
+  window.location.replace(`/play/${gameId}`);
+}
+
+/**
  * Idempotency key for the scan this landing represents. A reload or
  * back-navigation within a couple of minutes reuses it, so the server replays
  * the stored outcome instead of logging a duplicate; a genuine later re-scan
@@ -162,11 +171,7 @@ function ScanOutcome({ scan }: { scan: ScanView }) {
           {scan.found} of {scan.total} stops found.
         </p>
       ) : null}
-      {scan.complete ? (
-        <p className="text-sm font-medium text-green-700">
-          🎉 That&apos;s everything - route complete!
-        </p>
-      ) : scan.hintsReleased && scan.nextHint ? (
+      {scan.hintsReleased && scan.nextHint ? (
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Your next clue</p>
           <p className="mt-1 whitespace-pre-line text-base text-slate-900">“{scan.nextHint}”</p>
@@ -266,6 +271,12 @@ export function JoinFunnel({ code }: { code: string }) {
 
           if (scan) {
             rememberActiveGame(data.game.id, data.game.name);
+
+            if (scan.complete) {
+              openGame(data.game.id);
+              return;
+            }
+
             setJoined({ returning: true, message: null, playerName: data.viewer.name, scan });
             setStage("joined");
             return;
@@ -435,6 +446,11 @@ export function JoinFunnel({ code }: { code: string }) {
 
       // A poster brought them here: log that stop now.
       const scan = resolved.kind === "stop" ? await submitScan(game.id).catch(() => null) : null;
+
+      if (scan?.complete) {
+        openGame(game.id);
+        return;
+      }
 
       setJoined({
         returning: wasEnrolled,
@@ -615,6 +631,12 @@ export function JoinFunnel({ code }: { code: string }) {
             {joined?.message ? <p className="text-sm text-slate-700">{joined.message}</p> : null}
             {isGameMode(game.mode) && !joined?.returning ? (
               <p className="text-sm text-slate-600">{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
+            ) : null}
+            {joined?.teamCode && !joined.returning ? (
+              <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+                🎖 There&apos;s a badge in it for you! Find every stop to complete the hunt, then
+                head to the Digital Team tent to collect it.
+              </p>
             ) : null}
             {joined?.teamCode ? (
               <p className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
