@@ -90,6 +90,14 @@ const styles = StyleSheet.create({
     lineHeight: LABEL_TYPE.gameName.lineHeight,
     textAlign: "center",
   },
+  subtitle: {
+    fontSize: LABEL_TYPE.subtitle.fontSize,
+    fontWeight: LABEL_TYPE.subtitle.fontWeight,
+    lineHeight: LABEL_TYPE.subtitle.lineHeight,
+    color: "#475569",
+    marginTop: SPACE.xs,
+    textAlign: "center",
+  },
   qr: {
     alignSelf: "center",
     marginTop: SPACE.sm,
@@ -169,6 +177,7 @@ export function LabelSheetDocument({
                 </View>
                 <View style={styles.body}>
                   <Text style={styles.gameName}>{game.name} QR Hunt</Text>
+                  <Text style={styles.subtitle}>Scan to start the game</Text>
                   <View style={styles.qr}>
                     {renderQrCode(buildQrPayload(qr.code, appUrl), {
                       size: POSTER_QR_SIZE,
