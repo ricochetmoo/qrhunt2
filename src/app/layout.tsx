@@ -3,7 +3,7 @@ import "./globals.css";
 import { ScoutSite } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "The Lost Signal · QR Hunt",
+  title: "QR Hunt",
   description: "Follow the route, find the signals, and bring your team home.",
 };
 

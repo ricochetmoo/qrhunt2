@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { JoinFunnel } from "./join-funnel-client";
 
 export const metadata: Metadata = {
-  title: "Join the hunt · QR Hunt",
+  title: "QR Hunt",
   robots: { index: false, follow: false },
 };
 

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { GameScreen } from "./game-screen-client";
 
 export const metadata: Metadata = {
-  title: "Play · QR Hunt",
+  title: "QR Hunt",
   robots: { index: false, follow: false },
 };
 
