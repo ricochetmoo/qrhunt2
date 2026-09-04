@@ -11,6 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
+import { HeaderBar, ScoutsHeader, ScoutsLink, Timeline } from "@/components/ui";
 
 const ACTIVE_GAME_KEY = "qr-hunt:active-game";
 
@@ -227,6 +228,16 @@ export function GameScreen({ gameId }: { gameId: string }) {
 
   return (
     <Shell>
+      <div>
+        <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
+        <HeaderBar level={1}>
+          <nav aria-label="Component sections" className="mx-auto flex max-w-6xl gap-6 overflow-x-auto">
+            <ScoutsLink variant="text" className="shrink-0" href="/test">
+              Test
+            </ScoutsLink>
+          </nav>
+        </HeaderBar>
+      </div>
       <header className="space-y-1">
         <div className="flex items-center justify-between gap-2">
           <h1 className="text-xl font-semibold text-slate-900">{game.name}</h1>
@@ -423,6 +434,9 @@ export function GameScreen({ gameId }: { gameId: string }) {
         <Card>
           <CardHeader title="Scan history" description="Every code your team has scanned." />
           <CardBody className="space-y-2">
+            {/* <Timeline
+              events={history}
+            /> */}
             {history.length === 0 ? (
               <p className="text-sm text-slate-500">No scans yet - they&apos;ll show up here.</p>
             ) : (
