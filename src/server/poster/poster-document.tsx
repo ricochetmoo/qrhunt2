@@ -75,6 +75,14 @@ const styles = StyleSheet.create({
     lineHeight: TYPE.gameName.lineHeight,
     alignSelf: "center",
   },
+  subtitle: {
+    fontSize: TYPE.subtitle.fontSize,
+    fontWeight: TYPE.subtitle.fontWeight,
+    lineHeight: TYPE.subtitle.lineHeight,
+    color: "#475569",
+    marginTop: SPACE.xs,
+    alignSelf: "center",
+  },
   codeName: {
     fontSize: TYPE.codeName.fontSize,
     marginTop: SPACE.md,
@@ -118,6 +126,7 @@ export function PosterDocument({ game, codes, appUrl }: PosterDocumentProps) {
           </View>
           <View style={styles.body}>
             <Text style={styles.gameName}>{game.name} QR Hunt</Text>
+            <Text style={styles.subtitle}>Scan to start the game</Text>
             <Text style={styles.codeName}>{qr.name}</Text>
             <View style={styles.qr}>
               {renderQrCode(buildQrPayload(qr.code, appUrl), { size: QR_SIZE })}

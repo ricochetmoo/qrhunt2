@@ -9,15 +9,15 @@ const nextConfig: NextConfig = {
     // keeps the rule aligned with the path emitted by both Next.js and Vercel.
     "/api/admin/games/*/poster-pdf": [
       "./src/server/poster/fonts/**/*",
-      "./public/brand/logo-linear-white.png",
-      "./public/brand/logo-marque-purple.png",
+      "./public/brand/logo-stacked-digital-white.svg",
+      "./public/brand/logo-marque-orange.png",
       // pdfkit loads its standard fonts through package `imports`, which
       // output file tracing cannot resolve from the externalized renderer.
       "./node_modules/.pnpm/pdfkit@*/node_modules/pdfkit/js/standard-fonts/**/*",
     ],
     "/api/admin/games/*/qr-images": [
       "./public/brand/logo-linear-white.png",
-      "./public/brand/logo-marque-purple.png",
+      "./public/brand/logo-marque-orange.png",
     ],
   },
 };
