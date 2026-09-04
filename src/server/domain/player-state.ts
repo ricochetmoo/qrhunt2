@@ -24,6 +24,7 @@ export type PlayerState = {
     /** "speed" or "completeness" — how the leaderboard ranks (src/lib/game-mode.ts). */
     mode: string;
     pauseReason: string | null;
+    helpText: string | null;
     startedAt: Date | null;
     finishedAt: Date | null;
     completionMessage: string | null;
@@ -204,6 +205,7 @@ async function buildState(game: Game, team: Team | null, userId: string): Promis
       status: game.status,
       mode: game.gameMode,
       pauseReason: game.status === "paused" ? game.pauseReason : null,
+      helpText: game.helpText ?? null,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,
       completionMessage: game.completionMessage ?? null,

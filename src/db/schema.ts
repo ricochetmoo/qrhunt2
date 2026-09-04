@@ -90,6 +90,7 @@ export const games = pgTable(
     name: text("name").notNull(),
     status: text("status").notNull().default("draft"),
     pauseReason: text("pause_reason"),
+    helpText: text("help_text"),
     completionMessage: text("completion_message"),
     // How the game is won: "speed" (fastest to finish) or "completeness"
     // (find everything, no time pressure). See src/lib/game-mode.ts.

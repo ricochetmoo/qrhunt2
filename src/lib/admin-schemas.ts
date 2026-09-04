@@ -3,6 +3,7 @@ import { z } from "zod";
 import { COMPLETION_MESSAGE_MAX_LENGTH } from "./completion";
 import { gameModeSchema } from "./game-mode";
 import { gameStatusSchema } from "./game-status";
+import { HELP_TEXT_MAX_LENGTH } from "./help";
 import { latitude, longitude, optionalText } from "./zod-helpers";
 
 /**
@@ -19,6 +20,7 @@ export const createGameSchema = z.object({
 /** Per-game configuration (see AGENTS.md "Admin configuration frontend"). */
 export const gameConfigSchema = z.object({
   gameMode: gameModeSchema,
+  helpText: optionalText(HELP_TEXT_MAX_LENGTH),
   completionMessage: optionalText(COMPLETION_MESSAGE_MAX_LENGTH),
   feedbackUrl: z.httpUrl().max(2048).nullable().optional(),
   allowOutOfOrder: z.boolean(),

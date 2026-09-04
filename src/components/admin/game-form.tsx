@@ -18,6 +18,7 @@ import {
   type GameMode,
 } from "@/lib/game-mode";
 import { GAME_STATUSES, GAME_STATUS_LABELS, isGameStatus, type GameStatus } from "@/lib/game-status";
+import { HELP_TEXT_MAX_LENGTH } from "@/lib/help";
 
 export type EditableGame = Pick<
   Game,
@@ -25,6 +26,7 @@ export type EditableGame = Pick<
   | "name"
   | "status"
   | "pauseReason"
+  | "helpText"
   | "completionMessage"
   | "feedbackUrl"
   | "gameCode"
@@ -46,6 +48,7 @@ type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
 
 type ConfigState = {
   gameMode: GameMode;
+  helpText: string;
   completionMessage: string;
   feedbackUrl: string;
   allowOutOfOrder: boolean;
@@ -72,6 +75,7 @@ function toLocalInputValue(date: Date | null): string {
 function initialConfig(game: EditableGame | null): ConfigState {
   return {
     gameMode: game && isGameMode(game.gameMode) ? game.gameMode : "speed",
+    helpText: game?.helpText ?? "",
     completionMessage: game?.completionMessage ?? "",
     feedbackUrl: game?.feedbackUrl ?? "",
     allowOutOfOrder: game?.allowOutOfOrder ?? false,
@@ -173,6 +177,7 @@ export function GameForm(props: GameFormProps) {
           name,
           status,
           pauseReason: status === "paused" ? pauseReason : null,
+          helpText: config.helpText.trim() || null,
           completionMessage: config.completionMessage.trim() || null,
           feedbackUrl: config.feedbackUrl.trim() || null,
           gameMode: config.gameMode,
@@ -345,6 +350,22 @@ export function GameForm(props: GameFormProps) {
               checked={config.allowOutOfOrder}
               onChange={set("allowOutOfOrder")}
             />
+          </Section>
+
+          <Section title="Player help">
+            <Field
+              label="Help text"
+              htmlFor="cfg-help-text"
+              hint={`Optional game-specific guidance for players. Up to ${HELP_TEXT_MAX_LENGTH} characters.`}
+            >
+              <Textarea
+                id="cfg-help-text"
+                value={config.helpText}
+                onChange={(event) => set("helpText")(event.target.value)}
+                maxLength={HELP_TEXT_MAX_LENGTH}
+                rows={5}
+              />
+            </Field>
           </Section>
 
           <Section title="Players and teams">
