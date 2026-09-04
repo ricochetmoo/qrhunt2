@@ -24,7 +24,10 @@ import {
   TYPE,
 } from "./theme";
 
-const LOGO_PATH = join(process.cwd(), "public/brand/logo-linear-white.png");
+const LOGO_PATH = join(
+  process.cwd(),
+  "public/brand/logo-stacked-digital-white.svg",
+);
 
 registerPosterFonts();
 
@@ -112,7 +115,7 @@ export function PosterDocument({ game, codes, appUrl }: PosterDocumentProps) {
             <Image src={LOGO_PATH} style={styles.logo} />
           </View>
           <View style={styles.body}>
-            <Text style={styles.gameName}>{game.name}</Text>
+            <Text style={styles.gameName}>{game.name} QR Hunt</Text>
             <Text style={styles.codeName}>{qr.name}</Text>
             <View style={styles.qr}>
               {renderQrCode(buildQrPayload(qr.code, appUrl), { size: QR_SIZE })}
