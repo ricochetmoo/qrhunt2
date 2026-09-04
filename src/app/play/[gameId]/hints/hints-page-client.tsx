@@ -25,7 +25,6 @@ type RouteEntry = PlayerState["route"]["codes"][number];
 type HintRow = {
   id: string;
   number: number;
-  name: string;
   entry: RouteEntry;
 };
 
@@ -123,10 +122,8 @@ export function HintsPage({ gameId }: { gameId: string }) {
   const rows: HintRow[] = route.codes.map((entry) => ({
     id: entry.id,
     number: entry.position + 1,
-    name: entry.name,
     entry,
   }));
-  const foundCount = progress?.found ?? route.codes.filter((entry) => entry.found).length;
   const hintsReleased = progress?.hintsReleased ?? false;
 
   return (
@@ -149,12 +146,12 @@ export function HintsPage({ gameId }: { gameId: string }) {
       <ErrorMessage message={error} />
 
       <ScoutsCard
-        title="Your progress"
-        description={`You have found ${foundCount} of ${route.totalCodes} hints.`}
+        title="All Hints"
+        description="See all the hints for this game, so you know where to be keeping an eye out!"
         variant="primary"
       >
         <DataTable<HintRow>
-          caption="All hints"
+          caption=""
           rows={rows}
           getRowKey={(row) => row.id}
           className="min-w-[40rem] text-base"
@@ -164,11 +161,6 @@ export function HintsPage({ gameId }: { gameId: string }) {
               header: "No.",
               numeric: true,
               render: (row) => <span className="font-bold tabular-nums">{row.number}</span>,
-            },
-            {
-              key: "name",
-              header: "Location",
-              render: (row) => <span className="font-bold">{row.name}</span>,
             },
             {
               key: "hint",
