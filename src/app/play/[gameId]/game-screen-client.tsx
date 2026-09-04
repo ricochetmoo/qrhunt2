@@ -231,26 +231,17 @@ export function GameScreen({ gameId }: { gameId: string }) {
       <div>
         <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
         <HeaderBar level={1}>
-          <nav aria-label="Component sections" className="mx-auto flex max-w-6xl gap-6 overflow-x-auto">
-            <ScoutsNavigation
-              items={[
-                { href: "#your-progress", label: "Your progress" },
-              ]}
-             />
-          </nav>
+          <ScoutsNavigation
+            label="Game navigation"
+            items={[
+              { href: "#", label: "Game", current: true },
+              { href: `/play/${game.id}/history`, label: "History" },
+              { href: `/play/${game.id}/hints`, label: "All Hints" },
+              { href: `/play/${game.id}/help`, label: "Help" },
+            ]}
+            />
         </HeaderBar>
       </div>
-      <header className="space-y-1">
-        <div className="flex items-center justify-between gap-2">
-          <h1 className="text-xl font-semibold text-slate-900">{game.name}</h1>
-          <Button variant="ghost" size="sm" onClick={refresh} disabled={busy} aria-label="Refresh">
-            ↻
-          </Button>
-        </div>
-        {isGameMode(game.mode) ? (
-          <p className="text-xs text-slate-500">{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
-        ) : null}
-      </header>
 
       {game.status === "paused" ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
