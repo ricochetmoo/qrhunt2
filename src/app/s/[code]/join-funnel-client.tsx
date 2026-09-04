@@ -8,7 +8,6 @@ import {
   Field,
   Input,
   Message,
-  ScoutsCard,
   ScoutsHeader,
   ScoutsLink,
   Spinner,
@@ -484,7 +483,7 @@ export function JoinFunnel({ code }: { code: string }) {
     return (
       <>
         <ScoutsHeader title="QR Hunt" logo />
-        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 pb-8 pt-6 sm:px-6">
+        <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 pb-8 pt-6 sm:px-6">
           <CameraAdvice context={scanContext} />
           <FinishLine code={code} game={game} viewer={viewer} />
         </main>
@@ -495,7 +494,7 @@ export function JoinFunnel({ code }: { code: string }) {
   return (
     <>
       <ScoutsHeader title="QR Hunt" logo />
-      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-4 px-4 pb-8 pt-6 sm:px-6">
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 pb-8 pt-6 sm:px-6">
         <CameraAdvice context={scanContext} />
         {error ? (
           <Message title="Something went wrong" variant="danger">
@@ -519,8 +518,12 @@ export function JoinFunnel({ code }: { code: string }) {
       ) : null}
 
       {stage === "onboard" && game ? (
-        <ScoutsCard title={`Welcome to ${game.name}!`} variant="blue">
-          <div className="space-y-4">
+        <section aria-labelledby="onboard-heading" className="space-y-5">
+          <header className="space-y-2">
+            <p className="text-sm font-bold uppercase tracking-wider text-scouts-blue">Get started</p>
+            <h1 id="onboard-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
+              Welcome to {game.name}!
+            </h1>
             <p>
               {resolved?.stop ? (
                 <>
@@ -532,11 +535,15 @@ export function JoinFunnel({ code }: { code: string }) {
                 <>Your game code worked. Let&apos;s get you into the game.</>
               )}
             </p>
+          </header>
             {isGameMode(game.mode) ? (
-              <Message title="About this hunt" variant="info">
-                {GAME_MODE_PLAYER_BLURBS[game.mode]}
-                {game.allowOutOfOrder ? " Stops can be found in any order." : ""}
-              </Message>
+              <div className="border-y border-scouts-border-muted py-4">
+                <p className="text-sm font-bold uppercase tracking-wider text-scouts-muted">About this hunt</p>
+                <p className="mt-1 text-base text-scouts-text">
+                  {GAME_MODE_PLAYER_BLURBS[game.mode]}
+                  {game.allowOutOfOrder ? " Stops can be found in any order." : ""}
+                </p>
+              </div>
             ) : null}
             <form onSubmit={handleOnboard} className="space-y-3">
               <Field label="What's your first name?" htmlFor="player-name" required>
@@ -554,20 +561,25 @@ export function JoinFunnel({ code }: { code: string }) {
                 {busy ? "Saving…" : "Save my name"}
               </Button>
             </form>
-            <Details summary="Already gave your name? Expected to still be here?">
-              <p>
-                Close this page, open your normal <strong>Camera app</strong>, and scan the poster
-                again. If your phone still does not remember you, try opening <strong>Safari</strong>
-                and typing the address printed on the poster.
-              </p>
-            </Details>
-          </div>
-        </ScoutsCard>
+          <Details summary="Already gave your name? Expected to still be here?">
+            <p>
+              Close this page, open your normal <strong>Camera app</strong>, and scan the poster
+              again. If your phone still does not remember you, try opening <strong>Safari</strong>
+              and typing the address printed on the poster.
+            </p>
+          </Details>
+        </section>
       ) : null}
 
       {stage === "rescan" && game ? (
-        <ScoutsCard title={`Nice to meet you, ${name.trim()}! 👋`} variant="success">
-          <div className="space-y-3">
+        <section aria-labelledby="rescan-heading" className="space-y-4">
+          <header className="space-y-2">
+            <p className="text-sm font-bold uppercase tracking-wider text-scouts-green-dark">Almost there</p>
+            <h1 id="rescan-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
+              Nice to meet you, {name.trim()}! 👋
+            </h1>
+          </header>
+          <div className="space-y-3 text-base">
             <p>
               One quick check before the game starts:
             </p>
@@ -582,12 +594,16 @@ export function JoinFunnel({ code }: { code: string }) {
               <strong>Camera app</strong> - not the Control Centre code scanner, which forgets you.
             </p>
           </div>
-        </ScoutsCard>
+        </section>
       ) : null}
 
       {stage === "welcome-back" && game && viewer ? (
-        <ScoutsCard title={`Welcome back, ${viewer.name}! ✅`} variant="purple">
-          <div className="space-y-4">
+        <section aria-labelledby="welcome-back-heading" className="space-y-5">
+          <header className="space-y-2">
+            <p className="text-sm font-bold uppercase tracking-wider text-scouts-purple">Your game is ready</p>
+            <h1 id="welcome-back-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
+              Welcome back, {viewer.name}! ✅
+            </h1>
             <p>
               Your phone remembers you{viewer.teamName ? ` - team ${viewer.teamName}` : ""}.
               {resolved?.stop ? (
@@ -609,68 +625,72 @@ export function JoinFunnel({ code }: { code: string }) {
                     : "Starting…"
                   : viewer.enrolled
                     ? "Log this stop"
-                    : "Start the game"}
+                  : "Start the game"}
               </Button>
             )}
-          </div>
-        </ScoutsCard>
+          </header>
+        </section>
       ) : null}
 
       {stage === "joined" && game ? (
-        <ScoutsCard
-          title={
-            joined?.playerName
-              ? joined.returning
-                ? `Welcome back, ${joined.playerName}! ✅`
-                : `You're checked in, ${joined.playerName}! 🎉`
-              : game.name
-          }
-          variant={
-            joined?.scan?.result === "accepted" || joined?.scan?.result === "wildcard"
-              ? "success"
-              : "blue"
-          }
-        >
-          <div className="space-y-3">
-            {joined?.scan ? <ScanOutcome scan={joined.scan} /> : null}
-            {joined?.message ? (
-              <Message title="Next step" variant={joined.returning ? "info" : "warning"}>
-                {joined.message}
-              </Message>
-            ) : null}
-            {isGameMode(game.mode) && !joined?.returning ? (
-              <p>{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
-            ) : null}
-            {joined?.teamCode && !joined.returning ? (
-              <Message title="Your badge is waiting" variant="warning">
-                🎖 There&apos;s a badge in it for you! Find every stop to complete the hunt, then
-                head to the Digital Team tent to collect it.
-              </Message>
-            ) : null}
-            {joined?.teamCode ? (
-              <Message title="Your rejoin code" variant="info">
-                <p>
-                  <code className="font-mono text-xl font-bold tracking-widest">
-                    {joined.teamCode}
-                  </code>
-                </p>
-                <p className="mt-1 text-sm">
-                  If you switch phones, scan any poster and use this code to carry on.
-                </p>
-              </Message>
-            ) : null}
-            {joined?.teamCode || joined?.playerName ? (
-              <Button size="lg" onClick={() => openGame(game.id)} className="w-full">
-                Open your game →
-              </Button>
-            ) : null}
-          </div>
-        </ScoutsCard>
+        <section aria-labelledby="joined-heading" className="space-y-5">
+          <header className="space-y-2">
+            <p className="text-sm font-bold uppercase tracking-wider text-scouts-green-dark">
+              {joined?.returning ? "Back on the route" : "You're in"}
+            </p>
+            <h1 id="joined-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
+              {joined?.playerName
+                ? joined.returning
+                  ? `Welcome back, ${joined.playerName}! ✅`
+                  : `You're checked in, ${joined.playerName}! 🎉`
+                : game.name}
+            </h1>
+          </header>
+          {joined?.scan ? <ScanOutcome scan={joined.scan} /> : null}
+          {joined?.message ? (
+            <Message title="Next step" variant={joined.returning ? "info" : "warning"}>
+              {joined.message}
+            </Message>
+          ) : null}
+          {isGameMode(game.mode) && !joined?.returning ? (
+            <p className="text-base text-scouts-text">{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
+          ) : null}
+          {joined?.teamCode && !joined.returning ? (
+            <p className="border-y border-scouts-border-muted py-4 text-base text-scouts-text">
+              <span className="font-bold">🎖 Your badge is waiting.</span> Find every stop to
+              complete the hunt, then head to the Digital Team tent to collect it.
+            </p>
+          ) : null}
+          {joined?.teamCode ? (
+            <div className="border-y border-scouts-border-muted py-4">
+              <p className="text-sm font-bold uppercase tracking-wider text-scouts-muted">Your rejoin code</p>
+              <p className="mt-1">
+                <code className="font-mono text-2xl font-bold tracking-widest text-scouts-text">
+                  {joined.teamCode}
+                </code>
+              </p>
+              <p className="mt-1 text-sm text-scouts-muted">
+                If you switch phones, scan any poster and use this code to carry on.
+              </p>
+            </div>
+          ) : null}
+          {joined?.teamCode || joined?.playerName ? (
+            <Button size="lg" onClick={() => openGame(game.id)} className="w-full">
+              Open your game →
+            </Button>
+          ) : null}
+        </section>
       ) : null}
 
       {stage === "throwaway" ? (
-        <ScoutsCard title="This scanner forgets you 😔" variant="warning">
-          <div className="space-y-3">
+        <section aria-labelledby="throwaway-heading" className="space-y-4">
+          <header className="space-y-2">
+            <p className="text-sm font-bold uppercase tracking-wider text-scouts-orange-dark">One more try</p>
+            <h1 id="throwaway-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
+              This scanner forgets you 😔
+            </h1>
+          </header>
+          <div className="space-y-3 text-base">
             <p>
               Some scanners (like the iPhone <strong>Control Centre code scanner</strong> and
               scanners inside other apps) throw everything away when they close - so the game
@@ -690,7 +710,7 @@ export function JoinFunnel({ code }: { code: string }) {
               I&apos;ve re-scanned - check again
             </Button>
           </div>
-        </ScoutsCard>
+        </section>
       ) : null}
       </main>
     </>

@@ -191,7 +191,14 @@ export function FinishLine({
   const firstName = viewer?.name ? `, ${viewer.name}` : "";
 
   return (
-    <ScoutsCard title="Finish line" description={game.name} variant="success">
+    <section aria-labelledby="finish-line-heading" className="space-y-5">
+      <header className="space-y-1">
+        <p className="text-sm font-bold uppercase tracking-wider text-scouts-green-dark">Finish line</p>
+        <h1 id="finish-line-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
+          {game.name}
+        </h1>
+      </header>
+
       <div className="space-y-4">
         {error ? (
           <Message title="Something went wrong" variant="danger">
@@ -200,7 +207,7 @@ export function FinishLine({
         ) : null}
 
         {phase.kind === "loading" ? (
-          <p className="text-scouts-muted">Checking your hunt…</p>
+          <p className="text-base text-scouts-muted">Checking your hunt…</p>
         ) : null}
 
         {phase.kind === "error" ? (
@@ -215,7 +222,10 @@ export function FinishLine({
         ) : null}
 
         {phase.kind === "not-playing" ? (
-          <Message title="You&apos;re not playing yet" variant="info">
+          <section aria-labelledby="not-playing-heading" className="space-y-3">
+            <h2 id="not-playing-heading" className="text-2xl font-extrabold text-scouts-text">
+              You&apos;re not playing yet
+            </h2>
             <p>
               This is the finish-line code for teams who have completed the hunt. Scan a poster on
               the route to start playing, or use your rejoin code if you switched phones.
@@ -223,11 +233,14 @@ export function FinishLine({
             <ScoutsLink href="/" className="mt-3 inline-block">
               Go to the start page
             </ScoutsLink>
-          </Message>
+          </section>
         ) : null}
 
         {phase.kind === "incomplete" ? (
-          <Message title={`Not quite yet${firstName}!`} variant="warning">
+          <section aria-labelledby="incomplete-heading" className="space-y-3">
+            <h2 id="incomplete-heading" className="text-2xl font-extrabold text-scouts-text">
+              Not quite yet{firstName}!
+            </h2>
             <p>
               You&apos;ve found <strong>{phase.found}</strong> of <strong>{phase.total}</strong>{" "}
               stops. Come back and scan this code once you&apos;ve found them all.
@@ -235,7 +248,7 @@ export function FinishLine({
             <Button size="lg" onClick={() => router.push(`/play/${game.id}`)} className="mt-3 w-full">
               Back to your game →
             </Button>
-          </Message>
+          </section>
         ) : null}
 
         {phase.kind === "form" ? (
@@ -370,9 +383,10 @@ export function FinishLine({
               feedback form. Your feedback is really valuable and helps the Digital Team make the
               next hunt even better.
             </p>
-            <Message title="Badge reward" variant="warning">
-              🎖 Once you&apos;ve completed the hunt, the Digital Team can hand over your badge.
-            </Message>
+            <p className="border-y border-scouts-border-muted py-4 text-base text-scouts-text">
+              <span className="font-bold">🎖 Badge reward.</span> Once you&apos;ve completed the hunt,
+              the Digital Team can hand over your badge.
+            </p>
             <Button
               onClick={() => handleComplete(phase.feedbackUrl)}
               disabled={busy}
@@ -431,6 +445,6 @@ export function FinishLine({
           </>
         ) : null}
       </div>
-    </ScoutsCard>
+    </section>
   );
 }
