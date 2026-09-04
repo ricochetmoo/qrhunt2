@@ -9,7 +9,7 @@ import { ACCENT, QR_SIZE } from "./theme";
 
 const DEFAULT_LOGO_PATH = join(
   process.cwd(),
-  "public/brand/logo-marque-purple.png",
+  "public/brand/logo-marque-orange.png",
 );
 const QUIET_ZONE = 4;
 const DEFAULT_LOGO_SCALE = 0.18;
@@ -32,7 +32,7 @@ export interface QRCodeRenderOptions {
 export interface BrandedQrSvgOptions {
   size?: number;
   errorCorrectionLevel?: QRCodeErrorCorrectionLevel;
-  /** A data URI for the marque. Omit to use the bundled purple marque. */
+  /** A data URI for the marque. Omit to use the bundled orange marque. */
   logoDataUri?: string | null;
   logoScale?: number;
 }

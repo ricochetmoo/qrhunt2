@@ -30,7 +30,7 @@ export interface BuildQrImageInput extends QrImageCode {
 }
 
 const brandAssets = Promise.all([
-  readFile(join(ASSETS_DIR, "logo-marque-purple.png")),
+  readFile(join(ASSETS_DIR, "logo-marque-orange.png")),
   readFile(join(ASSETS_DIR, "logo-linear-white.png")),
 ]).then(([marque, linear]) => ({
   marque: `data:image/png;base64,${marque.toString("base64")}`,
