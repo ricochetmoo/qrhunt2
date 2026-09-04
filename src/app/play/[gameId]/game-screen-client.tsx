@@ -11,13 +11,11 @@ import { apiClient } from "@/lib/api-client";
 import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
+import { PlayerPageHeader, PlayerPageLoading } from "@/components/player/player-page-layout";
 import {
-  HeaderBar,
   ScoutsCard,
-  ScoutsHeader,
   ScoutsHeading,
   ScoutsLink,
-  ScoutsNavigation,
   ProgressBar,
   Timeline,
   Box,
@@ -211,10 +209,13 @@ export function GameScreen({ gameId }: { gameId: string }) {
 
   if (!state) {
     return (
-      <Shell>
-        <ErrorMessage message={error} />
-        <p className="text-center text-sm text-slate-500">Loading your game…</p>
-      </Shell>
+      <PlayerPageLoading
+        gameId={gameId}
+        activePage="game"
+        label="Loading your game"
+        error={error}
+        className="max-w-md"
+      />
     );
   }
 
@@ -239,20 +240,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
 
   return (
     <>
-      <div>
-        <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
-        <HeaderBar level={1}>
-          <ScoutsNavigation
-            label="Game navigation"
-            items={[
-              { href: "#", label: "Game", current: true },
-              { href: `/play/${game.id}/history`, label: "History" },
-              { href: `/play/${game.id}/hints`, label: "All Hints" },
-              { href: `/play/${game.id}/help`, label: "Help" },
-            ]}
-          />
-        </HeaderBar>
-      </div>
+      <PlayerPageHeader gameId={game.id} gameName={game.name} activePage="game" />
 
       <Shell>
 

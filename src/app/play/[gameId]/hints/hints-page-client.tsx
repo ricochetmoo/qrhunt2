@@ -4,15 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 
 import { ErrorMessage } from "@/components/ui/field";
 import { apiClient } from "@/lib/api-client";
+import { PlayerPageHeader, PlayerPageLoading } from "@/components/player/player-page-layout";
 import {
   DataTable,
   Message,
   ScoutsCard,
   ScoutsHeader,
   ScoutsLink,
-  ScoutsNavigation,
   Tag,
-  HeaderBar,
 } from "@/components/ui";
 
 type StateResponse = Awaited<
@@ -34,22 +33,6 @@ function hintText(entry: RouteEntry, hintsReleased: boolean): string {
   if (!hintsReleased) return "Hints will appear when the game starts.";
   if (entry.hint) return entry.hint;
   return "Locked - keep following the route to reveal this hint.";
-}
-
-function Navigation({ gameId }: { gameId: string }) {
-  return (
-    <HeaderBar level={1}>
-      <ScoutsNavigation
-        label="Game navigation"
-        items={[
-          { href: `/play/${gameId}`, label: "Game" },
-          { href: `/play/${gameId}/history`, label: "History" },
-          { href: `/play/${gameId}/hints`, label: "All Hints", current: true },
-          { href: `/play/${gameId}/help`, label: "Help" },
-        ]}
-      />
-    </HeaderBar>
-  );
 }
 
 export function HintsPage({ gameId }: { gameId: string }) {
@@ -127,10 +110,12 @@ export function HintsPage({ gameId }: { gameId: string }) {
 
   if (!state) {
     return (
-      <Shell>
-        <ErrorMessage message={error} />
-        <p className="text-center text-sm text-scouts-muted">Loading your hints…</p>
-      </Shell>
+      <PlayerPageLoading
+        gameId={gameId}
+        activePage="hints"
+        label="Loading your hints"
+        error={error}
+      />
     );
   }
 
@@ -146,10 +131,7 @@ export function HintsPage({ gameId }: { gameId: string }) {
 
   return (
     <>
-      <div>
-        <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
-        <Navigation gameId={game.id} />
-      </div>
+      <PlayerPageHeader gameId={game.id} gameName={game.name} activePage="hints" />
 
       <Shell>
 

@@ -4,13 +4,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { ErrorMessage } from "@/components/ui/field";
+import { PlayerPageHeader, PlayerPageLoading } from "@/components/player/player-page-layout";
 import {
-  HeaderBar,
   Message,
   ScoutsCard,
   ScoutsHeader,
   ScoutsLink,
-  ScoutsNavigation,
 } from "@/components/ui";
 import { apiClient } from "@/lib/api-client";
 
@@ -20,22 +19,6 @@ type StateResponse = Awaited<
   >
 >;
 type PlayerState = Extract<StateResponse, { state: unknown }>["state"];
-
-function Navigation({ gameId }: { gameId: string }) {
-  return (
-    <HeaderBar level={1}>
-      <ScoutsNavigation
-        label="Game navigation"
-        items={[
-          { href: `/play/${gameId}`, label: "Game" },
-          { href: `/play/${gameId}/history`, label: "History" },
-          { href: `/play/${gameId}/hints`, label: "All Hints" },
-          { href: `/play/${gameId}/help`, label: "Help", current: true },
-        ]}
-      />
-    </HeaderBar>
-  );
-}
 
 export function HelpPage({ gameId }: { gameId: string }) {
   const [state, setState] = useState<PlayerState | null>(null);
@@ -111,10 +94,12 @@ export function HelpPage({ gameId }: { gameId: string }) {
 
   if (!state) {
     return (
-      <Shell>
-        <ErrorMessage message={error} />
-        <p className="text-center text-sm text-scouts-muted">Loading your game help…</p>
-      </Shell>
+      <PlayerPageLoading
+        gameId={gameId}
+        activePage="help"
+        label="Loading your game help"
+        error={error}
+      />
     );
   }
 
@@ -122,10 +107,7 @@ export function HelpPage({ gameId }: { gameId: string }) {
 
   return (
     <>
-      <div>
-        <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
-        <Navigation gameId={game.id} />
-      </div>
+      <PlayerPageHeader gameId={game.id} gameName={game.name} activePage="help" />
 
       <Shell>
         {game.status === "paused" ? (

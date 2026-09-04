@@ -3,13 +3,12 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
+import { PlayerPageHeader, PlayerPageLoading } from "@/components/player/player-page-layout";
 import {
-  HeaderBar,
   Message,
   ScoutsCard,
   ScoutsHeader,
   ScoutsLink,
-  ScoutsNavigation,
   Timeline,
   type TimelineItem,
 } from "@/components/ui";
@@ -202,10 +201,13 @@ export function HistoryScreen({ gameId }: { gameId: string }) {
 
   if (!state) {
     return (
-      <Shell>
-        <ErrorMessage message={error} />
-        <p className="text-center text-sm text-scouts-muted">Loading your scan history…</p>
-      </Shell>
+      <PlayerPageLoading
+        gameId={gameId}
+        activePage="history"
+        label="Loading your scan history"
+        error={error}
+        className="max-w-md"
+      />
     );
   }
 
@@ -216,20 +218,7 @@ export function HistoryScreen({ gameId }: { gameId: string }) {
 
   return (
     <>
-      <div>
-        <ScoutsHeader title="QR Hunt" subtitle={game.name} logo />
-        <HeaderBar level={1}>
-          <ScoutsNavigation
-            label="Game navigation"
-            items={[
-              { href: `/play/${game.id}`, label: "Game" },
-              { href: `/play/${game.id}/history`, label: "History", current: true },
-              { href: `/play/${game.id}/hints`, label: "All Hints" },
-              { href: `/play/${game.id}/help`, label: "Help" },
-            ]}
-          />
-        </HeaderBar>
-      </div>
+      <PlayerPageHeader gameId={game.id} gameName={game.name} activePage="history" />
 
       <Shell>
 
