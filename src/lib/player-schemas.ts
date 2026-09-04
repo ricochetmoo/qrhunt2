@@ -106,16 +106,23 @@ const emailOrEmpty = z
 
 /**
  * Checking in at the finish line (`POST /games/:gameId/complete`). The
- * finish-line code is the capability proof; the fun score and comments are
- * the gate; the keep-updated details are optional but need an email to be
- * useful.
+ * finish-line code is the capability proof. The fun score and comments are
+ * the gate when feedback is collected in-app; a game with a feedback URL
+ * collects it on that external form instead, so both are optional here and
+ * the server decides (domain/completion.ts). The keep-updated details are
+ * optional but need an email to be useful.
  */
 export const reportCompletionSchema = z
   .object({
     /** The finish-line QR payload the player scanned. */
     code: qrPayload,
-    funScore: z.number().int().min(FUN_SCORE_MIN).max(FUN_SCORE_MAX),
-    comments: z.string().trim().min(1, "Share a thought or two before checking in.").max(2000),
+    funScore: z.number().int().min(FUN_SCORE_MIN).max(FUN_SCORE_MAX).optional(),
+    comments: z
+      .string()
+      .trim()
+      .min(1, "Share a thought or two before checking in.")
+      .max(2000)
+      .optional(),
     keepUpdated: z.boolean().default(false),
     contactName: optionalText(120),
     contactEmail: emailOrEmpty,

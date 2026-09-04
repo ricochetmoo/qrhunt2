@@ -446,7 +446,7 @@ export function GameForm(props: GameFormProps) {
             <Field
               label="Feedback URL"
               htmlFor="cfg-feedback-url"
-              hint="Optional. Players are sent here after scanning the finish-line code."
+              hint="Optional. When set, scanning the finish-line code records the team's completion (for the badge queue) and then sends players here for feedback, instead of the built-in form."
             >
               <Input
                 id="cfg-feedback-url"

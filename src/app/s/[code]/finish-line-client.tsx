@@ -15,7 +15,10 @@ import { FUN_SCORE_MAX, FUN_SCORE_MIN } from "@/lib/player-schemas";
  * The finish line: what the `/s/<code>` page shows when the scanned code is a
  * game's "I'm done" code. Enrolled players with a complete route fill in the
  * fun score and comments (the gate), optionally opt in to keep-updated
- * details, and are checked in for a badge. Everyone else is told why not.
+ * details, and are checked in for a badge. Games with a feedback URL skip the
+ * in-app form: the player confirms with one tap, which records the check-in
+ * (so the badge queue knows who to issue to), and is then sent to the external
+ * feedback form without coming back. Everyone else is told why not.
  */
 
 type Viewer = {
@@ -30,6 +33,9 @@ type Phase =
   | { kind: "not-playing" }
   | { kind: "incomplete"; found: number; total: number }
   | { kind: "form" }
+  /** Feedback URL configured: confirm, record the check-in, then leave for the form. */
+  | { kind: "confirm"; feedbackUrl: string }
+  | { kind: "redirecting"; feedbackUrl: string }
   | { kind: "done"; reportedAt: string | null; prizeIssuedAt: string | null; already: boolean }
   | { kind: "error"; message: string };
 
@@ -95,7 +101,7 @@ export function FinishLine({
       const feedbackUrl = state.game.feedbackUrl?.trim();
 
       if (feedbackUrl) {
-        window.location.replace(feedbackUrl);
+        setPhase({ kind: "confirm", feedbackUrl });
         return;
       }
 
@@ -149,6 +155,34 @@ export function FinishLine({
         prizeIssuedAt: state.team?.prizeIssuedAt ?? null,
         already: false,
       });
+    } catch {
+      setError("Could not reach the game. Check your signal and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * External-feedback games: record the check-in first, then hand over to the
+   * feedback form. `replace` on purpose: the player is not expected back here.
+   */
+  async function handleComplete(feedbackUrl: string) {
+    setError(null);
+    setBusy(true);
+
+    try {
+      const response = await apiClient.api.player.games[":gameId"].complete.$post({
+        param: { gameId: game.id },
+        json: { code },
+      });
+
+      if (!response.ok) {
+        setError(await readError(response));
+        return;
+      }
+
+      setPhase({ kind: "redirecting", feedbackUrl });
+      window.location.replace(feedbackUrl);
     } catch {
       setError("Could not reach the game. Check your signal and try again.");
     } finally {
@@ -328,6 +362,50 @@ export function FinishLine({
               {busy ? "Checking you in…" : "Check in"}
             </Button>
           </form>
+        ) : null}
+
+        {phase.kind === "confirm" ? (
+          <>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">🏁 You made it{firstName}!</h2>
+              <p className="mt-1 text-sm text-slate-700">You&apos;ve found every stop. Amazing work!</p>
+            </div>
+            <p className="text-sm text-slate-700">
+              Tap the button below to complete the hunt. We&apos;ll then take you to a short
+              feedback form. Your feedback is really valuable and helps the Digital Team make the
+              next hunt even better.
+            </p>
+            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              🎖 Once you&apos;ve completed the hunt, the Digital Team can hand over your badge.
+            </p>
+            <Button
+              onClick={() => handleComplete(phase.feedbackUrl)}
+              disabled={busy}
+              className="w-full"
+            >
+              {busy ? "Completing your hunt…" : "Complete hunt & give feedback"}
+            </Button>
+          </>
+        ) : null}
+
+        {phase.kind === "redirecting" ? (
+          <>
+            <div
+              aria-hidden="true"
+              className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-3xl text-green-700"
+            >
+              ✓
+            </div>
+            <h2 className="text-center text-lg font-semibold text-slate-900">
+              Hunt complete{firstName}!
+            </h2>
+            <p role="status" className="text-center text-sm text-slate-700">
+              Taking you to the feedback form…
+            </p>
+            <a href={phase.feedbackUrl} className="block text-center text-sm font-medium underline">
+              If nothing happens, tap here to open the feedback form.
+            </a>
+          </>
         ) : null}
 
         {phase.kind === "done" ? (
