@@ -81,12 +81,15 @@ export async function buildRouteBundle(
     route.map(async (code, index): Promise<RouteBundleEntry> => {
       const found = options.foundIds.has(code.id);
       const previous = index > 0 ? route[index - 1] : null;
-      // A stop is unlocked when found, when it is the first stop, or when the
-      // previous stop has been found — exactly what the offline crypto chain
-      // can decrypt, so online and offline reveal the same information. This
-      // holds for ordered and out-of-order games alike.
+      // Completeness games with any-order scanning reveal the whole route once
+      // the game starts. Other games unlock the first stop, the current stop,
+      // and stops whose predecessor has been found - exactly what the offline
+      // crypto chain can decrypt.
+      const allHintsUnlocked =
+        options.hintsReleased && game.gameMode === "completeness" && game.allowOutOfOrder;
       const unlocked =
-        options.hintsReleased && (found || !previous || options.foundIds.has(previous.id));
+        allHintsUnlocked ||
+        (options.hintsReleased && (found || !previous || options.foundIds.has(previous.id)));
       const location =
         code.latitude && code.longitude
           ? { latitude: code.latitude, longitude: code.longitude }
