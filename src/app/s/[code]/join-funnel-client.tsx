@@ -10,12 +10,12 @@ import { apiClient } from "@/lib/api-client";
 import { signIn } from "@/lib/auth-client";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { detectScanContext, type ScanContext } from "@/lib/scan-context";
+import { rememberActiveGame } from "@/lib/player-storage";
 
 import { FinishLine } from "./finish-line-client";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
 
 const ONBOARDED_KEY = "qr-hunt:onboarded";
-const ACTIVE_GAME_KEY = "qr-hunt:active-game";
 const LANDING_SCAN_KEY_PREFIX = "qr-hunt:landing-scan:";
 /** Reloading this page soon after landing replays the same scan rather than logging a second one. */
 const LANDING_SCAN_REUSE_MS = 2 * 60_000;
@@ -89,14 +89,6 @@ function rememberOnboarded(gameId: string) {
     window.localStorage.setItem(ONBOARDED_KEY, JSON.stringify({ gameId, at: new Date().toISOString() }));
   } catch {
     // Storage may be unavailable; the server session is what matters.
-  }
-}
-
-function rememberActiveGame(gameId: string, name: string) {
-  try {
-    window.localStorage.setItem(ACTIVE_GAME_KEY, JSON.stringify({ gameId, name }));
-  } catch {
-    // convenience only
   }
 }
 
