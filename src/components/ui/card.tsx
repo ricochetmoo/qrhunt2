@@ -2,6 +2,9 @@ import type { HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
+export { ScoutsCard } from "./scouts-card";
+export type { ScoutsCardHeadingLevel, ScoutsCardProps, ScoutsCardVariant } from "./scouts-card";
+
 export function Card({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
   return (
     <div

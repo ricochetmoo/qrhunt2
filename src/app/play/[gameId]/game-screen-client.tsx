@@ -11,7 +11,18 @@ import { apiClient } from "@/lib/api-client";
 import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
-import { HeaderBar, ScoutsHeader, ScoutsLink, ScoutsNavigation, Timeline } from "@/components/ui";
+import {
+  HeaderBar,
+  ScoutsCard,
+  ScoutsHeader,
+  ScoutsHeading,
+  ScoutsLink,
+  ScoutsNavigation,
+  ProgressBar,
+  Timeline,
+  Box,
+  Message,
+} from "@/components/ui";
 
 const ACTIVE_GAME_KEY = "qr-hunt:active-game";
 
@@ -258,147 +269,56 @@ export function GameScreen({ gameId }: { gameId: string }) {
       <ErrorMessage message={error} />
 
       {/* Your progress */}
-      <Card>
-        <CardHeader
-          title={`Your progress, ${yourName}`}
-          description={
-            !you
-              ? undefined
-              : game.mode === "completeness"
-                ? // No race in completeness mode: rank is meaningless, completion isn't.
-                  `${completedTeams} of ${leaderboard.length} ${leaderboard.length === 1 ? "person has" : "people have"} completed the course${progress?.complete ? " - you included!" : ""}`
-                : `You're ${ordinal(you.rank)} of ${leaderboard.length}`
-          }
-        />
-        <CardBody className="space-y-3">
-          {progress ? (
-            <>
-              <div className="flex items-baseline justify-between">
-                <span className="text-2xl font-semibold text-slate-900">
-                  {progress.found}
-                  <span className="text-base font-normal text-slate-500"> / {progress.total} stops</span>
-                </span>
-                {progress.wildcardFound ? (
-                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                    ★ Wildcard found
-                  </span>
-                ) : null}
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
-                <div className="h-full rounded-full bg-slate-900 transition-all" style={{ width: `${percent}%` }} />
-              </div>
-              {progress.complete ? (
-                <p className="text-sm font-medium text-green-700">
-                  🎉 Route complete - you found everything!
-                </p>
-              ) : null}
-            </>
-          ) : (
-            <p className="text-sm text-slate-500">Join a team to start tracking progress.</p>
-          )}
-          {team ? (
-            <p className="text-xs text-slate-500">
-              Rejoin code: <code className="font-mono font-semibold">{team.teamCode}</code> - use it
-              if you switch phones.
-            </p>
-          ) : null}
-        </CardBody>
-      </Card>
-
-      {/* Next clue */}
+      <ScoutsCard
+        title="Progress"
+        description={`You have found ${progress?.found ?? 0} of ${progress?.total ?? 0} codes`}
+        >
+          <ProgressBar
+            value={progress?.found ?? 0}
+            max={progress?.total ?? 0}
+            label=""
+            variant={progress?.complete ? "success" : "primary"}
+          />
+      </ScoutsCard>
       {progress && !progress.complete ? (
-        <Card>
-          <CardHeader
-            title={game.settings.allowOutOfOrder ? "A clue to chase" : "Your next clue"}
-            description={
-              game.settings.allowOutOfOrder
-                ? "Stops can be found in any order - this is the next one along from where you are, and the route loops round."
-                : undefined
-            }
-          />
-          <CardBody>
+        <ScoutsCard
+          title="Next clue"
+          description="Use this to help you find the next QR code. You don't have to go in order, so scan any you find!"
+        >
+          <Box size="md">
             {progress.hintsReleased && progress.nextHint ? (
-              <p className="whitespace-pre-line text-base text-slate-900">“{progress.nextHint}”</p>
-            ) : (
-              <p className="text-sm text-slate-500">
-                {game.status === "published" || game.status === "draft"
-                  ? "The game hasn't started yet - your first clue appears here when it does."
-                  : "Your clue will appear here once you're released to start."}
-              </p>
-            )}
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {/* Last scanned stop */}
-      <Card>
-        <CardHeader title="Last stop you found" />
-        <CardBody>
-          {progress?.lastFound ? (
-            <div className="space-y-1.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold text-slate-400">
-                  #{progress.lastFound.position + 1}
-                </span>
-                <span className="text-base font-semibold text-slate-900">
-                  {progress.lastFound.name}
-                </span>
-                <span className="text-xs text-slate-500">
-                  at {timeFormat.format(new Date(progress.lastFound.scannedAt))}
-                </span>
-              </div>
-              <p className="whitespace-pre-line text-sm text-slate-600">
-                “{progress.lastFound.hint}”
-              </p>
-              {progress.lastFound.funFact ? (
-                <p className="whitespace-pre-line rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700">
-                  <span className="font-semibold">Fun fact:</span> {progress.lastFound.funFact}
+                <p>“{progress.nextHint}”</p>
+              ) : (
+                <p>
+                  {game.status === "published" || game.status === "draft"
+                    ? "The game hasn't started yet - your first clue appears here when it does."
+                    : "Your clue will appear here once you're released to start."}
                 </p>
+              )}
+          </Box>
+        </ScoutsCard>
+      ): null}
+      <ScoutsCard
+        title="Enter a code"
+        description="If scanning isn't working, you can type the code manually instead."
+      >
+        {notice ? (
+            <Message
+              title={notice.message}
+              variant={notice.result === "accepted" || notice.result === "wildcard" ? "success" : "warning"}
+              className="mb-6"
+            >
+              {notice.funFact ? (
+                <span>
+                  <span className="font-semibold">Fun fact:</span> {notice.funFact}
+                </span>
               ) : null}
-              {progress.lastFound.location ? (
-                <p className="text-xs text-slate-500">
-                  📍 {progress.lastFound.location.latitude}, {progress.lastFound.location.longitude}
-                </p>
+              {notice.checkInHref ? (
+                <Link href={notice.checkInHref}>
+                  Check in at the finish line →
+                </Link>
               ) : null}
-            </div>
-          ) : (
-            <p className="text-sm text-slate-500">Nothing scanned yet - follow your first clue!</p>
-          )}
-        </CardBody>
-      </Card>
-
-      {/* Manual code entry */}
-      {progress && !progress.complete && game.status !== "finished" ? (
-        <Card>
-          <CardHeader
-            title="Found a code?"
-            description="Type the code printed under the QR if scanning is tricky."
-          />
-          <CardBody className="space-y-3">
-            {notice ? (
-              <div
-                role="status"
-                className={`rounded-md border px-3 py-2 text-sm ${
-                  notice.result === "accepted" || notice.result === "wildcard"
-                    ? "border-green-200 bg-green-50 text-green-800"
-                    : isRetryableScanResult(notice.result)
-                      ? "border-amber-200 bg-amber-50 text-amber-900"
-                      : "border-slate-200 bg-slate-50 text-slate-700"
-                }`}
-              >
-                {notice.stopName ? <strong>{notice.stopName}: </strong> : null}
-                {notice.message}
-                {notice.funFact ? (
-                  <span className="mt-2 block whitespace-pre-line">
-                    <span className="font-semibold">Fun fact:</span> {notice.funFact}
-                  </span>
-                ) : null}
-                {notice.checkInHref ? (
-                  <Link href={notice.checkInHref} className="mt-2 block font-medium underline">
-                    Check in at the finish line →
-                  </Link>
-                ) : null}
-              </div>
+            </Message>
             ) : null}
             <form onSubmit={handleSubmitCode} className="flex gap-2">
               <label htmlFor="scan-code" className="sr-only">
@@ -408,7 +328,7 @@ export function GameScreen({ gameId }: { gameId: string }) {
                 id="scan-code"
                 value={code}
                 onChange={(event) => setCode(event.target.value)}
-                placeholder="e.g. Ab3xY9qR"
+                placeholder="e.g. ABC234DE"
                 autoComplete="off"
                 spellCheck={false}
                 maxLength={16}
@@ -418,139 +338,15 @@ export function GameScreen({ gameId }: { gameId: string }) {
                 {busy ? "Checking…" : "Submit"}
               </Button>
             </form>
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {/* Scan history */}
-      {team ? (
-        <Card>
-          <CardHeader title="Scan history" description="Every code your team has scanned." />
-          <CardBody className="space-y-2">
-            {/* <Timeline
-              events={history}
-            /> */}
-            {history.length === 0 ? (
-              <p className="text-sm text-slate-500">No scans yet - they&apos;ll show up here.</p>
-            ) : (
-              <>
-                <ol className="divide-y divide-slate-100">
-                  {visibleHistory.map((entry) => {
-                    const scanner = team.members.find(
-                      (member) => member.userId === entry.scannedByUserId,
-                    );
-                    const scannerName = scanner ? (scanner.isYou ? "you" : scanner.name) : null;
-
-                    const hasDetails = Boolean(entry.hint || entry.funFact);
-                    const expanded = hasDetails && expandedHistoryId === entry.id;
-
-                    return (
-                      <li key={entry.id} className="py-2 text-sm">
-                        <div
-                          role={hasDetails ? "button" : undefined}
-                          tabIndex={hasDetails ? 0 : undefined}
-                          aria-expanded={hasDetails ? expanded : undefined}
-                          onClick={
-                            hasDetails
-                              ? () => setExpandedHistoryId(expanded ? null : entry.id)
-                              : undefined
-                          }
-                          onKeyDown={
-                            hasDetails
-                              ? (event) => {
-                                  if (event.key === "Enter" || event.key === " ") {
-                                    event.preventDefault();
-                                    setExpandedHistoryId(expanded ? null : entry.id);
-                                  }
-                                }
-                              : undefined
-                          }
-                          className={`flex items-center gap-3 rounded-md ${
-                            hasDetails ? "cursor-pointer -mx-1 px-1 hover:bg-slate-50" : ""
-                          }`}
-                        >
-                          <span className="w-6 shrink-0 text-right text-xs font-semibold text-slate-400">
-                            {entry.isWildcard
-                              ? "★"
-                              : entry.position !== null
-                                ? `#${entry.position + 1}`
-                                : ""}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-slate-900">
-                              {entry.stopName ?? "Unknown stop"}
-                            </span>
-                            <span className="block text-xs text-slate-500">
-                              {timeFormat.format(new Date(entry.scannedAt))}
-                              {scannerName ? ` · by ${scannerName}` : ""}
-                              {hasDetails ? (expanded ? " · hide clue" : " · see clue") : ""}
-                            </span>
-                          </span>
-                          <span className={historyPillClass(entry.result)}>
-                            {HISTORY_RESULT_LABELS[entry.result] ?? entry.result}
-                          </span>
-                        </div>
-                        {expanded ? (
-                          <div className="ml-9 mt-2 space-y-2 rounded-md bg-slate-50 px-3 py-2">
-                            {entry.hint ? (
-                              <p className="whitespace-pre-line text-sm text-slate-700">
-                                <span className="font-semibold">Clue:</span> “{entry.hint}”
-                              </p>
-                            ) : null}
-                            {entry.funFact ? (
-                              <p className="whitespace-pre-line text-sm text-slate-700">
-                                <span className="font-semibold">Fun fact:</span> {entry.funFact}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ol>
-                {history.length > HISTORY_PREVIEW_COUNT ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAllHistory((current) => !current)}
-                  >
-                    {showAllHistory ? "Show fewer" : `Show all ${history.length}`}
-                  </Button>
-                ) : null}
-              </>
-            )}
-          </CardBody>
-        </Card>
-      ) : null}
-
-      {/* Leaderboard */}
-      <Card>
-        <CardHeader title="Leaderboard" />
-        <CardBody>
-          {leaderboard.length === 0 ? (
-            <p className="text-sm text-slate-500">No players yet.</p>
-          ) : (
-            <ol className="divide-y divide-slate-100">
-              {leaderboard.map((entry) => (
-                <li
-                  key={entry.teamId}
-                  className={`flex items-center gap-3 py-2 text-sm ${entry.isYou ? "font-semibold text-slate-900" : "text-slate-700"}`}
-                >
-                  <span className="w-6 text-right text-xs text-slate-400">{entry.rank}</span>
-                  <span className="min-w-0 flex-1 truncate">
-                    {entry.name}
-                    {entry.isYou ? " (you)" : ""}
-                  </span>
-                  {entry.wildcardFound ? <span title="Wildcard found">★</span> : null}
-                  <span className="text-xs text-slate-500">
-                    {entry.found}/{entry.total}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          )}
-        </CardBody>
-      </Card>
+      </ScoutsCard>
+      <ScoutsCard
+        title="Rejoin Code"
+        description="Use this code to rejoin your game if you switch phones"
+      >
+        <Box size="lg" className="font-mono tracking-widest text-center">
+            {team?.teamCode ?? "—"}
+        </Box>
+      </ScoutsCard>
     </Shell>
   );
 }

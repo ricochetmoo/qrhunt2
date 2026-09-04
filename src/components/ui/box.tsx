@@ -2,24 +2,75 @@ import type { HTMLAttributes } from "react";
 
 import { cn } from "@/lib/cn";
 
-export type BoxVariant = "default" | "success" | "warning" | "navy" | "yellow" | "cubs";
-export type BoxSize = "xs" | "sm" | "md" | "lg" | "xl";
+export type BoxVariant =
+  | "default"
+  | "primary"
+  | "secondary"
+  | "success"
+  | "info"
+  | "warning"
+  | "danger"
+  | "purple"
+  | "teal"
+  | "red"
+  | "navy"
+  | "blue"
+  | "forest"
+  | "green"
+  | "orange"
+  | "yellow"
+  | "pink"
+  | "grey"
+  | "black"
+  | "white"
+  | "squirrels"
+  | "beavers"
+  | "cubs"
+  | "scouts"
+  | "explorers"
+  | "network"
+  | "adult"
+  | "dev";
+export type BoxSize = "xs" | "sm" | "md" | "normal" | "lg" | "xl";
 
 const VARIANT_CLASSES: Record<BoxVariant, string> = {
-  default: "bg-scouts-grey-light text-scouts-text",
-  success: "bg-scouts-green text-black",
-  warning: "bg-scouts-orange text-black",
-  navy: "bg-scouts-navy text-white",
-  yellow: "bg-scouts-yellow text-black",
-  cubs: "bg-scouts-green text-black",
+  default: "",
+  primary: "scouts-box--primary",
+  secondary: "scouts-box--secondary",
+  success: "scouts-box--success",
+  info: "scouts-box--info",
+  warning: "scouts-box--warning",
+  danger: "scouts-box--danger",
+  purple: "scouts-box--purple",
+  teal: "scouts-box--teal",
+  red: "scouts-box--red",
+  navy: "scouts-box--navy",
+  blue: "scouts-box--blue",
+  forest: "scouts-box--forest",
+  green: "scouts-box--green",
+  orange: "scouts-box--orange",
+  yellow: "scouts-box--yellow",
+  pink: "scouts-box--pink",
+  grey: "scouts-box--grey",
+  black: "scouts-box--black",
+  white: "scouts-box--white",
+  squirrels: "scouts-box--squirrels",
+  beavers: "scouts-box--beavers",
+  cubs: "scouts-box--cubs",
+  scouts: "scouts-box--scouts",
+  explorers: "scouts-box--explorers",
+  network: "scouts-box--network",
+  adult: "scouts-box--adult",
+  dev: "scouts-box--dev",
 };
 
 const SIZE_CLASSES: Record<BoxSize, string> = {
-  xs: "p-2 text-sm",
-  sm: "p-3 text-sm",
-  md: "p-5 text-base",
-  lg: "p-7 text-xl",
-  xl: "p-8 text-2xl",
+  xs: "scouts-box--xs",
+  sm: "scouts-box--sm",
+  md: "",
+  normal: "",
+  lg: "scouts-box--lg",
+  xl: "scouts-box--xl",
 };
 
 export interface BoxProps extends HTMLAttributes<HTMLDivElement> {
@@ -28,5 +79,5 @@ export interface BoxProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Box({ variant = "default", size = "md", className, ...props }: BoxProps) {
-  return <div className={cn(VARIANT_CLASSES[variant], SIZE_CLASSES[size], className)} {...props} />;
+  return <div className={cn("scouts-box", VARIANT_CLASSES[variant], SIZE_CLASSES[size], className)} {...props} />;
 }
