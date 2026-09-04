@@ -1,4 +1,4 @@
-export const ACCENT = "#7143DC";
+export const ACCENT = "#006ddf";
 
 export const PAGE = {
   width: 595.28,
@@ -7,8 +7,8 @@ export const PAGE = {
 
 export const TOP_BAR_HEIGHT = 100;
 
-const LOGO_ASPECT = 2195 / 619;
-const LOGO_HEIGHT = 48;
+const LOGO_ASPECT = 300 / 256;
+const LOGO_HEIGHT = 72;
 export const LOGO = {
   height: LOGO_HEIGHT,
   width: LOGO_HEIGHT * LOGO_ASPECT,
