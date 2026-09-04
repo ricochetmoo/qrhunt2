@@ -140,6 +140,7 @@ export async function updateGame(gameId: string, patch: UpdateGameInput): Promis
       name: patch.name ?? current.name,
       status: nextStatus,
       pauseReason: pauseReason || null,
+      helpText: patch.helpText === undefined ? current.helpText : patch.helpText,
       completionMessage:
         patch.completionMessage === undefined
           ? current.completionMessage
