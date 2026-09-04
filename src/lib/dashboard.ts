@@ -40,6 +40,64 @@ export function lastScan(scans: Scanned[]): Extract<Scanned, { scanned: true }> 
   return latest;
 }
 
+export const CODE_SCAN_DELAY_FACTOR = 2;
+
+export type CodeScanStatus = {
+  code: QrCode;
+  lastScannedAt: number | null;
+  overdue: boolean;
+};
+
+export type CodeScanSummary = {
+  codes: CodeScanStatus[];
+  averageAgeMs: number | null;
+  overdueAfterMs: number | null;
+};
+
+export function buildCodeScanSummary(
+  route: QrCode[],
+  progress: Progress,
+  nowMs: number,
+): CodeScanSummary {
+  const lastScannedAtByCode = new Map<string, number>();
+
+  for (const row of progress) {
+    for (const item of row.scans) {
+      if (!item.scanned) continue;
+
+      const scannedAt = asTime(item.scan.createdAt);
+      if (!Number.isFinite(scannedAt)) continue;
+
+      const previous = lastScannedAtByCode.get(item.code.id);
+      if (previous === undefined || scannedAt > previous) {
+        lastScannedAtByCode.set(item.code.id, scannedAt);
+      }
+    }
+  }
+
+  const ages = route.flatMap((code) => {
+    const lastScannedAt = lastScannedAtByCode.get(code.id);
+    return lastScannedAt === undefined ? [] : [Math.max(0, nowMs - lastScannedAt)];
+  });
+  const averageAgeMs = ages.length ? ages.reduce((total, age) => total + age, 0) / ages.length : null;
+  const overdueAfterMs = averageAgeMs === null ? null : averageAgeMs * CODE_SCAN_DELAY_FACTOR;
+
+  return {
+    codes: route.map((code) => {
+      const lastScannedAt = lastScannedAtByCode.get(code.id) ?? null;
+      const ageMs = lastScannedAt === null ? null : Math.max(0, nowMs - lastScannedAt);
+
+      return {
+        code,
+        lastScannedAt,
+        overdue: ageMs !== null && overdueAfterMs !== null && ageMs > overdueAfterMs,
+      };
+    }),
+    averageAgeMs,
+    overdueAfterMs,
+  };
+}
+
 export type TeamStanding = {
   team: TeamProgress["team"];
   memberCount: number;

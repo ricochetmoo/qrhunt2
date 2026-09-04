@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { ActivitySparkline } from "@/components/dashboard/activity-sparkline";
 import { CheckpointFunnel } from "@/components/dashboard/checkpoint-funnel";
+import { CodeLastScans } from "@/components/dashboard/code-last-scans";
 import { GameMetadata } from "@/components/dashboard/game-metadata";
 import { Leaderboard } from "@/components/dashboard/leaderboard";
 import { ProgressTable } from "@/components/dashboard/progress-table";
@@ -93,6 +94,8 @@ export function GameDashboard({ gameId }: { gameId: string }) {
         lastUpdatedAt={serverTime}
         nowMs={nowMs}
       />
+
+      <CodeLastScans route={route} progress={progress} nowMs={nowMs} />
 
       {progress.length === 0 ? (
         <Card>
