@@ -73,10 +73,12 @@ const styles = StyleSheet.create({
     fontSize: TYPE.gameName.fontSize,
     fontWeight: TYPE.gameName.fontWeight,
     lineHeight: TYPE.gameName.lineHeight,
+    alignSelf: "center",
   },
   codeName: {
     fontSize: TYPE.codeName.fontSize,
     marginTop: SPACE.md,
+    alignSelf: "center",
   },
   qr: {
     alignSelf: "center",

@@ -30,7 +30,7 @@ export const QR_SIZE = 400;
 export const FONT_FAMILY = "Nunito Sans";
 
 export const TYPE = {
-  gameName: { fontSize: 26, fontWeight: 700 as const, lineHeight: 1.15 },
+  gameName: { fontSize: 30, fontWeight: 700 as const, lineHeight: 1.15 },
   codeName: { fontSize: 22, fontWeight: 400 as const, lineHeight: 1.3 },
   helper: { fontSize: 14, fontWeight: 400 as const },
   codeValue: { fontSize: 30, fontWeight: 700 as const, letterSpacing: 8 },
