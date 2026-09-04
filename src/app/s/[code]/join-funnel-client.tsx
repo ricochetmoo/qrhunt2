@@ -522,7 +522,6 @@ export function JoinFunnel({ code }: { code: string }) {
       {stage === "onboard" && game ? (
         <section aria-labelledby="onboard-heading" className="space-y-5">
           <header className="space-y-2">
-            <p className="text-sm font-bold uppercase tracking-wider text-scouts-blue">Get started</p>
             <h1 id="onboard-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
               Welcome to {game.name}!
             </h1>
@@ -575,7 +574,6 @@ export function JoinFunnel({ code }: { code: string }) {
       {stage === "rescan" && game ? (
         <section aria-labelledby="rescan-heading" className="space-y-4">
           <header className="space-y-2">
-            <p className="text-sm font-bold uppercase tracking-wider text-scouts-green-dark">Almost there</p>
             <h1 id="rescan-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
               Nice to meet you, {name.trim()}! 👋
             </h1>
@@ -601,7 +599,6 @@ export function JoinFunnel({ code }: { code: string }) {
       {stage === "welcome-back" && game && viewer ? (
         <section aria-labelledby="welcome-back-heading" className="space-y-5">
           <header className="space-y-2">
-            <p className="text-sm font-bold uppercase tracking-wider text-scouts-purple">Your game is ready</p>
             <h1 id="welcome-back-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
               Welcome back, {viewer.name}!
             </h1>
@@ -636,9 +633,6 @@ export function JoinFunnel({ code }: { code: string }) {
       {stage === "joined" && game ? (
         <section aria-labelledby="joined-heading" className="space-y-5">
           <header className="space-y-2">
-            <p className="text-sm font-bold uppercase tracking-wider text-scouts-green-dark">
-              {joined?.returning ? "Back on the route" : "You're in"}
-            </p>
             <h1 id="joined-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
               {joined?.playerName
                 ? joined.returning
@@ -685,7 +679,6 @@ export function JoinFunnel({ code }: { code: string }) {
       {stage === "throwaway" ? (
         <section aria-labelledby="throwaway-heading" className="space-y-4">
           <header className="space-y-2">
-            <p className="text-sm font-bold uppercase tracking-wider text-scouts-orange-dark">One more try</p>
             <h1 id="throwaway-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
               This scanner forgets you 😔
             </h1>
