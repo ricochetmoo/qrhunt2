@@ -256,8 +256,8 @@ export function PlayerGameScreen() {
   );
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-xl bg-white px-4 py-6 text-slate-900 sm:px-6">
-      <header className="flex items-start justify-between gap-4 border-b border-slate-200 pb-5">
+    <>
+      <header className="flex w-full items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 pb-5 pt-0 text-slate-900 sm:px-6">
         <div>
           <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">
             {playerState.troopName}
@@ -292,6 +292,8 @@ export function PlayerGameScreen() {
           ) : null}
         </div>
       </header>
+
+      <main className="mx-auto min-h-screen w-full max-w-xl bg-white px-4 pb-6 pt-6 text-slate-900 sm:px-6">
 
       <section aria-labelledby="next-location" className="py-6">
         <p className="text-sm font-semibold uppercase tracking-wider text-slate-500">Next signal</p>
@@ -365,7 +367,8 @@ export function PlayerGameScreen() {
           {isSyncing ? "Syncing scan…" : pendingScans.length ? "Saved here and retrying automatically." : "Scans sync immediately when you submit."}
         </p>
       </section>
-    </main>
+      </main>
+    </>
   );
 }
 
