@@ -395,7 +395,7 @@ function CompletionScreen({
               <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm text-slate-700">
                 <p className="font-semibold text-slate-900">Claim your badge</p>
                 <p className="mt-1">
-                  Head to the <strong>Digital Team tent</strong> and scan the{" "}
+                  Head to the <strong>Digital Team stall</strong> in the Support Zone and scan the{" "}
                   {game.completion ? (
                     <>
                       <strong>&quot;{game.completion.name}&quot;</strong> QR code
