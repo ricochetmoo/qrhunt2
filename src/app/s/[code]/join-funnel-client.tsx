@@ -9,6 +9,7 @@ import {
   Input,
   Message,
   ScoutsHeader,
+  ScoutsHeading,
   ScoutsLink,
   Spinner,
 } from "@/components/ui";
@@ -162,27 +163,28 @@ function ScanOutcome({ scan }: { scan: ScanView }) {
       : "Scan update";
 
   return (
-    <Message title={title} variant={variant}>
-      <div className="space-y-3">
-        <p role="status">
-          {scan.stopName ? <strong>{scan.stopName}: </strong> : null}
-          {scan.message}
+    <>
+    <ScoutsHeading title={title} size="l" />
+    <div className="space-y-3">
+      <p role="status">
+        {scan.stopName ? <strong>{scan.stopName}: </strong> : null}
+        {scan.message}
+      </p>
+      {scan.funFact ? (
+        <p>
+          <span className="font-bold">Fun fact:</span>{" "}
+          <span className="whitespace-pre-line">{scan.funFact}</span>
         </p>
-        {scan.funFact ? (
-          <p>
-            <span className="font-bold">Fun fact:</span>{" "}
-            <span className="whitespace-pre-line">{scan.funFact}</span>
-          </p>
-        ) : null}
-        {credited && scan.total > 0 ? <p>{scan.found} of {scan.total} stops found.</p> : null}
-        {scan.hintsReleased && scan.nextHint ? (
-          <div>
-            <p className="text-sm font-bold uppercase tracking-wide">Your next clue</p>
-            <p className="mt-1 whitespace-pre-line text-lg">“{scan.nextHint}”</p>
-          </div>
-        ) : null}
-      </div>
-    </Message>
+      ) : null}
+      {credited && scan.total > 0 ? <p>{scan.found} of {scan.total} stops found.</p> : null}
+      {scan.hintsReleased && scan.nextHint ? (
+        <div>
+          <p className="text-sm font-bold uppercase tracking-wide">Your next clue</p>
+          <p className="mt-1 whitespace-pre-line text-lg">“{scan.nextHint}”</p>
+        </div>
+      ) : null}
+    </div>
+    </>
   );
 }
 
@@ -564,8 +566,7 @@ export function JoinFunnel({ code }: { code: string }) {
           <Details summary="Already gave your name? Expected to still be here?">
             <p>
               Close this page, open your normal <strong>Camera app</strong>, and scan the poster
-              again. If your phone still does not remember you, try opening <strong>Safari</strong>
-              and typing the address printed on the poster.
+              again. Do not use the code scanner in control centre as this will not remember you.
             </p>
           </Details>
         </section>
@@ -602,7 +603,7 @@ export function JoinFunnel({ code }: { code: string }) {
           <header className="space-y-2">
             <p className="text-sm font-bold uppercase tracking-wider text-scouts-purple">Your game is ready</p>
             <h1 id="welcome-back-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
-              Welcome back, {viewer.name}! ✅
+              Welcome back, {viewer.name}!
             </h1>
             <p>
               Your phone remembers you{viewer.teamName ? ` - team ${viewer.teamName}` : ""}.
@@ -641,8 +642,8 @@ export function JoinFunnel({ code }: { code: string }) {
             <h1 id="joined-heading" className="text-3xl font-extrabold tracking-tight text-scouts-text">
               {joined?.playerName
                 ? joined.returning
-                  ? `Welcome back, ${joined.playerName}! ✅`
-                  : `You're checked in, ${joined.playerName}! 🎉`
+                  ? `Welcome back, ${joined.playerName}!`
+                  : `You're checked in, ${joined.playerName}!`
                 : game.name}
             </h1>
           </header>
@@ -656,10 +657,9 @@ export function JoinFunnel({ code }: { code: string }) {
             <p className="text-base text-scouts-text">{GAME_MODE_PLAYER_BLURBS[game.mode]}</p>
           ) : null}
           {joined?.teamCode && !joined.returning ? (
-            <p className="border-y border-scouts-border-muted py-4 text-base text-scouts-text">
-              <span className="font-bold">🎖 Your badge is waiting.</span> Find every stop to
-              complete the hunt, then head to the Digital Team tent to collect it.
-            </p>
+            <Message title="Fancy a badge?" variant="info">
+              <p>Find every stop on the hunt, and then head to the Scouts Digital stall in the Support Zone to claim your prize!</p>
+            </Message>
           ) : null}
           {joined?.teamCode ? (
             <div className="border-y border-scouts-border-muted py-4">
