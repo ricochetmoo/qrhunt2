@@ -24,7 +24,10 @@ import {
   TYPE,
 } from "./theme";
 
-const LOGO_PATH = join(process.cwd(), "public/brand/logo-linear-white.png");
+const LOGO_PATH = join(
+  process.cwd(),
+  "public/brand/logo-stacked-digital-white.svg",
+);
 
 registerPosterFonts();
 
@@ -70,10 +73,20 @@ const styles = StyleSheet.create({
     fontSize: TYPE.gameName.fontSize,
     fontWeight: TYPE.gameName.fontWeight,
     lineHeight: TYPE.gameName.lineHeight,
+    alignSelf: "center",
+  },
+  subtitle: {
+    fontSize: TYPE.subtitle.fontSize,
+    fontWeight: TYPE.subtitle.fontWeight,
+    lineHeight: TYPE.subtitle.lineHeight,
+    color: "#475569",
+    marginTop: SPACE.xs,
+    alignSelf: "center",
   },
   codeName: {
     fontSize: TYPE.codeName.fontSize,
     marginTop: SPACE.md,
+    alignSelf: "center",
   },
   qr: {
     alignSelf: "center",
@@ -112,7 +125,8 @@ export function PosterDocument({ game, codes, appUrl }: PosterDocumentProps) {
             <Image src={LOGO_PATH} style={styles.logo} />
           </View>
           <View style={styles.body}>
-            <Text style={styles.gameName}>{game.name}</Text>
+            <Text style={styles.gameName}>{game.name} QR Hunt</Text>
+            <Text style={styles.subtitle}>Scan to start the game</Text>
             <Text style={styles.codeName}>{qr.name}</Text>
             <View style={styles.qr}>
               {renderQrCode(buildQrPayload(qr.code, appUrl), { size: QR_SIZE })}
