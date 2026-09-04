@@ -5,7 +5,10 @@ import { z } from "zod";
 import { db } from "@/db";
 import { qr_codes } from "@/db/schema";
 import { requireAdminGameRequest } from "@/server/auth/require-admin-request";
-import { buildGamePosterPdf } from "@/server/poster/render";
+import {
+  buildGameLabelSheetPdf,
+  buildGamePosterPdf,
+} from "@/server/poster/render";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,6 +16,8 @@ export const dynamic = "force-dynamic";
 const paramsSchema = z.object({
   gameId: z.string().trim().min(1),
 });
+
+const formatSchema = z.enum(["poster", "labels"]);
 
 function slugify(name: string): string {
   const slug = name
@@ -35,6 +40,14 @@ export async function POST(
 
   const { gameId } = parsedParams.data;
 
+  const parsedFormat = formatSchema.safeParse(
+    request.nextUrl.searchParams.get("format") ?? "poster",
+  );
+
+  if (!parsedFormat.success) {
+    return Response.json({ error: "Invalid poster format" }, { status: 400 });
+  }
+
   const auth = await requireAdminGameRequest(request, gameId);
 
   if (!auth.ok) {
@@ -56,16 +69,22 @@ export async function POST(
     );
   }
 
-  const bytes = await buildGamePosterPdf({
+  const input = {
     game: { name: game.name },
     codes: rows.map((row) => ({ name: row.name, code: row.code })),
-  });
+  };
+  const bytes =
+    parsedFormat.data === "labels"
+      ? await buildGameLabelSheetPdf(input)
+      : await buildGamePosterPdf(input);
+  const fileSuffix =
+    parsedFormat.data === "labels" ? "qr-label-sheets" : "qr-posters";
 
   return new Response(new Uint8Array(bytes), {
     status: 200,
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${slugify(game.name)}-qr-posters.pdf"`,
+      "Content-Disposition": `attachment; filename="${slugify(game.name)}-${fileSuffix}.pdf"`,
     },
   });
 }

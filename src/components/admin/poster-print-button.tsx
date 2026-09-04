@@ -10,7 +10,7 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handlePrint() {
+  async function handlePrint(format: "poster" | "labels") {
     if (pending) return;
 
     setError(null);
@@ -21,20 +21,27 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
     const printWindow = window.open("", "_blank");
 
     if (!printWindow) {
-      setError("Allow pop-ups for this site to print the posters.");
+      setError(
+        `Allow pop-ups for this site to print the ${format === "labels" ? "stickers" : "posters"}.`,
+      );
       setPending(false);
       return;
     }
 
-    printWindow.document.title = "Generating QR posters…";
+    const formatLabel = format === "labels" ? "stickers" : "posters";
+    printWindow.document.title = `Generating QR ${formatLabel}…`;
     printWindow.document.body.innerHTML =
-      '<p style="font: 16px sans-serif; padding: 2rem">Generating QR posters…</p>';
+      `<p style="font: 16px sans-serif; padding: 2rem">Generating QR ${formatLabel}…</p>`;
 
     try {
-      const response = await fetch(`/api/admin/games/${encodeURIComponent(gameId)}/poster-pdf`, {
-        method: "POST",
-        credentials: "same-origin",
-      });
+      const query = format === "labels" ? "?format=labels" : "";
+      const response = await fetch(
+        `/api/admin/games/${encodeURIComponent(gameId)}/poster-pdf${query}`,
+        {
+          method: "POST",
+          credentials: "same-origin",
+        },
+      );
 
       if (!response.ok) {
         throw new Error(await readError(response));
@@ -57,24 +64,39 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
       window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
     } catch (caught) {
       printWindow.close();
-      setError(caught instanceof Error ? caught.message : "Failed to generate posters.");
+      setError(
+        caught instanceof Error
+          ? caught.message
+          : `Failed to generate ${formatLabel}.`,
+      );
     } finally {
       setPending(false);
     }
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-wrap items-end justify-end gap-2">
       <Button
         variant="secondary"
         size="sm"
         type="button"
         className="!px-3 !py-1.5 !text-sm"
-        onClick={handlePrint}
+        onClick={() => handlePrint("poster")}
         disabled={pending}
         aria-busy={pending}
       >
         {pending ? "Generating…" : "Generate & print posters"}
+      </Button>
+      <Button
+        variant="secondary"
+        size="sm"
+        type="button"
+        className="!px-3 !py-1.5 !text-sm"
+        onClick={() => handlePrint("labels")}
+        disabled={pending}
+        aria-busy={pending}
+      >
+        {pending ? "Generating…" : "Generate & print stickers"}
       </Button>
       <ErrorMessage message={error} />
     </div>
