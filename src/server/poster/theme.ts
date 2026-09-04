@@ -1,4 +1,4 @@
-export const ACCENT = "#7143DC";
+export const ACCENT = "#006ddf";
 
 export const PAGE = {
   width: 595.28,
@@ -7,8 +7,8 @@ export const PAGE = {
 
 export const TOP_BAR_HEIGHT = 100;
 
-const LOGO_ASPECT = 2195 / 619;
-const LOGO_HEIGHT = 48;
+const LOGO_ASPECT = 300 / 256;
+const LOGO_HEIGHT = 72;
 export const LOGO = {
   height: LOGO_HEIGHT,
   width: LOGO_HEIGHT * LOGO_ASPECT,
@@ -30,7 +30,7 @@ export const QR_SIZE = 400;
 export const FONT_FAMILY = "Nunito Sans";
 
 export const TYPE = {
-  gameName: { fontSize: 26, fontWeight: 700 as const, lineHeight: 1.15 },
+  gameName: { fontSize: 30, fontWeight: 700 as const, lineHeight: 1.15 },
   codeName: { fontSize: 22, fontWeight: 400 as const, lineHeight: 1.3 },
   helper: { fontSize: 14, fontWeight: 400 as const },
   codeValue: { fontSize: 30, fontWeight: 700 as const, letterSpacing: 8 },
