@@ -3,8 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button, Input } from "@/components/ui";
 
 /**
  * Hands any typed code to the /s/<code> funnel, which resolves game codes,
@@ -25,7 +24,7 @@ export function EnterCodeForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex gap-2 sm:gap-3">
       <label htmlFor="enter-code" className="sr-only">
         Game, poster, or rejoin code
       </label>
@@ -41,7 +40,7 @@ export function EnterCodeForm() {
         className="font-mono tracking-widest"
       />
       <Button type="submit" disabled={busy || !code.trim()}>
-        {busy ? "Opening…" : "Go"}
+        {busy ? "Opening…" : "Submit"}
       </Button>
     </form>
   );

@@ -1,4 +1,10 @@
-import Link from "next/link";
+import {
+  ScoutsCard,
+  ScoutsHeading,
+  ScoutsHeader,
+  ScoutsLink,
+  ScoutsList,
+} from "@/components/ui";
 
 import { ContinuePlaying } from "./continue-playing";
 import { EnterCodeForm } from "./enter-code-form";
@@ -6,12 +12,12 @@ import { EnterCodeForm } from "./enter-code-form";
 const STEPS = [
   {
     title: "Find a QR Hunt poster",
-    detail: "Head to the start location - your leader will point you at the first poster.",
+    detail: "Find a poster somewhere along the route.",
   },
   {
     title: "Scan it with your Camera app",
     detail:
-      "Point your phone's normal Camera app at the QR code and tap the link that pops up. On iPhone, use the Camera app itself - not the Control Centre code scanner, which forgets who you are.",
+      "Point your phone's normal Camera app at the QR code and tap the link that pops up. On iPhone, use the Camera app itself - not the Control Centre code scanner.",
   },
   {
     title: "Tell us your name and you're in",
@@ -22,56 +28,53 @@ const STEPS = [
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-10">
-      <header className="space-y-2 text-center">
-        <p className="text-4xl" aria-hidden>
-          🔍
-        </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">QR Hunt</h1>
-        <p className="text-sm text-slate-600">
-          A treasure trail of QR codes: scan your way from clue to clue and race - or explore - to
-          the end.
-        </p>
-      </header>
+    <>
+      <ScoutsHeader title="QR Hunt" logo />
 
-      <ContinuePlaying />
+      <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 px-4 pb-8 pt-6 sm:px-6">
+        <header className="space-y-2">
+          <ScoutsHeading size="s" as="h2">
+            Ready to play?
+          </ScoutsHeading>
+          <p className="max-w-prose text-base text-scouts-text">
+            Follow the route, find the QR codes, and complete the hunt!
+          </p>
+        </header>
 
-      <section aria-labelledby="get-started" className="space-y-4">
-        <h2 id="get-started" className="text-lg font-semibold text-slate-900">
-          Get started
-        </h2>
-        <ol className="space-y-3">
-          {STEPS.map((step, index) => (
-            <li key={step.title} className="flex gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-900 text-sm font-semibold text-white">
-                {index + 1}
+        <ContinuePlaying />
+
+        <ScoutsCard
+          title="Get started"
+          variant="blue"
+        >
+          <ScoutsList
+            ordered
+            spaced
+            className="space-y-5"
+            items={STEPS.map((step) => (
+              <span key={step.title} className="block">
+                <strong className="block text-scouts-text">{step.title}</strong>
+                <span className="mt-1 block text-base text-scouts-text">{step.detail}</span>
               </span>
-              <span>
-                <span className="block text-sm font-medium text-slate-900">{step.title}</span>
-                <span className="mt-0.5 block text-sm text-slate-600">{step.detail}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
-      </section>
+            ))}
+          />
+        </ScoutsCard>
 
-      <section aria-labelledby="have-code" className="space-y-3">
-        <h2 id="have-code" className="text-lg font-semibold text-slate-900">
-          Got a code instead?
-        </h2>
-        <p className="text-sm text-slate-600">
-          Enter the game code from your leader, the code printed on any poster, or your rejoin code
-          if you&apos;ve switched phones.
-        </p>
-        <EnterCodeForm />
-      </section>
+        <ScoutsCard
+          title="Got a code instead?"
+          description="Enter the game, poster, or rejoin code you have been given."
+          variant="orange"
+        >
+          <EnterCodeForm />
+        </ScoutsCard>
 
-      <footer className="mt-auto border-t border-slate-200 pt-4 text-center text-xs text-slate-500">
-        Organising a hunt?{" "}
-        <Link href="/admin" className="underline hover:text-slate-900">
-          Open the admin area
-        </Link>
-      </footer>
-    </main>
+        <footer className="mt-auto border-t border-scouts-border-muted pt-4 text-center text-sm text-scouts-text">
+          Organising a hunt?{" "}
+          <ScoutsLink href="/admin" variant="muted">
+            Open the admin area
+          </ScoutsLink>
+        </footer>
+      </main>
+    </>
   );
 }
