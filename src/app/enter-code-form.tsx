@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 import { Button, Input } from "@/components/ui";
+import { normalizeCodeInput } from "@/lib/player-schemas";
 
 /**
  * Hands any typed code to the /s/<code> funnel, which resolves game codes,
@@ -31,12 +32,14 @@ export function EnterCodeForm() {
       <Input
         id="enter-code"
         value={code}
-        onChange={(event) => setCode(event.target.value)}
+        onChange={(event) => setCode(normalizeCodeInput(event.target.value))}
         placeholder="e.g. V6F3TX"
+        inputMode="text"
         autoCapitalize="characters"
         autoComplete="off"
         spellCheck={false}
         maxLength={16}
+        pattern="[A-Z0-9]*"
         className="font-mono tracking-widest"
       />
       <Button type="submit" disabled={busy || !code.trim()}>

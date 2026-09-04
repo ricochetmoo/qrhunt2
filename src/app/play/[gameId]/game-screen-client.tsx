@@ -11,6 +11,7 @@ import { apiClient } from "@/lib/api-client";
 import { DEFAULT_COMPLETION_MESSAGE } from "@/lib/completion";
 import { GAME_MODE_PLAYER_BLURBS, isGameMode } from "@/lib/game-mode";
 import { SCAN_RESULT_MESSAGES, isRetryableScanResult, type ScanResult } from "@/lib/scan-results";
+import { normalizeCodeInput } from "@/lib/player-schemas";
 import { rememberActiveGame } from "@/lib/player-storage";
 import { PlayerPageHeader, PlayerPageLoading } from "@/components/player/player-page-layout";
 import {
@@ -308,11 +309,14 @@ export function GameScreen({ gameId }: { gameId: string }) {
               <Input
                 id="scan-code"
                 value={code}
-                onChange={(event) => setCode(event.target.value)}
+                onChange={(event) => setCode(normalizeCodeInput(event.target.value))}
                 placeholder="e.g. ABC234DE"
+                inputMode="text"
+                autoCapitalize="characters"
                 autoComplete="off"
                 spellCheck={false}
                 maxLength={16}
+                pattern="[A-Z0-9]*"
                 className="font-mono tracking-widest"
               />
               <Button type="submit" disabled={busy || !code.trim()}>
