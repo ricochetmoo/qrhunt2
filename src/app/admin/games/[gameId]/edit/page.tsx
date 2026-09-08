@@ -1,11 +1,7 @@
-import Link from "next/link";
-
 import { AdminHuntName } from "@/components/admin/admin-nav";
 import { notFound } from "next/navigation";
 
 import { GameForm } from "@/components/admin/game-form";
-import { PosterPrintButton } from "@/components/admin/poster-print-button";
-import { QrImageExportButton } from "@/components/admin/qr-image-export-button";
 import { QrCodeList } from "@/components/admin/qr-code-list";
 import { StatusBadge } from "@/components/ui/badge";
 import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/card";
@@ -35,25 +31,7 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
       <PageHeader
         title={game.name}
         description={`Game code ${game.gameCode} · ${onRoute} ${onRoute === 1 ? "stop" : "stops"} on the route${hasFinishLine ? " · finish-line code set" : ""}${spares > 0 ? ` · ${spares} spare ${spares === 1 ? "code" : "codes"}` : ""}`}
-        actions={
-          <>
-            <PosterPrintButton gameId={game.id} />
-            <QrImageExportButton gameId={game.id} />
-            <Link
-              href={`/admin/games/${game.id}/dashboard`}
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              View dashboard
-            </Link>
-            <Link
-              href={`/admin/games/${game.id}/badges`}
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              Badges
-            </Link>
-            <StatusBadge status={game.status} />
-          </>
-        }
+        actions={<StatusBadge status={game.status} />}
       />
 
       <Card>

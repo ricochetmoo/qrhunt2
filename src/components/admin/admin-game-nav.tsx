@@ -11,8 +11,15 @@ const sections = [
   { segment: "badges", label: "Badges" },
 ];
 
+function normalizePathname(pathname: string | null) {
+  if (!pathname) return "";
+
+  const normalized = pathname.replace(/\/+$/, "");
+  return normalized || "/";
+}
+
 export function AdminGameNav({ gameId }: { gameId: string }) {
-  const pathname = usePathname();
+  const pathname = normalizePathname(usePathname());
   const basePath = `/admin/games/${encodeURIComponent(gameId)}`;
 
   return (

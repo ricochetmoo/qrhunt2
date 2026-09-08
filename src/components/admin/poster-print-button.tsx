@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/field";
 import { readError } from "@/lib/api-errors";
 
@@ -75,29 +74,25 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-end justify-end gap-2">
-      <Button
-        variant="secondary"
-        size="sm"
+    <div className="flex flex-col items-start gap-[15px] min-[641px]:flex-row min-[641px]:flex-wrap min-[641px]:gap-x-5 min-[641px]:gap-y-0">
+      <button
         type="button"
-        className="!px-3 !py-1.5 !text-sm"
+        className="scouts-navigation__link cursor-pointer text-left disabled:cursor-wait disabled:opacity-50"
         onClick={() => handlePrint("poster")}
         disabled={pending}
         aria-busy={pending}
       >
         {pending ? "Generating…" : "Generate & print posters"}
-      </Button>
-      <Button
-        variant="secondary"
-        size="sm"
+      </button>
+      <button
         type="button"
-        className="!px-3 !py-1.5 !text-sm"
+        className="scouts-navigation__link cursor-pointer text-left disabled:cursor-wait disabled:opacity-50"
         onClick={() => handlePrint("labels")}
         disabled={pending}
         aria-busy={pending}
       >
         {pending ? "Generating…" : "Generate & print stickers"}
-      </Button>
+      </button>
       <ErrorMessage message={error} />
     </div>
   );

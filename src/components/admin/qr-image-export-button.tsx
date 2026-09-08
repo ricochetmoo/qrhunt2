@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/field";
 import { readError } from "@/lib/api-errors";
 
@@ -53,17 +52,16 @@ export function QrImageExportButton({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <Button
-        variant="secondary"
-        size="sm"
-        className="!px-3 !py-1.5 !text-sm"
+    <div className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        className="scouts-navigation__link cursor-pointer text-left disabled:cursor-wait disabled:opacity-50"
         onClick={handleExport}
         disabled={pending}
         aria-busy={pending}
       >
         {pending ? "Exporting…" : "Export QR images"}
-      </Button>
+      </button>
       <ErrorMessage message={error} />
     </div>
   );
