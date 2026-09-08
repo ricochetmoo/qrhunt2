@@ -356,7 +356,7 @@ export function ComponentLibraryShowcase() {
                 </CardBody>
               </Card>
               <Card>
-                <CardHeader title="Sortable list" description="Keyboard controls and drag targets support route ordering." />
+                <CardHeader title="Sortable list" description="Drag targets support route ordering." />
                 <CardBody className="space-y-4">
                   <SortableList
                     items={[
