@@ -1,9 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
-import { AdminHuntName } from "@/components/admin/admin-nav";
-
 import { ActivitySparkline } from "@/components/dashboard/activity-sparkline";
 import { CheckpointFunnel } from "@/components/dashboard/checkpoint-funnel";
 import { CodeLastScans } from "@/components/dashboard/code-last-scans";
@@ -13,7 +9,14 @@ import { ProgressTable } from "@/components/dashboard/progress-table";
 import { StalledTeams } from "@/components/dashboard/stalled-teams";
 import { SummaryStats } from "@/components/dashboard/summary-stats";
 import { TeamLastScans } from "@/components/dashboard/team-last-scans";
-import { Card, CardBody, CardHeader, PageHeader } from "@/components/ui/card";
+import {
+  Message,
+  PageHeader,
+  ScoutsCard,
+  ScoutsLink,
+  Spinner,
+  StatusBadge,
+} from "@/components/ui";
 import { useDashboard } from "@/hooks/useDashboard";
 import {
   buildActivitySeries,
@@ -26,11 +29,22 @@ export function GameDashboard({ gameId }: { gameId: string }) {
   const { dashboard, error, isLoading } = useDashboard(gameId);
 
   if (error) {
-    return <p className="text-sm text-red-600">Failed to load dashboard: {error}</p>;
+    return (
+      <div className="space-y-4">
+        <Message title="Could not load dashboard" variant="danger">
+          <p>{error}</p>
+        </Message>
+        <ScoutsLink href="/admin/games">Back to games</ScoutsLink>
+      </div>
+    );
   }
 
   if (isLoading || !dashboard) {
-    return <p className="text-sm text-slate-500">Loading…</p>;
+    return (
+      <div className="flex justify-center py-16">
+        <Spinner label="Loading dashboard" size="lg" />
+      </div>
+    );
   }
 
   const { game, route, progress, serverTime } = dashboard;
@@ -53,39 +67,15 @@ export function GameDashboard({ gameId }: { gameId: string }) {
 
   return (
     <div className="space-y-6">
-      <AdminHuntName gameId={game.id} name={game.name} />
       <PageHeader
         title={game.name}
         description="Live team progress and scan activity."
-        actions={
-          <>
-            <Link
-              href={`/admin/games/${game.id}/badges`}
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              Badges
-            </Link>
-            <Link
-              href={`/admin/games/${game.id}/edit`}
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              Manage game
-            </Link>
-            <Link
-              href="/admin/games"
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              ← Back to games
-            </Link>
-          </>
-        }
+        actions={<ScoutsLink href="/admin/games" className="self-center">Back to games</ScoutsLink>}
       />
 
-      <Card>
-        <CardBody>
-          <GameMetadata game={game} />
-        </CardBody>
-      </Card>
+      <ScoutsCard title="Game details" titleExtras={<StatusBadge status={game.status} />}>
+        <GameMetadata game={game} />
+      </ScoutsCard>
 
       <SummaryStats
         teams={teams}
@@ -98,40 +88,30 @@ export function GameDashboard({ gameId }: { gameId: string }) {
         nowMs={nowMs}
       />
 
+      <StalledTeams standings={standings} nowMs={nowMs} />
+
       <CodeLastScans route={route} progress={progress} nowMs={nowMs} />
 
       {progress.length === 0 ? (
-        <Card>
-          <CardBody>
-            <p className="text-sm text-slate-500">
-              No teams yet. Teams appear here once players join and start scanning.
-            </p>
-          </CardBody>
-        </Card>
+        <Message title="No teams yet" variant="info">
+          Teams appear here once players join and start scanning.
+        </Message>
       ) : (
         <>
           <Leaderboard standings={standings} nowMs={nowMs} />
 
-          <Card>
-            <CardHeader title="Progress matrix" description="Relative scan time per checkpoint." />
-            <CardBody>
-              <ProgressTable codes={route} progress={orderedProgress} nowMs={nowMs} />
-            </CardBody>
-          </Card>
+          <ScoutsCard title="Progress matrix" description="Relative scan time per checkpoint.">
+            <ProgressTable codes={route} progress={orderedProgress} nowMs={nowMs} />
+          </ScoutsCard>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <CheckpointFunnel checkpoints={checkpoints} />
             <ActivitySparkline series={activity} />
           </div>
 
-          <StalledTeams standings={standings} nowMs={nowMs} />
-
-          <Card>
-            <CardHeader title="Last scans" />
-            <CardBody>
-              <TeamLastScans progress={orderedProgress} />
-            </CardBody>
-          </Card>
+          <ScoutsCard title="Last scans">
+            <TeamLastScans progress={orderedProgress} />
+          </ScoutsCard>
         </>
       )}
     </div>
