@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -105,22 +104,6 @@ export function BadgeQueue({ gameId }: { gameId: string }) {
       <PageHeader
         title="Badges"
         description="Teams that have checked in at the finish line. Mark each badge as issued when you hand it over. Updates every 10 seconds."
-        actions={
-          <>
-            <Link
-              href={`/admin/games/${gameId}/dashboard`}
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              View dashboard
-            </Link>
-            <Link
-              href={`/admin/games/${gameId}/edit`}
-              className="inline-flex items-center rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-            >
-              Manage game
-            </Link>
-          </>
-        }
       />
 
       <ErrorMessage message={error} />
