@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { AdminGameNav } from "@/components/admin/admin-game-nav";
 import { HeaderBar, ScoutsHeader } from "@/components/ui/header";
 import { ScoutsNavigation } from "@/components/ui/navigation";
 import { readCachedGameName, rememberActiveGame } from "@/lib/player-storage";
@@ -76,6 +77,7 @@ export function ScoutsNav({ children }: { children: ReactNode }) {
             ]}
           />
         </HeaderBar>
+        {gameId ? <AdminGameNav gameId={gameId} /> : null}
       </div>
       {children}
     </HuntContext.Provider>

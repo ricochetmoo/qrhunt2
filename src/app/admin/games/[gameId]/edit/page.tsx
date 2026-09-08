@@ -1,4 +1,6 @@
 import Link from "next/link";
+
+import { AdminHuntName } from "@/components/admin/admin-nav";
 import { notFound } from "next/navigation";
 
 import { GameForm } from "@/components/admin/game-form";
@@ -29,6 +31,7 @@ export default async function GameEditPage({ params }: PageProps<"/admin/games/[
 
   return (
     <div className="space-y-6">
+      <AdminHuntName gameId={game.id} name={game.name} />
       <PageHeader
         title={game.name}
         description={`Game code ${game.gameCode} · ${onRoute} ${onRoute === 1 ? "stop" : "stops"} on the route${hasFinishLine ? " · finish-line code set" : ""}${spares > 0 ? ` · ${spares} spare ${spares === 1 ? "code" : "codes"}` : ""}`}

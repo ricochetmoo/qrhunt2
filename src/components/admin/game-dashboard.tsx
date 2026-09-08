@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 
+import { AdminHuntName } from "@/components/admin/admin-nav";
+
 import { ActivitySparkline } from "@/components/dashboard/activity-sparkline";
 import { CheckpointFunnel } from "@/components/dashboard/checkpoint-funnel";
 import { CodeLastScans } from "@/components/dashboard/code-last-scans";
@@ -51,6 +53,7 @@ export function GameDashboard({ gameId }: { gameId: string }) {
 
   return (
     <div className="space-y-6">
+      <AdminHuntName gameId={game.id} name={game.name} />
       <PageHeader
         title={game.name}
         description="Live team progress and scan activity."
