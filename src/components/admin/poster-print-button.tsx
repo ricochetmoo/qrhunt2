@@ -2,36 +2,30 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
 import { readError } from "@/lib/api-errors";
+import { downloadFile } from "@/lib/download-file";
 
 export function PosterPrintButton({ gameId }: { gameId: string }) {
+  return (
+    <div className="flex flex-col items-start gap-[15px] min-[641px]:flex-row min-[641px]:flex-wrap min-[641px]:gap-x-5 min-[641px]:gap-y-0">
+      <PdfDownloadButton gameId={gameId} format="poster" />
+      <PdfDownloadButton gameId={gameId} format="labels" />
+    </div>
+  );
+}
+
+function PdfDownloadButton({ gameId, format }: { gameId: string; format: "poster" | "labels" }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const formatLabel = format === "labels" ? "stickers" : "posters";
 
-  async function handlePrint(format: "poster" | "labels") {
+  async function handleDownload() {
     if (pending) return;
 
     setError(null);
     setPending(true);
-
-    // Open the window during the click so browsers do not block it while the
-    // server generates the PDF.
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-      setError(
-        `Allow pop-ups for this site to print the ${format === "labels" ? "stickers" : "posters"}.`,
-      );
-      setPending(false);
-      return;
-    }
-
-    const formatLabel = format === "labels" ? "stickers" : "posters";
-    printWindow.document.title = `Generating QR ${formatLabel}…`;
-    printWindow.document.body.innerHTML =
-      `<p style="font: 16px sans-serif; padding: 2rem">Generating QR ${formatLabel}…</p>`;
 
     try {
       const query = format === "labels" ? "?format=labels" : "";
@@ -47,23 +41,8 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
         throw new Error(await readError(response));
       }
 
-      const pdfUrl = URL.createObjectURL(await response.blob());
-      printWindow.location.href = pdfUrl;
-      printWindow.focus();
-
-      // Give the browser's PDF viewer time to load before opening its print
-      // dialog. The PDF remains available in the tab if printing is cancelled.
-      window.setTimeout(() => {
-        try {
-          printWindow.print();
-        } catch {
-          // The PDF viewer can still be printed manually from the new tab.
-        }
-      }, 1000);
-
-      window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 60_000);
+      await downloadFile(response, `qr-${formatLabel}.pdf`);
     } catch (caught) {
-      printWindow.close();
       setError(
         caught instanceof Error
           ? caught.message
@@ -75,29 +54,19 @@ export function PosterPrintButton({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-end justify-end gap-2">
-      <Button
-        variant="secondary"
-        size="sm"
+    <div className="flex flex-col items-start gap-1">
+      <button
         type="button"
-        className="!px-3 !py-1.5 !text-sm"
-        onClick={() => handlePrint("poster")}
+        className="scouts-navigation__link cursor-pointer text-left disabled:cursor-wait disabled:opacity-50"
+        onClick={handleDownload}
         disabled={pending}
         aria-busy={pending}
       >
-        {pending ? "Generating…" : "Generate & print posters"}
-      </Button>
-      <Button
-        variant="secondary"
-        size="sm"
-        type="button"
-        className="!px-3 !py-1.5 !text-sm"
-        onClick={() => handlePrint("labels")}
-        disabled={pending}
-        aria-busy={pending}
-      >
-        {pending ? "Generating…" : "Generate & print stickers"}
-      </Button>
+        <span className="inline-flex items-center gap-2">
+          {pending ? <Spinner size="sm" inline label="" /> : null}
+          {pending ? `Generating ${formatLabel}…` : `Generate & download ${formatLabel}`}
+        </span>
+      </button>
       <ErrorMessage message={error} />
     </div>
   );

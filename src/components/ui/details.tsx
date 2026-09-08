@@ -2,6 +2,13 @@ import type { HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
+export type InsetTextVariant = "primary" | "grey";
+
+const INSET_VARIANT_CLASSES: Record<InsetTextVariant, string> = {
+  primary: "border-scouts-primary bg-scouts-primary-light",
+  grey: "border-scouts-grey bg-scouts-grey-light",
+};
+
 export function Details({
   summary,
   children,
@@ -18,10 +25,19 @@ export function Details({
   );
 }
 
-export function InsetText({ children, className, ...props }: HTMLAttributes<HTMLDivElement>) {
+export function InsetText({
+  children,
+  className,
+  variant = "primary",
+  ...props
+}: HTMLAttributes<HTMLDivElement> & { variant?: InsetTextVariant }) {
   return (
     <div
-      className={cn("my-5 border-l-4 border-scouts-primary bg-scouts-primary-light px-5 py-4 text-scouts-text", className)}
+      className={cn(
+        "my-5 border-l-4 px-5 py-4 text-scouts-text",
+        INSET_VARIANT_CLASSES[variant],
+        className,
+      )}
       {...props}
     >
       {children}

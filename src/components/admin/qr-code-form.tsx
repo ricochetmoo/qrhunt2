@@ -3,10 +3,14 @@
 import { useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
+import { CheckboxGroup, RadioGroup } from "@/components/ui/choice-group";
+import { InsetText } from "@/components/ui/details";
 import { Field } from "@/components/ui/field";
 import { Input, Textarea } from "@/components/ui/input";
 import type { QrCodeInput } from "@/lib/admin-schemas";
 import { useGeolocation } from "@/lib/use-geolocation";
+
+type QrCodeType = "route" | "wildcard" | "completion";
 
 export type QrCodeFormValues = {
   name: string;
@@ -69,6 +73,22 @@ export function QrCodeForm({
     (value: QrCodeFormValues[K]) =>
       setValues((current) => ({ ...current, [key]: value }));
 
+  const codeType: QrCodeType = values.isWildcard
+    ? "wildcard"
+    : values.isCompletion
+      ? "completion"
+      : "route";
+
+  function setCodeType(type: string) {
+    if (type !== "route" && type !== "wildcard" && type !== "completion") return;
+
+    setValues((current) => ({
+      ...current,
+      isWildcard: type === "wildcard",
+      isCompletion: type === "completion",
+    }));
+  }
+
   async function useCurrentLocation() {
     const coords = await geo.request();
 
@@ -112,6 +132,29 @@ export function QrCodeForm({
           maxLength={1000}
         />
       </Field>
+      <RadioGroup
+        name={`${idPrefix}-type`}
+        legend="Code type"
+        value={codeType}
+        onChange={setCodeType}
+        options={[
+          {
+            value: "route",
+            label: "Route stop",
+            hint: "Part of the ordered route and counted towards progress when in use.",
+          },
+          {
+            value: "wildcard",
+            label: "Wildcard",
+            hint: "Scanned at any point outside the route order. One per game, and only counts while the wildcard is enabled.",
+          },
+          {
+            value: "completion",
+            label: "Finish line",
+            hint: "Scanned after all route stops to complete the game. One per game.",
+          },
+        ]}
+      />
       <Field
         label="Fun fact"
         htmlFor={`${idPrefix}-fun-fact`}
@@ -142,81 +185,38 @@ export function QrCodeForm({
           />
         </Field>
       </div>
-      <label className="flex cursor-pointer items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-          checked={values.isWildcard}
-          onChange={(event) =>
-            setValues((current) => ({
-              ...current,
-              isWildcard: event.target.checked,
-              isCompletion: event.target.checked ? false : current.isCompletion,
-            }))
-          }
-        />
-        <span className="text-sm text-slate-700">
-          This is the wildcard object
-          <span className="block text-xs text-slate-500">
-            Scanned at any point, outside the route order. One per game; only counts while the
-            wildcard is enabled in game settings.
-          </span>
-        </span>
-      </label>
-      <label className="flex cursor-pointer items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-          checked={values.isCompletion}
-          onChange={(event) =>
-            setValues((current) => ({
-              ...current,
-              isCompletion: event.target.checked,
-              isWildcard: event.target.checked ? false : current.isWildcard,
-            }))
-          }
-        />
-        <span className="text-sm text-slate-700">
-          This is the &quot;I&apos;m done&quot; finish-line code
-          <span className="block text-xs text-slate-500">
-            Put this poster at the Digital Team tent. Never part of the route: once a team has
-            found every stop, scanning it opens the feedback form and checks them in for a
-            badge. One per game.
-          </span>
-        </span>
-      </label>
-      <label className="flex cursor-pointer items-start gap-2">
-        <input
-          type="checkbox"
-          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-          checked={values.isActive}
-          onChange={(event) => update("isActive")(event.target.checked)}
-        />
-        <span className="text-sm text-slate-700">
-          In use
-          <span className="block text-xs text-slate-500">
-            Untick to keep this as a spare. Spares are printed on posters but are not part of the
-            route, do not count towards progress, and cannot be scanned or used to join.
-          </span>
-        </span>
-      </label>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={useCurrentLocation}
-            disabled={pending || geo.pending}
-          >
-            {geo.pending ? "Locating…" : "Use my current location"}
-          </Button>
+      <InsetText variant="grey" className="my-0 space-y-2">
+        <Button
+          variant="primary"
+          size="xs"
+          onClick={useCurrentLocation}
+          disabled={pending || geo.pending}
+        >
+          {geo.pending ? "Locating..." : "Use my current location"}
+        </Button>
+        <div className="text-sm text-scouts-muted">
           {geo.error ? (
-            <span className="text-red-600">{geo.error}</span>
+            <span className="text-scouts-danger">{geo.error}</span>
           ) : accuracy !== null ? (
             <span>Accurate to about {Math.round(accuracy)} m</span>
           ) : (
-            <span>Stand at the QR code’s spot and tap to fill in the coordinates.</span>
+            <span>Stand at the QR code&apos;s spot and tap to fill in the coordinates.</span>
           )}
-      </div>
+        </div>
+      </InsetText>
+      <CheckboxGroup
+        name={`${idPrefix}-availability`}
+        legend="Availability"
+        value={values.isActive ? ["in-use"] : []}
+        onChange={(selected) => update("isActive")(selected.includes("in-use"))}
+        options={[
+          {
+            value: "in-use",
+            label: "In use",
+            hint: "Untick to keep this as a spare. Spares are printed on posters but are not part of the route, do not count towards progress, and cannot be scanned or used to join.",
+          },
+        ]}
+      />
       <div className="flex gap-2 pt-1">
         <Button type="submit" size="sm" disabled={pending}>
           {pending ? "Saving…" : submitLabel}

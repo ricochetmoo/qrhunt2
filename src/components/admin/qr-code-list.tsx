@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardBody, CardHeader } from "@/components/ui/card";
+import { Card, CardBody, CardHeader, ScoutsCard } from "@/components/ui/card";
 import { ErrorMessage } from "@/components/ui/field";
+import { SortableList, type SortableItem } from "@/components/ui/sortable-list";
+import { Tag } from "@/components/ui/badge";
 import type { QrCode } from "@/db/types";
 import { apiClient } from "@/lib/api-client";
 import { readError } from "@/lib/api-errors";
@@ -26,6 +28,10 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
   const [pending, startTransition] = useTransition();
 
   const game = apiClient.api.admin.games[":gameId"];
+  const editingCode = editingId ? codes.find((code) => code.id === editingId) ?? null : null;
+  const routeCodes = codes.filter(isRouteCode);
+  const auxiliaryCodes = codes.filter((code) => !isRouteCode(code));
+  const codesById = new Map(codes.map((code) => [code.id, code]));
 
   function handleAdd(values: QrCodeFormValues) {
     setError(null);
@@ -87,20 +93,22 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
     });
   }
 
-  function handleMove(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= codes.length) return;
-
+  function handleRouteReorder(items: SortableItem[]) {
     const previous = codes;
-    const next = [...codes];
-    [next[index], next[target]] = [next[target], next[index]];
+    const routeIds = items.map((item) => item.id);
+    const auxiliaryIds = auxiliaryCodes.map((code) => code.id);
+    const orderedIds = [...routeIds, ...auxiliaryIds];
+    const next = orderedIds
+      .map((id) => codesById.get(id))
+      .filter((code): code is QrCode => code !== undefined);
+
     setCodes(next);
     setError(null);
 
     startTransition(async () => {
       const response = await game.route.order.$put({
         param: { gameId },
-        json: { orderedIds: next.map((c) => c.id) },
+        json: { orderedIds },
       });
 
       if (!response.ok) {
@@ -121,8 +129,15 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
         title="Route"
         description="Players scan these codes in order. Each code is generated automatically."
         actions={
-          !adding ? (
-            <Button size="sm" onClick={() => setAdding(true)} disabled={pending}>
+          !adding && !editingCode ? (
+            <Button
+              size="sm"
+              onClick={() => {
+                setAdding(true);
+                setEditingId(null);
+              }}
+              disabled={pending}
+            >
               Add QR code
             </Button>
           ) : null
@@ -131,137 +146,189 @@ export function QrCodeList({ gameId, qrCodes: initialCodes }: QrCodeListProps) {
       <CardBody className="space-y-4">
         <ErrorMessage message={error} />
 
-        {codes.length === 0 && !adding ? (
-          <p className="text-sm text-slate-500">No QR codes yet. Add the first location on the route.</p>
+        {adding || editingCode ? (
+          <ScoutsCard
+            variant="grey"
+            title={adding ? "New QR code" : `Edit ${editingCode?.name ?? "QR code"}`}
+            description={
+              adding
+                ? "Add a code to this game's route."
+                : "Update this code without changing its position in the route."
+            }
+          >
+            <QrCodeForm
+              idPrefix={editingCode ? `qr-${editingCode.id}` : "qr-new"}
+              initial={
+                editingCode
+                  ? {
+                      name: editingCode.name,
+                      hint: editingCode.hint,
+                      funFact: editingCode.funFact ?? "",
+                      latitude: editingCode.latitude ?? "",
+                      longitude: editingCode.longitude ?? "",
+                      isWildcard: editingCode.isWildcard,
+                      isCompletion: editingCode.isCompletion,
+                      isActive: editingCode.isActive,
+                    }
+                  : undefined
+              }
+              pending={pending}
+              submitLabel={adding ? "Add to route" : "Save"}
+              onSubmit={(values) =>
+                editingCode ? handleEdit(editingCode.id, values) : handleAdd(values)
+              }
+              onCancel={() => {
+                setAdding(false);
+                setEditingId(null);
+              }}
+            />
+          </ScoutsCard>
         ) : null}
 
-        <ol className="divide-y divide-slate-100">
-          {codes.map((code, index) => (
-            <li key={code.id} className="py-3">
-              {editingId === code.id ? (
-                <QrCodeForm
-                  idPrefix={`qr-${code.id}`}
-                  initial={{
-                    name: code.name,
-                    hint: code.hint,
-                    funFact: code.funFact ?? "",
-                    latitude: code.latitude ?? "",
-                    longitude: code.longitude ?? "",
-                    isWildcard: code.isWildcard,
-                    isCompletion: code.isCompletion,
-                    isActive: code.isActive,
+        {routeCodes.length === 0 && !adding ? (
+          <p className="text-sm text-scouts-muted">No route stops yet. Add the first location on the route.</p>
+        ) : null}
+
+        {routeCodes.length > 0 ? (
+          <SortableList
+            items={routeCodes.map(toSortableItem)}
+            onReorder={handleRouteReorder}
+            disabled={pending}
+            renderActions={(item) => {
+              const code = codesById.get(item.id);
+              return code ? (
+                <QrCodeActions
+                  code={code}
+                  disabled={pending}
+                  onDelete={handleDelete}
+                  onEdit={(id) => {
+                    setAdding(false);
+                    setEditingId(id);
                   }}
-                  pending={pending}
-                  submitLabel="Save"
-                  onSubmit={(values) => handleEdit(code.id, values)}
-                  onCancel={() => setEditingId(null)}
                 />
-              ) : (
-                <div className="flex items-start gap-3">
-                  <div className="flex flex-col">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Move up"
-                      onClick={() => handleMove(index, -1)}
-                      disabled={pending || index === 0}
-                    >
-                      ▲
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Move down"
-                      onClick={() => handleMove(index, 1)}
-                      disabled={pending || index === codes.length - 1}
-                    >
-                      ▼
-                    </Button>
-                  </div>
-                  <div className="min-w-0 flex-1">
+              ) : null;
+            }}
+          />
+        ) : null}
+
+        {auxiliaryCodes.length > 0 ? (
+          <section aria-labelledby="auxiliary-codes-heading" className="space-y-3">
+            <div>
+              <h3 id="auxiliary-codes-heading" className="text-lg font-extrabold text-scouts-text">
+                Other codes
+              </h3>
+              <p className="mt-1 text-sm text-scouts-muted">
+                These codes are not part of the ordered route.
+              </p>
+            </div>
+            <ul className="divide-y divide-scouts-border-muted border-y border-scouts-border-muted">
+              {auxiliaryCodes.map((code) => (
+                <li key={code.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      {!code.isActive ? (
-                        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600">
-                          Spare
-                        </span>
-                      ) : code.isCompletion ? (
-                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                          Finish line
-                        </span>
-                      ) : code.isWildcard ? (
-                        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
-                          Wildcard
-                        </span>
-                      ) : (
-                        <span className="text-xs font-semibold text-slate-400">
-                          {codes
-                            .slice(0, index)
-                            .filter((c) => c.isActive && !c.isWildcard && !c.isCompletion).length + 1}
-                          .
-                        </span>
-                      )}
-                      <span
-                        className={
-                          code.isActive ? "font-medium text-slate-900" : "font-medium text-slate-500"
-                        }
-                      >
-                        {code.name}
-                      </span>
-                      <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-700">
+                      <AuxiliaryCodeTag code={code} />
+                      <h4 className="font-bold text-scouts-text">{code.name}</h4>
+                      <code className="bg-scouts-grey-light px-1.5 py-0.5 font-mono text-xs text-scouts-text">
                         {code.code.toUpperCase()}
                       </code>
                       {code.latitude && code.longitude ? (
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-scouts-muted">
                           {code.latitude}, {code.longitude}
                         </span>
                       ) : null}
                     </div>
-                    <p className="mt-1 whitespace-pre-line text-sm text-slate-600">{code.hint}</p>
+                    <p className="mt-1 whitespace-pre-line text-sm text-scouts-muted">{code.hint}</p>
                     {code.funFact ? (
-                      <p className="mt-1 whitespace-pre-line text-xs text-slate-500">
-                        <span className="font-semibold">Fun fact:</span> {code.funFact}
+                      <p className="mt-1 whitespace-pre-line text-xs text-scouts-muted">
+                        <span className="font-bold">Fun fact:</span> {code.funFact}
                       </p>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setEditingId(code.id)}
-                      disabled={pending}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-600"
-                      onClick={() => handleDelete(code)}
-                      disabled={pending}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </li>
-          ))}
-        </ol>
-
-        {adding ? (
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
-            <h3 className="mb-3 text-sm font-semibold text-slate-900">New QR code</h3>
-            <QrCodeForm
-              idPrefix="qr-new"
-              pending={pending}
-              submitLabel="Add to route"
-              onSubmit={handleAdd}
-              onCancel={() => setAdding(false)}
-            />
-          </div>
+                  <QrCodeActions
+                    code={code}
+                    disabled={pending}
+                    onDelete={handleDelete}
+                    onEdit={(id) => {
+                      setAdding(false);
+                      setEditingId(id);
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
         ) : null}
       </CardBody>
     </Card>
+  );
+}
+
+function isRouteCode(code: QrCode) {
+  return code.isActive && !code.isWildcard && !code.isCompletion;
+}
+
+function toSortableItem(code: QrCode, index: number): SortableItem {
+  return {
+    id: code.id,
+    title: (
+      <span className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-bold text-scouts-muted">{index + 1}.</span>
+        <span>{code.name}</span>
+        <code className="bg-scouts-grey-light px-1.5 py-0.5 font-mono text-xs text-scouts-text">
+          {code.code.toUpperCase()}
+        </code>
+      </span>
+    ),
+    description: (
+      <>
+        <span className="block whitespace-pre-line">{code.hint}</span>
+        {code.funFact ? (
+          <span className="mt-1 block whitespace-pre-line text-xs">
+            <span className="font-bold">Fun fact:</span> {code.funFact}
+          </span>
+        ) : null}
+        {code.latitude && code.longitude ? (
+          <span className="mt-1 block text-xs">
+            {code.latitude}, {code.longitude}
+          </span>
+        ) : null}
+      </>
+    ),
+  };
+}
+
+function AuxiliaryCodeTag({ code }: { code: QrCode }) {
+  if (!code.isActive) return <Tag variant="grey">Spare</Tag>;
+  if (code.isCompletion) return <Tag variant="success">Finish line</Tag>;
+  return <Tag variant="warning">Wildcard</Tag>;
+}
+
+function QrCodeActions({
+  code,
+  disabled,
+  onEdit,
+  onDelete,
+}: {
+  code: QrCode;
+  disabled: boolean;
+  onEdit: (id: string) => void;
+  onDelete: (code: QrCode) => void;
+}) {
+  return (
+    <div className="flex shrink-0 gap-1">
+      <Button variant="secondary" size="sm" onClick={() => onEdit(code.id)} disabled={disabled}>
+        Edit
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="text-scouts-red-dark"
+        onClick={() => onDelete(code)}
+        disabled={disabled}
+      >
+        Delete
+      </Button>
+    </div>
   );
 }
 

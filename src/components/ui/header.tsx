@@ -47,7 +47,7 @@ export function HeaderBar({
   const levelClasses = {
     1: "bg-scouts-primary-header text-scouts-primary-header-foreground",
     2: "border-b-2 border-scouts-grey bg-scouts-grey-light text-black",
-    3: "border-b-2 border-scouts-primary bg-scouts-surface text-scouts-primary",
+    3: "bg-white text-scouts-primary",
   };
 
   return (

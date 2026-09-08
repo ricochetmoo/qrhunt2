@@ -1,11 +1,17 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition, type FormEvent, type ReactNode } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 
+import { Accordion } from "@/components/ui/accordion";
+import { Tag } from "@/components/ui/badge";
+import { Box } from "@/components/ui/box";
 import { Button } from "@/components/ui/button";
-import { ErrorMessage, Field } from "@/components/ui/field";
+import { CheckboxGroup, RadioGroup } from "@/components/ui/choice-group";
+import { Details, InsetText } from "@/components/ui/details";
+import { Field } from "@/components/ui/field";
 import { Input, Select, Textarea } from "@/components/ui/input";
+import { Message } from "@/components/ui/message";
 import type { Game } from "@/db/types";
 import { apiClient } from "@/lib/api-client";
 import { readError } from "@/lib/api-errors";
@@ -40,9 +46,8 @@ export type EditableGame = Pick<
   | "wildcardEnabled"
   | "wildcardName"
   | "staggeredStart"
-  | "qrRemoveBy"
   | "issueContactPhone"
->;
+> & { qrRemoveBy: string | null };
 
 type GameFormProps = { mode: "create" } | { mode: "edit"; game: EditableGame };
 
@@ -65,8 +70,10 @@ type ConfigState = {
 };
 
 /** datetime-local wants `YYYY-MM-DDTHH:mm` in local time. */
-function toLocalInputValue(date: Date | null): string {
-  if (!date) return "";
+function toLocalInputValue(dateValue: string | null): string {
+  if (!dateValue) return "";
+  const date = new Date(dateValue);
+  if (Number.isNaN(date.getTime())) return "";
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -90,48 +97,6 @@ function initialConfig(game: EditableGame | null): ConfigState {
     qrRemoveBy: toLocalInputValue(game?.qrRemoveBy ?? null),
     issueContactPhone: game?.issueContactPhone ?? "",
   };
-}
-
-function Toggle({
-  id,
-  label,
-  hint,
-  checked,
-  onChange,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  hint?: string;
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  disabled?: boolean;
-}) {
-  return (
-    <label htmlFor={id} className="flex cursor-pointer items-start gap-3">
-      <input
-        id={id}
-        type="checkbox"
-        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-        disabled={disabled}
-      />
-      <span>
-        <span className="block text-sm font-medium text-slate-700">{label}</span>
-        {hint ? <span className="block text-xs text-slate-500">{hint}</span> : null}
-      </span>
-    </label>
-  );
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <fieldset className="space-y-3 border-t border-slate-200 pt-4">
-      <legend className="pr-3 text-sm font-semibold text-slate-900">{title}</legend>
-      {children}
-    </fieldset>
-  );
 }
 
 export function GameForm(props: GameFormProps) {
@@ -247,10 +212,14 @@ export function GameForm(props: GameFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <ErrorMessage message={error} />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {error ? (
+        <Message title="There is a problem with these settings" variant="danger">
+          {error}
+        </Message>
+      ) : null}
 
-      <Field label="Name" htmlFor="game-name">
+      <Field label="Name" htmlFor="game-name" hint="Use a name that leaders and players will recognise." required>
         <Input
           id="game-name"
           value={name}
@@ -266,38 +235,53 @@ export function GameForm(props: GameFormProps) {
           <Field
             label="Game code"
             htmlFor="game-code"
-            hint="Players enter this code to join. Share it at the start; regenerate it if it leaks."
+            hint="Players enter this code to join. Share it at the start of the game."
           >
-            <div className="flex items-center gap-2">
-              <code
-                id="game-code"
-                className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-lg tracking-widest text-slate-900"
-              >
+            <Box variant="grey" size="sm" className="flex flex-wrap items-center justify-between gap-3">
+              <code id="game-code" className="font-mono text-xl font-bold tracking-widest text-scouts-text">
                 {gameCode}
               </code>
               <Button variant="secondary" size="sm" onClick={handleRegenerateCode} disabled={pending}>
-                Regenerate
+                Issue new code
               </Button>
-            </div>
+            </Box>
           </Field>
+
+          <InsetText className="my-0">
+            Issuing a new game code stops the current code working immediately. Update any printed or shared joining instructions afterwards.
+          </InsetText>
 
           <Field
             label="Status"
             htmlFor="game-status"
-            hint="Lifecycle transition rules are not enforced yet; any status can be chosen."
+            hint="The lifecycle status controls what players can see, join, and do."
           >
-            <Select
-              id="game-status"
-              value={status}
-              onChange={(event) => setStatus(event.target.value as GameStatus)}
-            >
-              {GAME_STATUSES.map((value) => (
-                <option key={value} value={value}>
-                  {GAME_STATUS_LABELS[value]}
-                </option>
-              ))}
-            </Select>
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                id="game-status"
+                value={status}
+                onChange={(event) => setStatus(event.target.value as GameStatus)}
+                className="max-w-xs"
+              >
+                {GAME_STATUSES.map((value) => (
+                  <option key={value} value={value}>
+                    {GAME_STATUS_LABELS[value]}
+                  </option>
+                ))}
+              </Select>
+            </div>
           </Field>
+
+          <Details summary="What do the lifecycle statuses mean?" className="my-0">
+            <ul className="list-inside list-disc space-y-1 text-sm text-scouts-muted">
+              <li><Tag variant="grey">Draft</Tag> is still being prepared.</li>
+              <li><Tag variant="info">Published</Tag> can be joined, but does not release the first hint.</li>
+              <li><Tag variant="success">Started</Tag> is live and accepts scans.</li>
+              <li><Tag variant="warning">Paused</Tag> is visible, but scanning is temporarily stopped.</li>
+              <li><Tag variant="purple">Finished</Tag> stays viewable without accepting new progress.</li>
+              <li><Tag variant="grey">Archived</Tag> is hidden from players and retained for administrators.</li>
+            </ul>
+          </Details>
 
           {status === "paused" ? (
             <Field
@@ -314,184 +298,226 @@ export function GameForm(props: GameFormProps) {
             </Field>
           ) : null}
 
-          <Section title="Game mode">
-            <div className="grid gap-2 sm:grid-cols-2">
-              {GAME_MODES.map((mode) => (
-                <label
-                  key={mode}
-                  htmlFor={`cfg-mode-${mode}`}
-                  className={`flex cursor-pointer items-start gap-3 rounded-md border px-3 py-2 ${
-                    config.gameMode === mode ? "border-slate-900 bg-slate-50" : "border-slate-200"
-                  }`}
-                >
-                  <input
-                    id={`cfg-mode-${mode}`}
-                    type="radio"
-                    name="cfg-mode"
-                    className="mt-0.5 h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-500"
-                    checked={config.gameMode === mode}
-                    onChange={() => set("gameMode")(mode)}
+          <Accordion
+            multiple
+            items={[
+              {
+                id: "game-mode",
+                title: "Game mode",
+                content: (
+                  <div className="space-y-6">
+                    <RadioGroup
+                      name="cfg-game-mode"
+                      legend="How should teams be ranked?"
+                      value={config.gameMode}
+                      onChange={(value) => {
+                        if (isGameMode(value)) set("gameMode")(value);
+                      }}
+                      options={GAME_MODES.map((mode) => ({
+                        value: mode,
+                        label: GAME_MODE_LABELS[mode],
+                        hint: GAME_MODE_DESCRIPTIONS[mode],
+                      }))}
+                    />
+                    <CheckboxGroup
+                      name="cfg-route-order"
+                      legend="Route order"
+                      value={config.allowOutOfOrder ? ["out-of-order"] : []}
+                      onChange={(values) => set("allowOutOfOrder")(values.includes("out-of-order"))}
+                      options={[
+                        {
+                          value: "out-of-order",
+                          label: "Stops can be found in any order",
+                          hint: "When off, players must follow the route in sequence. Any order pairs well with Completeness mode.",
+                        },
+                      ]}
+                    />
+                  </div>
+                ),
+              },
+              {
+                id: "player-help",
+                title: "Player help",
+                content: (
+                  <Field
+                    label="Help text"
+                    htmlFor="cfg-help-text"
+                    hint={`Optional game-specific guidance for players. Up to ${HELP_TEXT_MAX_LENGTH} characters.`}
+                  >
+                    <Textarea
+                      id="cfg-help-text"
+                      value={config.helpText}
+                      onChange={(event) => set("helpText")(event.target.value)}
+                      maxLength={HELP_TEXT_MAX_LENGTH}
+                      rows={5}
+                    />
+                  </Field>
+                ),
+              },
+              {
+                id: "players-teams",
+                title: "Players and teams",
+                content: (
+                  <CheckboxGroup
+                    name="cfg-player-team-settings"
+                    legend="Player and team options"
+                    value={[
+                      ...(config.allowSelfSignup ? ["self-signup"] : []),
+                      ...(config.allowTeamCreation ? ["team-creation"] : []),
+                      ...(config.allowTeamNames ? ["team-names"] : []),
+                      ...(config.allowTeamPhotos ? ["team-photos"] : []),
+                      ...(config.routeSignupEnabled ? ["route-signup"] : []),
+                    ]}
+                    onChange={(values) =>
+                      setConfig((current) => ({
+                        ...current,
+                        allowSelfSignup: values.includes("self-signup"),
+                        allowTeamCreation: values.includes("team-creation"),
+                        allowTeamNames: values.includes("team-names"),
+                        allowTeamPhotos: values.includes("team-photos"),
+                        routeSignupEnabled: values.includes("route-signup"),
+                      }))
+                    }
+                    options={[
+                      {
+                        value: "self-signup",
+                        label: "Players can sign up themselves",
+                        hint: "When off, only administrators can add players to teams.",
+                      },
+                      {
+                        value: "team-creation",
+                        label: "Players can create teams",
+                        hint: "When off, players can only join teams that already exist.",
+                        disabled: !config.allowSelfSignup,
+                      },
+                      { value: "team-names", label: "Players can choose a team name" },
+                      { value: "team-photos", label: "Players can upload a team photo" },
+                      {
+                        value: "route-signup",
+                        label: "Join by scanning a route QR code",
+                        hint: "Lets players join directly from any poster instead of entering the game code.",
+                      },
+                    ]}
                   />
-                  <span>
-                    <span className="block text-sm font-medium text-slate-700">
-                      {GAME_MODE_LABELS[mode]}
-                    </span>
-                    <span className="block text-xs text-slate-500">
-                      {GAME_MODE_DESCRIPTIONS[mode]}
-                    </span>
-                  </span>
-                </label>
-              ))}
-            </div>
-            <Toggle
-              id="cfg-out-of-order"
-              label="Stops can be found in any order"
-              hint="When off, players must follow the route in sequence and early finds are rejected. Any order pairs well with Completeness mode."
-              checked={config.allowOutOfOrder}
-              onChange={set("allowOutOfOrder")}
-            />
-          </Section>
-
-          <Section title="Player help">
-            <Field
-              label="Help text"
-              htmlFor="cfg-help-text"
-              hint={`Optional game-specific guidance for players. Up to ${HELP_TEXT_MAX_LENGTH} characters.`}
-            >
-              <Textarea
-                id="cfg-help-text"
-                value={config.helpText}
-                onChange={(event) => set("helpText")(event.target.value)}
-                maxLength={HELP_TEXT_MAX_LENGTH}
-                rows={5}
-              />
-            </Field>
-          </Section>
-
-          <Section title="Players and teams">
-            <Toggle
-              id="cfg-self-signup"
-              label="Players can sign up themselves"
-              hint="When off, only administrators can add players to teams."
-              checked={config.allowSelfSignup}
-              onChange={set("allowSelfSignup")}
-            />
-            <Toggle
-              id="cfg-team-creation"
-              label="Players can create teams"
-              hint="When off, players can only join teams that already exist."
-              checked={config.allowTeamCreation}
-              onChange={set("allowTeamCreation")}
-              disabled={!config.allowSelfSignup}
-            />
-            <Toggle
-              id="cfg-team-names"
-              label="Players can choose a team name"
-              checked={config.allowTeamNames}
-              onChange={set("allowTeamNames")}
-            />
-            <Toggle
-              id="cfg-team-photos"
-              label="Players can upload a team photo"
-              checked={config.allowTeamPhotos}
-              onChange={set("allowTeamPhotos")}
-            />
-            <Toggle
-              id="cfg-route-signup"
-              label="Join by scanning a route QR code"
-              hint="Lets players join the game directly from any poster instead of entering the game code."
-              checked={config.routeSignupEnabled}
-              onChange={set("routeSignupEnabled")}
-            />
-          </Section>
-
-          <Section title="Wildcard">
-            <Toggle
-              id="cfg-wildcard"
-              label="Wildcard is active"
-              hint="An extra object players can scan at any point, outside the route order."
-              checked={config.wildcardEnabled}
-              onChange={set("wildcardEnabled")}
-            />
-            {config.wildcardEnabled ? (
-              <Field label="Wildcard name" htmlFor="cfg-wildcard-name" hint="How it appears to players.">
-                <Input
-                  id="cfg-wildcard-name"
-                  value={config.wildcardName}
-                  onChange={(event) => set("wildcardName")(event.target.value)}
-                  maxLength={60}
-                  required
-                />
-              </Field>
-            ) : null}
-          </Section>
-
-          <Section title="Start and posters">
-            <Toggle
-              id="cfg-staggered"
-              label="Staggered start"
-              hint="Teams set off at intervals rather than all at once."
-              checked={config.staggeredStart}
-              onChange={set("staggeredStart")}
-            />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field
-                label="Remove QR codes by"
-                htmlFor="cfg-remove-by"
-                hint="Printed on posters so the public knows when they will be taken down."
-              >
-                <Input
-                  id="cfg-remove-by"
-                  type="datetime-local"
-                  value={config.qrRemoveBy}
-                  onChange={(event) => set("qrRemoveBy")(event.target.value)}
-                />
-              </Field>
-              <Field
-                label="Issue contact phone"
-                htmlFor="cfg-phone"
-                hint="Public number printed on posters for reporting problems."
-              >
-                <Input
-                  id="cfg-phone"
-                  type="tel"
-                  value={config.issueContactPhone}
-                  onChange={(event) => set("issueContactPhone")(event.target.value)}
-                  maxLength={30}
-                />
-              </Field>
-            </div>
-          </Section>
-
-          <Section title="Completion">
-            <Field
-              label="Feedback URL"
-              htmlFor="cfg-feedback-url"
-              hint="Optional. When set, scanning the finish-line code records the team's completion (for the badge queue) and then sends players here for feedback, instead of the built-in form."
-            >
-              <Input
-                id="cfg-feedback-url"
-                type="url"
-                value={config.feedbackUrl}
-                onChange={(event) => set("feedbackUrl")(event.target.value)}
-                maxLength={2048}
-                placeholder="https://example.com/feedback"
-              />
-            </Field>
-            <Field
-              label="Completion message"
-              htmlFor="cfg-completion-message"
-              hint={`Shown to a team when it completes the route. Leave blank for the standard congratulations message. Up to ${COMPLETION_MESSAGE_MAX_LENGTH} characters.`}
-            >
-              <Textarea
-                id="cfg-completion-message"
-                value={config.completionMessage}
-                onChange={(event) => set("completionMessage")(event.target.value)}
-                maxLength={COMPLETION_MESSAGE_MAX_LENGTH}
-                rows={5}
-              />
-            </Field>
-          </Section>
+                ),
+              },
+              {
+                id: "wildcard",
+                title: "Wildcard",
+                content: (
+                  <div className="space-y-5">
+                    <CheckboxGroup
+                      name="cfg-wildcard-settings"
+                      legend="Wildcard option"
+                      value={config.wildcardEnabled ? ["wildcard"] : []}
+                      onChange={(values) => set("wildcardEnabled")(values.includes("wildcard"))}
+                      options={[
+                        {
+                          value: "wildcard",
+                          label: "Wildcard is active",
+                          hint: "An extra object players can scan at any point, outside the route order.",
+                        },
+                      ]}
+                    />
+                    {config.wildcardEnabled ? (
+                      <Field label="Wildcard name" htmlFor="cfg-wildcard-name" hint="How it appears to players." required>
+                        <Input
+                          id="cfg-wildcard-name"
+                          value={config.wildcardName}
+                          onChange={(event) => set("wildcardName")(event.target.value)}
+                          maxLength={60}
+                          required
+                        />
+                      </Field>
+                    ) : null}
+                  </div>
+                ),
+              },
+              {
+                id: "start-posters",
+                title: "Start and posters",
+                content: (
+                  <div className="space-y-5">
+                    <CheckboxGroup
+                      name="cfg-start-settings"
+                      legend="Start settings"
+                      value={config.staggeredStart ? ["staggered"] : []}
+                      onChange={(values) => set("staggeredStart")(values.includes("staggered"))}
+                      options={[
+                        {
+                          value: "staggered",
+                          label: "Staggered start",
+                          hint: "Teams set off at intervals rather than all at once.",
+                        },
+                      ]}
+                    />
+                    <div className="grid gap-5 sm:grid-cols-2">
+                      <Field
+                        label="Remove QR codes by"
+                        htmlFor="cfg-remove-by"
+                        hint="Printed on posters so the public knows when they will be taken down."
+                      >
+                        <Input
+                          id="cfg-remove-by"
+                          type="datetime-local"
+                          value={config.qrRemoveBy}
+                          onChange={(event) => set("qrRemoveBy")(event.target.value)}
+                        />
+                      </Field>
+                      <Field
+                        label="Issue contact phone"
+                        htmlFor="cfg-phone"
+                        hint="Public number printed on posters for reporting problems."
+                      >
+                        <Input
+                          id="cfg-phone"
+                          type="tel"
+                          value={config.issueContactPhone}
+                          onChange={(event) => set("issueContactPhone")(event.target.value)}
+                          maxLength={30}
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                id: "completion",
+                title: "Completion",
+                content: (
+                  <div className="space-y-5">
+                    <Field
+                      label="Feedback URL"
+                      htmlFor="cfg-feedback-url"
+                      hint="Optional. When set, the finish-line code records completion and then sends players here for feedback."
+                    >
+                      <Input
+                        id="cfg-feedback-url"
+                        type="url"
+                        value={config.feedbackUrl}
+                        onChange={(event) => set("feedbackUrl")(event.target.value)}
+                        maxLength={2048}
+                        placeholder="https://example.com/feedback"
+                      />
+                    </Field>
+                    <Field
+                      label="Completion message"
+                      htmlFor="cfg-completion-message"
+                      hint={`Shown to a team when it completes the route. Leave blank for the standard congratulations message. Up to ${COMPLETION_MESSAGE_MAX_LENGTH} characters.`}
+                    >
+                      <Textarea
+                        id="cfg-completion-message"
+                        value={config.completionMessage}
+                        onChange={(event) => set("completionMessage")(event.target.value)}
+                        maxLength={COMPLETION_MESSAGE_MAX_LENGTH}
+                        rows={5}
+                      />
+                    </Field>
+                  </div>
+                ),
+              },
+            ]}
+          />
         </>
       ) : null}
 
@@ -504,8 +530,12 @@ export function GameForm(props: GameFormProps) {
             Delete game
           </Button>
         ) : null}
-        {saved ? <span className="text-sm text-green-700">Saved.</span> : null}
       </div>
+      {saved ? (
+        <Message title="Changes saved" variant="success">
+          The game settings have been updated.
+        </Message>
+      ) : null}
     </form>
   );
 }

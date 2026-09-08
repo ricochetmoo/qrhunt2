@@ -2,16 +2,10 @@
 
 import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import { ErrorMessage } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
 import { readError } from "@/lib/api-errors";
-
-function filenameFromResponse(response: Response): string {
-  const header = response.headers.get("Content-Disposition");
-  const match = header?.match(/filename="([^"]+)"/i);
-
-  return match?.[1] ?? "qr-images.zip";
-}
+import { downloadFile } from "@/lib/download-file";
 
 export function QrImageExportButton({ gameId }: { gameId: string }) {
   const [pending, setPending] = useState(false);
@@ -36,15 +30,7 @@ export function QrImageExportButton({ gameId }: { gameId: string }) {
         throw new Error(await readError(response));
       }
 
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = filenameFromResponse(response);
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      await downloadFile(response, "qr-images.zip");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Failed to export QR images.");
     } finally {
@@ -53,17 +39,19 @@ export function QrImageExportButton({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      <Button
-        variant="secondary"
-        size="sm"
-        className="!px-3 !py-1.5 !text-sm"
+    <div className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        className="scouts-navigation__link cursor-pointer text-left disabled:cursor-wait disabled:opacity-50"
         onClick={handleExport}
         disabled={pending}
         aria-busy={pending}
       >
-        {pending ? "Exporting…" : "Export QR images"}
-      </Button>
+        <span className="inline-flex items-center gap-2">
+          {pending ? <Spinner size="sm" inline label="" /> : null}
+          {pending ? "Exporting QR images…" : "Export QR images"}
+        </span>
+      </button>
       <ErrorMessage message={error} />
     </div>
   );
