@@ -4,6 +4,13 @@ import { useMemo, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
+type DropPosition = "before" | "after";
+
+interface DropTarget {
+  id: string;
+  position: DropPosition;
+}
+
 export interface SortableItem {
   id: string;
   title: ReactNode;
@@ -28,12 +35,14 @@ export function SortableList({
   const [orderedIds, setOrderedIds] = useState(itemIds);
   const [lastItemIdsKey, setLastItemIdsKey] = useState(itemIdsKey);
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
 
   // Keep the local drag order in sync with server refreshes and optimistic rollbacks.
   if (itemIdsKey !== lastItemIdsKey) {
     setLastItemIdsKey(itemIdsKey);
     setOrderedIds(itemIds);
     setDraggedId(null);
+    setDropTarget(null);
   }
 
   const itemsById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
@@ -54,13 +63,16 @@ export function SortableList({
     commit(nextItems);
   }
 
-  function drop(targetId: string) {
+  function drop(targetId: string, position: DropPosition) {
     if (disabled || !draggedId || draggedId === targetId) return;
     const from = orderedItems.findIndex((item) => item.id === draggedId);
-    const to = orderedItems.findIndex((item) => item.id === targetId);
+    let to = orderedItems.findIndex((item) => item.id === targetId);
     if (from === -1 || to === -1) return;
+    if (position === "after") to += 1;
+    if (from < to) to -= 1;
     move(from, to);
     setDraggedId(null);
+    setDropTarget(null);
   }
 
   return (
@@ -69,12 +81,40 @@ export function SortableList({
         <li
           key={item.id}
           draggable={!disabled}
-          onDragStart={() => setDraggedId(item.id)}
-          onDragOver={(event) => {
-            if (!disabled) event.preventDefault();
+          onDragStart={(event) => {
+            event.dataTransfer.effectAllowed = "move";
+            setDraggedId(item.id);
+            setDropTarget(null);
           }}
-          onDrop={() => drop(item.id)}
-          className="grid gap-3 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center"
+          onDragOver={(event) => {
+            if (disabled || draggedId === item.id) {
+              setDropTarget(null);
+              return;
+            }
+
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+            const bounds = event.currentTarget.getBoundingClientRect();
+            const position = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+            setDropTarget({ id: item.id, position });
+          }}
+          onDragLeave={(event) => {
+            const relatedTarget = event.relatedTarget;
+            if (!(relatedTarget instanceof Node) || !event.currentTarget.contains(relatedTarget)) {
+              setDropTarget(null);
+            }
+          }}
+          onDrop={() => drop(item.id, dropTarget?.id === item.id ? dropTarget.position : "before")}
+          onDragEnd={() => {
+            setDraggedId(null);
+            setDropTarget(null);
+          }}
+          className={cn(
+            "relative grid gap-3 py-4 sm:grid-cols-[auto_1fr_auto] sm:items-center",
+            item.id === draggedId && "opacity-45",
+            dropTarget?.id === item.id && dropTarget.position === "before" && "border-t-4 border-scouts-primary",
+            dropTarget?.id === item.id && dropTarget.position === "after" && "border-b-4 border-scouts-primary",
+          )}
         >
           <span className="hidden cursor-grab text-xl text-scouts-muted sm:inline" aria-hidden>
             ⠿
