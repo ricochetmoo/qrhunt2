@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 import { GAME_STATUS_LABELS, isGameStatus, type GameStatus } from "@/lib/game-status";
 import { cn } from "@/lib/cn";
 
-const STATUS_CLASSES: Record<GameStatus, string> = {
-  draft: "bg-scouts-grey-light text-scouts-grey-dark",
-  published: "bg-scouts-blue-light text-scouts-blue-dark",
-  started: "bg-scouts-green-light text-scouts-green-dark",
-  paused: "bg-scouts-orange-light text-scouts-orange-dark",
-  finished: "bg-scouts-primary-light text-scouts-primary-dark",
-  archived: "bg-scouts-grey text-scouts-grey-dark",
+const STATUS_TAG_VARIANTS: Record<GameStatus, TagVariant> = {
+  draft: "grey",
+  published: "info",
+  started: "success",
+  paused: "warning",
+  finished: "purple",
+  archived: "grey",
 };
 
 export type TagVariant =
@@ -92,14 +92,5 @@ export function Tag({ children, variant = "primary", className }: TagProps) {
 export function StatusBadge({ status }: { status: string }) {
   const known = isGameStatus(status);
 
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-2.5 py-1 text-xs font-bold leading-none",
-        known ? STATUS_CLASSES[status] : "bg-scouts-grey-light text-scouts-grey-dark",
-      )}
-    >
-      {known ? GAME_STATUS_LABELS[status] : status}
-    </span>
-  );
+  return <Tag variant={known ? STATUS_TAG_VARIANTS[status] : "grey"}>{known ? GAME_STATUS_LABELS[status] : status}</Tag>;
 }

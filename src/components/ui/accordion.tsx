@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 
@@ -24,6 +24,7 @@ export function Accordion({
   showAll?: boolean;
   className?: string;
 }) {
+  const accordionId = useId();
   const [openItems, setOpenItems] = useState<Set<string>>(() => new Set(defaultOpen));
   const allOpen = items.length > 0 && items.every((item) => openItems.has(item.id));
 
@@ -47,42 +48,71 @@ export function Accordion({
   }
 
   return (
-    <div className={cn("space-y-2", className)}>
+    <div className={cn("space-y-0", className)}>
       {showAll && items.length > 1 ? (
-        <button
-          type="button"
-          onClick={toggleAll}
-          className="mb-2 font-bold text-scouts-primary underline decoration-2 underline-offset-2 hover:text-scouts-primary-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
-        >
-          {allOpen ? "Hide all" : "Show all"}
-        </button>
+        <div className="border-b border-scouts-border-muted">
+          <div className="flex justify-end">
+            <button
+              type="button"
+              aria-expanded={allOpen}
+              onClick={toggleAll}
+              className="group flex cursor-pointer items-center px-1 py-1 text-xl font-bold text-scouts-link focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
+            >
+              <span
+                className={cn(
+                  "mr-3 h-2.5 w-2.5 rotate-45 border-r-2 border-b-2 border-black transition-transform",
+                  allOpen && "-rotate-[135deg]",
+                )}
+                aria-hidden
+              />
+              <span className="underline decoration-2 underline-offset-2 group-focus-visible:bg-scouts-orange group-focus-visible:text-black">
+                {allOpen ? "Hide all sections" : "Show all sections"}
+              </span>
+            </button>
+          </div>
+        </div>
       ) : null}
-      {items.map((item) => {
-        const open = openItems.has(item.id);
-        return (
-          <section key={item.id} className="border-b border-scouts-border-muted">
-            <h3 className="m-0">
-              <button
-                type="button"
-                aria-expanded={open}
-                onClick={() => toggle(item.id)}
-                className="flex w-full items-center justify-between gap-4 py-4 text-left text-xl font-extrabold text-scouts-text focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
-              >
-                <span>{item.title}</span>
-                <span className={cn("text-scouts-primary transition-transform", open && "rotate-180")} aria-hidden>
-                  ↓
-                </span>
-              </button>
-            </h3>
-            {open ? (
-              <div className="pb-5">
-                {item.summary ? <p className="mb-2 text-sm text-scouts-muted">{item.summary}</p> : null}
-                {item.content}
-              </div>
-            ) : null}
-          </section>
-        );
-      })}
+      <div className="border-b border-scouts-border-muted">
+        {items.map((item) => {
+          const open = openItems.has(item.id);
+          const contentId = `${accordionId}-${item.id}-content`;
+          return (
+            <section key={item.id} className="border-t border-scouts-border-muted first:border-t-0">
+              <h3 className="m-0">
+                <button
+                  type="button"
+                  aria-expanded={open}
+                  aria-controls={contentId}
+                  onClick={() => toggle(item.id)}
+                  className="group flex w-full cursor-pointer items-center justify-between gap-4 py-5 text-left text-2xl font-extrabold focus:outline-none focus-visible:ring-2 focus-visible:ring-scouts-focus"
+                >
+                  <span className="flex min-w-0 items-center gap-4">
+                    <span
+                      className={cn(
+                        "h-3 w-3 shrink-0 rotate-45 border-r-2 border-b-2 border-black transition-transform",
+                        open && "-rotate-[135deg]",
+                      )}
+                      aria-hidden
+                    />
+                    <span className="truncate font-black text-scouts-link underline decoration-2 underline-offset-2 group-focus-visible:bg-scouts-focus group-focus-visible:text-scouts-focus-text">
+                      {item.title}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-lg font-normal text-scouts-link">
+                    {open ? "Hide" : "Show"}
+                  </span>
+                </button>
+              </h3>
+              {item.summary ? <p className="pb-4 text-lg text-scouts-text">{item.summary}</p> : null}
+              {open ? (
+                <div id={contentId} className="pb-6 pt-1">
+                  {item.content}
+                </div>
+              ) : null}
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }
